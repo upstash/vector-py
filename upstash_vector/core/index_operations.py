@@ -12,8 +12,12 @@ class IndexOperations:
 
     # TODO: define list size here, maybe?
     # TODO: maybe, also define payload type
-    def upsert(self, id: str | int, vector: list[float]) -> ResponseType:
+    def upsert(self, id: str | int="", vector: list[float]=[], vectors:list[dict]=[]) -> ResponseType:
         payload = {"id": id, "vector": vector}
+
+        if len(vectors) > 0:
+            payload = [{"id": vector[0], "vector": vector[1]} for vector in vectors]
+
         path = "/upsert"
         return self.execute_request(payload=payload, path=path)
 
