@@ -1,0 +1,42 @@
+[tool.poetry]
+name = "upstash-vector"
+version = "0.1.0"
+description = "Serverless Vector SDK from Upstash"
+license = "MIT"
+authors = ["Upstash <support@upstash.com>"]
+maintainers = ["Upstash <support@upstash.com>"]
+readme = "README.md"
+repository = "https://github.com/upstash/vector-py"
+keywords = ["Upstash Vector", "Serverless Vector"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Database",
+    "Topic :: Database :: Front-Ends",
+    "Topic :: Software Development :: Libraries",
+]
+
+packages = [{ include = "upstash_vector" }]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+requests = "^2.31.0"
+
+
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.8.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
