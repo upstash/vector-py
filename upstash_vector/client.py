@@ -1,22 +1,45 @@
 from requests import Session
+from upstash_vector.http import execute_with_parameters, generate_headers
 from upstash_vector.core.index_operations import IndexOperations
 from typing import Any
+from upstash_vector.errors import UpstashError
+import time
 
 
 class Index(IndexOperations):
-    def __init__(self, url: str, token: str):
+    """
+    An Upstash Vector client that uses the Upstash Vector API to manage index operations.
+
+    Initialization example:
+
+    ```python
+    from upstash_vector import Index
+
+    index = Index(url=<url>, token=<token>)
+
+    # alternatively, configure retry mechanism as well
+
+    index = Index(url=<url>, token=<token>, retries=5, retry_interval=0.1) # retry 5 times, waiting 100ms between consequent requests
+    ```
+    """
+
+    def __init__(
+        self, url: str, token: str, retries: int = 3, retry_interval: float = 1
+    ):
         self._url = url
+        self._retries = retries
+        self._retry_interval = retry_interval  # Seconds
         self._session = Session()
 
-        # TODO: refactor headers to another func maybe
-        self._headers = {
-            "Authorization": f"Bearer {token}",
-        }
+        self._headers = generate_headers(token)
 
-    # TODO: define payload type maybe?
-    def execute_request(self, payload: Any, path: str):
-        # TODO: send request here.
+    def _execute_request(self, payload: Any = "", path: str = ""):
         url_with_path = f"{self._url}{path}"
-        return self._session.post(
-            url=url_with_path, headers=self._headers, json=payload
-        ).json()
+        return execute_with_parameters(
+            url=url_with_path,
+            session=self._session,
+            headers=self._headers,
+            retry_interval=self._retry_interval,
+            retries=self._retries,
+            payload=payload,
+        )
