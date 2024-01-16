@@ -33,4 +33,5 @@ jobs:
         run: |
           export URL="${{secrets.URL}}"
           export TOKEN="${{secrets.TOKEN}}"
+          poetry add --dev pytest
           poetry run pytest
