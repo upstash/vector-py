@@ -1,6 +1,7 @@
 name: Test
 
 on:
+  workflow_dispatch:
   pull_request:
     branches:
       - main
@@ -30,4 +31,6 @@ jobs:
 
       - name: Run tests
         run: |
+          export URL="${{secrets.URL}}"
+          export TOKEN="${{secrets.TOKEN}}"
           poetry run pytest
