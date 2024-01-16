@@ -1,11 +1,11 @@
 from dataclasses import dataclass
-from typing import Any, Optional, List
+from typing import Any, Optional, List, Dict, Union
 
-VectorT = list[float]
+VectorT = List[float]
 IdT = str
 CursorT = str
 ScoreT = float
-MetadataT = Optional[dict]
+MetadataT = Optional[Dict]
 
 ResponseType = Any
 ResponseStr = str
@@ -47,17 +47,20 @@ class QuerySingularResponse:
         return self._json["score"]
 
     @property
-    def vector(self) -> VectorT:
-        return self._json["vector"]
+    def vector(self) -> Union[VectorT, None]:
+        if self._json.get("vector") is not None:
+            return self._json["vector"]
+        return None
 
     @property
     def id(self) -> IdT:
         return self._json["id"]
 
     @property
-    def metadata(self):
+    def metadata(self) -> MetadataT:
         if self._json.get("metadata") is not None:
             return self._json["metadata"]
+        return None
 
 
 QueryResponse = List[QuerySingularResponse]
@@ -76,18 +79,20 @@ class SingleVectorResponse:
         return self._json["id"]
 
     @property
-    def vector(self) -> VectorT:
-        return self._json["vector"]
+    def vector(self) -> Union[VectorT, None]:
+        if self._json.get("vector") is not None:
+            return self._json["vector"]
+        return None
 
     @property
-    def metadata(self) -> Any:
+    def metadata(self) -> MetadataT:
         if self._json.get("metadata") is not None:
             return self._json["metadata"]
 
         return None
 
 
-FetchResponse = list[SingleVectorResponse]
+FetchResponse = List[Union[SingleVectorResponse, None]]
 
 
 @dataclass

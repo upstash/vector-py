@@ -1,7 +1,9 @@
 # Define vector operations here:
 # Upsert and query functions and signatures
 
-from typing import Any, Mapping, Union, List, Dict
+from typing import Union, List, Dict
+from upstash_vector.errors import ClientError
+
 from upstash_vector.types import (
     FetchResponse,
     IdT,
@@ -41,9 +43,9 @@ class IndexOperations:
         """
         Used for upserting vectors to the index. There are 3 ways to upsert vector.
 
-        Usage examples:
+        Example usages:
 
-        res = client.upsert(
+        res = index.upsert(
             vectors=[
                 ("id1", [0.1, 0.2], {"metadata_field": "metadata_value"}),
                 ("id2", [0.3,0.4])
@@ -52,7 +54,7 @@ class IndexOperations:
 
             # OR
 
-        res = client.upsert(
+        res = index.upsert(
             vectors=[
                 {"id": "id3", "vector": [0.1, 0.2], "metadata": {"metadata_f": "metadata_v"}},
                 {"id": "id4", "vector": [0.5, 0.6]},
@@ -62,7 +64,7 @@ class IndexOperations:
             # OR
 
         from upstash_vector import Vector
-        res = client.upsert(
+        res = index.upsert(
             vectors=[
                 Vector(id="id5", vector=[1, 2], metadata={"metadata_f": "metadata_v"}),
                 Vector(id="id6", vector=[6, 7]),
@@ -85,20 +87,18 @@ class IndexOperations:
         include_metadata: bool = False,
     ) -> QueryResponse:
         """
-        Used for querying vectors on the index. Usage example:
+        Used for querying vectors on the index.
 
         :param vector: list of floats for the values of vector.
         :param top_k: number that indicates how many vectors will be returned as the query result.
         :param include_vectors: bool value that indicates whether the resulting top_k vectors will have their vector values shown.
         :param include_metadata: bool value that indicates whether the resulting top_k vectors will have their metadata shown.
 
-        Usage example:
+        Example usage:
 
-        query_vector = [0.6, 0.9]
-        top_k = 3
-        query_res = client.query(
-            vector=query_vector,
-            top_k=top_k,
+        query_res = index.query(
+            vector=[0.6, 0.9],
+            top_k=3,
             include_vectors=True,
             include_metadata=True,
         )
@@ -120,10 +120,12 @@ class IndexOperations:
 
         :param ids: Singular or list of ids of vector(s) to be deleted from the index.
 
-        Usage example:
+        Example usage:
 
-        client.delete(["0"]) # delete vector with id="0"
+        index.delete(["0"]) # delete vector with id="0"
         """
+        if not isinstance(ids, List):
+            ids = [ids]
         return DeleteResponse(self._execute_request(payload=ids, path=DELETE_PATH))
 
     def reset(self) -> ResponseStr:
@@ -132,7 +134,7 @@ class IndexOperations:
 
         Example usage:
 
-        client.reset()
+        index.reset()
         """
         return self._execute_request(path=RESET_PATH, payload=None)
 
@@ -151,9 +153,13 @@ class IndexOperations:
         :param include_vectors: bool value that indicates whether the resulting top_k vectors will have their vector values shown.
         :param include_metadata: bool value that indicates whether the resulting top_k vectors will have their metadata shown.
 
-        Usage example:
-        res = client.range(cursor="cursor", limit=4, include_vectors=True, include_metadata=True)
+        Example usage:
+
+        res = index.range(cursor="cursor", limit=4, include_vectors=True, include_metadata=True)
         """
+        if limit <= 0:
+            raise ClientError("limit must be greater than 0")
+
         payload = {
             "cursor": cursor,
             "limit": limit,
@@ -164,7 +170,7 @@ class IndexOperations:
 
     def fetch(
         self,
-        ids: list[IdT],
+        ids: List[IdT],
         include_vectors: bool = False,
         include_metadata: bool = False,
     ) -> FetchResponse:
@@ -175,8 +181,9 @@ class IndexOperations:
         :param include_vectors: bool value that indicates whether the resulting top_k vectors will have their vector values shown.
         :param include_metadata: bool value that indicates whether the resulting top_k vectors will have their metadata shown.
 
-        Usage example:
-        res = client.fetch(["id1", "id2"], include_vectors=True, include_metadata=True)
+        Example usage:
+
+        res = index.fetch(["id1", "id2"], include_vectors=True, include_metadata=True)
         """
         payload = {
             "ids": ids,
@@ -184,6 +191,6 @@ class IndexOperations:
             include_metadata_json_field: include_metadata,
         }
         return [
-            SingleVectorResponse(vector)
+            SingleVectorResponse(vector) if vector is not None else None
             for vector in self._execute_request(payload=payload, path=FETCH_PATH)
         ]

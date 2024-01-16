@@ -1,5 +1,6 @@
 from upstash_vector.types import Vector
 from upstash_vector.errors import ClientError
+from typing import List, Dict
 
 
 def _tuple_to_vector(vector) -> Vector:
@@ -28,7 +29,7 @@ def _map_or_dict_to_vectors(vector) -> Vector:
         return vector
     elif isinstance(vector, tuple):
         return _tuple_to_vector(vector)
-    elif isinstance(vector, dict):
+    elif isinstance(vector, Dict):
         return _dict_to_vector(vector)
     else:
         raise ClientError(
@@ -36,5 +37,5 @@ def _map_or_dict_to_vectors(vector) -> Vector:
         )
 
 
-def convert_to_vectors(vectors) -> list[Vector]:
+def convert_to_vectors(vectors) -> List[Vector]:
     return [_map_or_dict_to_vectors(vector) for vector in vectors]
