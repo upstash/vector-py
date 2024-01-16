@@ -34,7 +34,7 @@ def test_query_with_vectors_with_metadata():
     v5_values = [124, 0.8]
     v5_metadata = {"metadata_field_5": "metadata_value_5"}
 
-    res = index.upsert(
+    index.upsert(
         vectors=[
             (v1_id, v1_values, v1_metadata),
             (v2_id, v2_values),
@@ -61,7 +61,7 @@ def test_query_with_vectors_with_metadata():
     assert len(query_res) == 2
 
     assert query_res[1].id == v2_id
-    assert query_res[1].metadata == None
+    assert query_res[1].metadata is None
     assert query_res[1].score < 1
     assert query_res[1].vector == v2_values
 
@@ -95,7 +95,7 @@ def test_query_with_vectors_without_metadata():
     v5_values = [124, 0.8]
     v5_metadata = {"metadata_field_5": "metadata_value_5"}
 
-    res = index.upsert(
+    index.upsert(
         vectors=[
             (v1_id, v1_values, v1_metadata),
             (v2_id, v2_values),
@@ -112,7 +112,7 @@ def test_query_with_vectors_without_metadata():
     assert len(query_res) == 1
 
     assert query_res[0].id == v1_id
-    assert query_res[0].metadata == None
+    assert query_res[0].metadata is None
     assert query_res[0].score == 1
     assert query_res[0].vector == v1_values
 
@@ -122,7 +122,7 @@ def test_query_with_vectors_without_metadata():
     assert len(query_res) == 2
 
     assert query_res[1].id == v2_id
-    assert query_res[1].metadata == None
+    assert query_res[1].metadata is None
     assert query_res[1].score < 1
     assert query_res[1].vector == v2_values
 
@@ -153,7 +153,7 @@ def test_query_without_vectors_without_metadata():
     v5_values = [124, 0.8]
     v5_metadata = {"metadata_field_5": "metadata_value_5"}
 
-    res = index.upsert(
+    index.upsert(
         vectors=[
             (v1_id, v1_values, v1_metadata),
             (v2_id, v2_values),
@@ -170,9 +170,9 @@ def test_query_without_vectors_without_metadata():
     assert len(query_res) == 1
 
     assert query_res[0].id == v1_id
-    assert query_res[0].metadata == None
+    assert query_res[0].metadata is None
     assert query_res[0].score == 1
-    assert query_res[0].vector == None
+    assert query_res[0].vector is None
 
     query_res = index.query(
         v1_values, top_k=2, include_metadata=False, include_vectors=False
@@ -180,9 +180,9 @@ def test_query_without_vectors_without_metadata():
     assert len(query_res) == 2
 
     assert query_res[1].id == v2_id
-    assert query_res[1].metadata == None
+    assert query_res[1].metadata is None
     assert query_res[1].score < 1
-    assert query_res[1].vector == None
+    assert query_res[1].vector is None
 
     query_res = index.query(
         v1_values, top_k=5, include_metadata=False, include_vectors=False

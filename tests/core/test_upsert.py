@@ -35,7 +35,7 @@ def test_upsert_tuple():
     assert res[0].vector == v1_values
 
     assert res[1].id == v2_id
-    assert res[1].metadata == None
+    assert res[1].metadata is None
     assert res[1].vector == v2_values
 
 
@@ -63,7 +63,7 @@ def test_upsert_dict():
     assert res[0].vector == v1_values
 
     assert res[1].id == v2_id
-    assert res[1].metadata == None
+    assert res[1].metadata is None
     assert res[1].vector == v2_values
 
 
@@ -93,5 +93,5 @@ def test_upsert_vector():
     assert res[0].vector == v1_values
 
     assert res[1].id == v2_id
-    assert res[1].metadata == None
+    assert res[1].metadata is None
     assert res[1].vector == v2_values
