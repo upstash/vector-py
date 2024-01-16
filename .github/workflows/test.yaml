@@ -27,7 +27,7 @@ jobs:
 
       - name: Run mypy
         run: |
-          poetry run mypy --show-error-codes .
+          poetry run mypy --show-error-codes --install-types .
 
       - name: Run tests
         run: |
