@@ -22,9 +22,6 @@ index = Index(url=URL, token=TOKEN)
 There are couple ways to upsert vectors. Feel free to use whichever one feels the most comfortable.
 
 ```python
-from upstash_vector import Index
-index = Index(url=URL, token=TOKEN)
-
 index.upsert(
     vectors=[
         ("id1", [0.1, 0.2], {"metadata_field": "metadata_value"}),
@@ -34,9 +31,6 @@ index.upsert(
 ```
 
 ```python
-from upstash_vector import Index
-index = Index(url=URL, token=TOKEN)
-
 index.upsert(
     vectors=[
         {"id": "id3", "vector": [0.1, 0.2], "metadata": {"metadata_f": "metadata_v"}},
@@ -44,10 +38,9 @@ index.upsert(
     ]
 )
 ```
+
 ```python
-from upstash_vector import Index
 from upstash_vector import Vector
-index = Index(url=URL, token=TOKEN)
 
 index.upsert(
     vectors=[
@@ -105,7 +98,7 @@ poetry install
 ```
 
 ## Code Formatting
-```ruff .```
+```ruff format .```
 
 ## Running tests
 To run all the tests, make sure the poetry virtual environment activated with all 

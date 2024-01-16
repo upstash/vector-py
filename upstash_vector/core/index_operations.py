@@ -18,7 +18,6 @@ from upstash_vector.types import (
 )
 from upstash_vector.utils import convert_to_vectors
 
-
 UPSERT_PATH = "/upsert"
 QUERY_PATH = "/query"
 DELETE_PATH = "/delete"
@@ -88,9 +87,7 @@ class IndexOperations:
         include_metadata: bool = False,
     ) -> QueryResponse:
         """
-        Query a vector from the index.
-
-        Response.vector returns None if the vector does not exist.
+        Query `top_k` many similar vectors.
 
         :param vector: list of floats for the values of vector.
         :param top_k: number that indicates how many vectors will be returned as the query result.
@@ -124,17 +121,19 @@ class IndexOperations:
         """
         Deletes the given vector(s) with given ids.
 
-        Response.deleted_count returns deleted vector amount.
+        Response contains deleted vector count.
 
-        :param ids: Singular or list of ids of vector(s) to be deleted from the index.
+        :param ids: Singular or list of ids of vector(s) to be deleted.
 
         Example usage:
 
         ```python
         # deletes vectors with ids "0", "1", "2"
+
         index.delete(["0", "1", "2"])
 
         # deletes single vector
+
         index.delete("0")
         ```
         """
