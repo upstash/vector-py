@@ -105,7 +105,7 @@ poetry install
 ```
 
 ## Code Formatting
-```black .```
+```ruff .```
 
 ## Running tests
 To run all the tests, make sure the poetry virtual environment activated with all 
