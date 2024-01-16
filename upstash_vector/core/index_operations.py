@@ -38,7 +38,7 @@ class IndexOperations:
 
     def upsert(
         self,
-        vectors: Union[List[Union[Dict, object]], List[tuple], List[Vector]] = [],
+        vectors: Union[List[Dict], List[tuple], List[Vector]] = [],
     ) -> ResponseStr:
         """
         Used for upserting vectors to the index. There are 3 ways to upsert vector.
@@ -84,7 +84,7 @@ class IndexOperations:
     def query(
         self,
         vector: VectorT,
-        top_k: int,
+        top_k: int = 10,
         include_vectors: bool = False,
         include_metadata: bool = False,
     ) -> QueryResponse:

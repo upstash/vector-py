@@ -2,8 +2,7 @@ from requests import Session
 from upstash_vector.http import execute_with_parameters, generate_headers
 from upstash_vector.core.index_operations import IndexOperations
 from typing import Any
-from upstash_vector.errors import UpstashError
-import time
+from os import environ
 
 
 class Index(IndexOperations):
@@ -24,7 +23,7 @@ class Index(IndexOperations):
     """
 
     def __init__(
-        self, url: str, token: str, retries: int = 3, retry_interval: float = 1
+        self, url: str, token: str, retries: int = 3, retry_interval: float = 1.0
     ):
         self._url = url
         self._retries = retries
@@ -42,4 +41,17 @@ class Index(IndexOperations):
             retry_interval=self._retry_interval,
             retries=self._retries,
             payload=payload,
+        )
+
+    @classmethod
+    def from_env(cls, retries: int = 3, retry_interval: float = 1.0):
+        """
+        Load the credentials from environment, and returns a client.
+        """
+
+        return cls(
+            environ["UPSTASH_VECTOR_REST_URL"],
+            environ["UPSTASH_VECTOR_REST_TOKEN"],
+            retries,
+            retry_interval,
         )

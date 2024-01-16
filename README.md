@@ -5,7 +5,7 @@ The Upstash Vector python client
 
 Install a released version from pip:
 ```shell
-pip3 install upstash_vector
+pip3 install upstash-vector
 ```
 
 ## Usage
@@ -83,9 +83,6 @@ res = index.delete(["id1", "id2"])
 ```python
 index.reset() # This will remove all the vectors that were upserted and index will be reset.
 ```
-
-
-
 
 # Contributing
 

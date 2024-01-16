@@ -35,7 +35,7 @@ def test_fetch_with_vectors_with_metadata():
     assert res[0].vector == v1_values
 
     assert res[1].id == v2_id
-    assert res[1].metadata == None
+    assert res[1].metadata is None
     assert res[1].vector == v2_values
 
 
@@ -59,11 +59,11 @@ def test_fetch_with_vectors_without_metadata():
     res = index.fetch(ids=[v1_id, v2_id], include_vectors=True, include_metadata=False)
 
     assert res[0].id == v1_id
-    assert res[0].metadata == None
+    assert res[0].metadata is None
     assert res[0].vector == v1_values
 
     assert res[1].id == v2_id
-    assert res[1].metadata == None
+    assert res[1].metadata is None
     assert res[1].vector == v2_values
 
 
@@ -87,9 +87,9 @@ def test_fetch_without_vectors_without_metadata():
     res = index.fetch(ids=[v1_id, v2_id], include_vectors=False, include_metadata=False)
 
     assert res[0].id == v1_id
-    assert res[0].metadata == None
-    assert res[0].vector == None
+    assert res[0].metadata is None
+    assert res[0].vector is None
 
     assert res[1].id == v2_id
-    assert res[1].metadata == None
-    assert res[1].vector == None
+    assert res[1].metadata is None
+    assert res[1].vector is None

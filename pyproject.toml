@@ -33,7 +33,6 @@ packages = [{ include = "upstash_vector" }]
 python = "^3.8"
 requests = "^2.31.0"
 
-
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.8.0"
 types-requests = "^2.31.0.20240106"

@@ -4,7 +4,7 @@ import pytest
 import random
 from pytest import raises
 
-from upstash_vector.errors import ClientError, UpstashError
+from upstash_vector.errors import ClientError
 
 url = os.environ["URL"]
 token = os.environ["TOKEN"]
