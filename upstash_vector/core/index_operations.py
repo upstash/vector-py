@@ -131,9 +131,7 @@ class IndexOperations:
         # deletes vectors with ids "0", "1", "2"
 
         index.delete(["0", "1", "2"])
-
         # deletes single vector
-
         index.delete("0")
         ```
         """
