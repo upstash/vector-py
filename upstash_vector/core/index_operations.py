@@ -45,6 +45,7 @@ class IndexOperations:
 
         Example usages:
 
+        ```python
         res = index.upsert(
             vectors=[
                 ("id1", [0.1, 0.2], {"metadata_field": "metadata_value"}),
@@ -52,7 +53,7 @@ class IndexOperations:
             ]
         )
 
-            # OR
+        # OR
 
         res = index.upsert(
             vectors=[
@@ -61,7 +62,7 @@ class IndexOperations:
             ]
         )
 
-            # OR
+        # OR
 
         from upstash_vector import Vector
         res = index.upsert(
@@ -70,6 +71,7 @@ class IndexOperations:
                 Vector(id="id6", vector=[6, 7]),
             ]
         )
+        ```
         """
         vectors = convert_to_vectors(vectors)
         payload = [
@@ -96,12 +98,14 @@ class IndexOperations:
 
         Example usage:
 
+        ```python
         query_res = index.query(
             vector=[0.6, 0.9],
             top_k=3,
             include_vectors=True,
             include_metadata=True,
         )
+        ```
         """
         payload = {
             "vector": vector,
@@ -122,7 +126,13 @@ class IndexOperations:
 
         Example usage:
 
-        index.delete(["0"]) # delete vector with id="0"
+        ```python
+        # deletes vectors with ids "0", "1", "2"
+        index.delete(["0", "1", "2"]) 
+
+        # deletes single vector
+        index.delete("0") 
+        ```
         """
         if not isinstance(ids, List):
             ids = [ids]
@@ -134,7 +144,9 @@ class IndexOperations:
 
         Example usage:
 
+        ```python
         index.reset()
+        ```
         """
         return self._execute_request(path=RESET_PATH, payload=None)
 
@@ -155,7 +167,9 @@ class IndexOperations:
 
         Example usage:
 
+        ```python
         res = index.range(cursor="cursor", limit=4, include_vectors=True, include_metadata=True)
+        ```
         """
         if limit <= 0:
             raise ClientError("limit must be greater than 0")
@@ -183,7 +197,9 @@ class IndexOperations:
 
         Example usage:
 
+        ```python
         res = index.fetch(["id1", "id2"], include_vectors=True, include_metadata=True)
+        ```
         """
         payload = {
             "ids": ids,
