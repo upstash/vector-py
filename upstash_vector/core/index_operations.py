@@ -23,7 +23,6 @@ UPSERT_PATH = "/upsert"
 QUERY_PATH = "/query"
 DELETE_PATH = "/delete"
 RESET_PATH = "/reset"
-DELETE_PATH = "/delete"
 RANGE_PATH = "/range"
 FETCH_PATH = "/fetch"
 
@@ -38,10 +37,10 @@ class IndexOperations:
 
     def upsert(
         self,
-        vectors: Union[List[Dict], List[tuple], List[Vector]] = [],
+        vectors: Union[List[Dict], List[tuple], List[Vector]],
     ) -> ResponseStr:
         """
-        Used for upserting vectors to the index. There are 3 ways to upsert vector.
+        Upserts(update or insert) vectors. There are 3 ways to upsert vector.
 
         Example usages:
 
@@ -89,7 +88,9 @@ class IndexOperations:
         include_metadata: bool = False,
     ) -> QueryResponse:
         """
-        Used for querying vectors on the index.
+        Query a vector from the index.
+
+        Response.vector returns None if the vector does not exist.
 
         :param vector: list of floats for the values of vector.
         :param top_k: number that indicates how many vectors will be returned as the query result.
@@ -105,6 +106,7 @@ class IndexOperations:
             include_vectors=True,
             include_metadata=True,
         )
+        vector = query_res.vector
         ```
         """
         payload = {
@@ -120,7 +122,9 @@ class IndexOperations:
 
     def delete(self, ids: Union[IdT, List[IdT]]) -> DeleteResponse:
         """
-        Deletes the given vector(s) with given ids from the index. As a response, returns how many vectors were deleted from the index.
+        Deletes the given vector(s) with given ids.
+
+        Response.deleted_count returns deleted vector amount.
 
         :param ids: Singular or list of ids of vector(s) to be deleted from the index.
 
@@ -128,10 +132,10 @@ class IndexOperations:
 
         ```python
         # deletes vectors with ids "0", "1", "2"
-        index.delete(["0", "1", "2"]) 
+        index.delete(["0", "1", "2"])
 
         # deletes single vector
-        index.delete("0") 
+        index.delete("0")
         ```
         """
         if not isinstance(ids, List):
@@ -140,7 +144,7 @@ class IndexOperations:
 
     def reset(self) -> ResponseStr:
         """
-        Resets the index. All the vectors are removed.
+        Resets the index. All vectors are removed.
 
         Example usage:
 
@@ -158,7 +162,7 @@ class IndexOperations:
         include_metadata: bool = False,
     ) -> RangeResponse:
         """
-        Gets `limit` amount of vectors starting from `cursor` value, in order to scan through all the vectors on the index.
+        Scans the vectors starting from `cursor`, returns at most `limit` many vectors.
 
         :param cursor: marker that indicates where the scanning was left off when running through all existing vectors.
         :param limit: limits how many vectors will be fetched with the request.
@@ -189,7 +193,7 @@ class IndexOperations:
         include_metadata: bool = False,
     ) -> FetchResponse:
         """
-        Used to fetch details of a vector from the index.
+        Fetches details of a vector.
 
         :param ids: List of vector ids to fetch details of.
         :param include_vectors: bool value that indicates whether the resulting top_k vectors will have their vector values shown.
