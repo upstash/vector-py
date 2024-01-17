@@ -43,11 +43,11 @@ class QueryResult:
 
 @dataclass
 class DeleteResult:
-    deleted_count: int
+    deleted: int
 
     @classmethod
     def from_json(cls, obj: dict) -> "DeleteResult":
-        return cls(deleted_count=obj["deleted"])
+        return cls(deleted=obj["deleted"])
 
 
 @dataclass
