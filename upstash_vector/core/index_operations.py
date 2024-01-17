@@ -1,21 +1,17 @@
 # Define vector operations here:
 # Upsert and query functions and signatures
 
-from typing import Union, List, Dict
+from typing import Sequence, Union, List, Dict, Optional
 from upstash_vector.errors import ClientError
-
 from upstash_vector.types import (
-    FetchResponse,
-    IdT,
-    QuerySingularResponse,
-    SingleVectorResponse,
+    DeleteResult,
+    RangeResult,
+    StatsResult,
     Vector,
-    RangeResponse,
-    DeleteResponse,
-    QueryResponse,
-    VectorT,
-    ResponseStr,
+    FetchResult,
+    QueryResult,
 )
+
 from upstash_vector.utils import convert_to_vectors
 
 
@@ -26,10 +22,7 @@ RESET_PATH = "/reset"
 DELETE_PATH = "/delete"
 RANGE_PATH = "/range"
 FETCH_PATH = "/fetch"
-
-include_vectors_json_field = "includeVectors"
-include_metadata_json_field = "includeMetadata"
-top_k_json_field = "topK"
+STATS_PATH = "/stats"
 
 
 class IndexOperations:
@@ -38,8 +31,8 @@ class IndexOperations:
 
     def upsert(
         self,
-        vectors: Union[List[Dict], List[tuple], List[Vector]] = [],
-    ) -> ResponseStr:
+        vectors: Sequence[Union[Dict, tuple, Vector]] = [],
+    ) -> str:
         """
         Used for upserting vectors to the index. There are 3 ways to upsert vector.
 
@@ -83,11 +76,11 @@ class IndexOperations:
 
     def query(
         self,
-        vector: VectorT,
+        vector: List[float],
         top_k: int = 10,
         include_vectors: bool = False,
         include_metadata: bool = False,
-    ) -> QueryResponse:
+    ) -> List[QueryResult]:
         """
         Used for querying vectors on the index.
 
@@ -109,16 +102,16 @@ class IndexOperations:
         """
         payload = {
             "vector": vector,
-            top_k_json_field: top_k,
-            include_vectors_json_field: include_vectors,
-            include_metadata_json_field: include_metadata,
+            "topK": top_k,
+            "includeVectors": include_vectors,
+            "includeMetadata": include_metadata,
         }
         return [
-            QuerySingularResponse(obj)
+            QueryResult.from_json(obj)
             for obj in self._execute_request(payload=payload, path=QUERY_PATH)
         ]
 
-    def delete(self, ids: Union[IdT, List[IdT]]) -> DeleteResponse:
+    def delete(self, ids: Union[str, List[str]]) -> DeleteResult:
         """
         Deletes the given vector(s) with given ids from the index. As a response, returns how many vectors were deleted from the index.
 
@@ -128,17 +121,20 @@ class IndexOperations:
 
         ```python
         # deletes vectors with ids "0", "1", "2"
-        index.delete(["0", "1", "2"]) 
+        index.delete(["0", "1", "2"])
 
         # deletes single vector
-        index.delete("0") 
+        index.delete("0")
         ```
         """
         if not isinstance(ids, List):
             ids = [ids]
-        return DeleteResponse(self._execute_request(payload=ids, path=DELETE_PATH))
 
-    def reset(self) -> ResponseStr:
+        return DeleteResult.from_json(
+            self._execute_request(payload=ids, path=DELETE_PATH)
+        )
+
+    def reset(self) -> str:
         """
         Resets the index. All the vectors are removed.
 
@@ -156,7 +152,7 @@ class IndexOperations:
         limit: int = 1,
         include_vectors: bool = False,
         include_metadata: bool = False,
-    ) -> RangeResponse:
+    ) -> RangeResult:
         """
         Gets `limit` amount of vectors starting from `cursor` value, in order to scan through all the vectors on the index.
 
@@ -177,17 +173,19 @@ class IndexOperations:
         payload = {
             "cursor": cursor,
             "limit": limit,
-            include_vectors_json_field: include_vectors,
-            include_metadata_json_field: include_metadata,
+            "includeVectors": include_vectors,
+            "includeMetadata": include_metadata,
         }
-        return RangeResponse(self._execute_request(payload=payload, path=RANGE_PATH))
+        return RangeResult.from_json(
+            self._execute_request(payload=payload, path=RANGE_PATH)
+        )
 
     def fetch(
         self,
-        ids: List[IdT],
+        ids: List[str],
         include_vectors: bool = False,
         include_metadata: bool = False,
-    ) -> FetchResponse:
+    ) -> List[Optional[FetchResult]]:
         """
         Used to fetch details of a vector from the index.
 
@@ -203,10 +201,20 @@ class IndexOperations:
         """
         payload = {
             "ids": ids,
-            include_vectors_json_field: include_vectors,
-            include_metadata_json_field: include_metadata,
+            "includeVectors": include_vectors,
+            "includeMetadata": include_metadata,
         }
         return [
-            SingleVectorResponse(vector) if vector is not None else None
+            FetchResult.from_json(vector) if vector else None
             for vector in self._execute_request(payload=payload, path=FETCH_PATH)
         ]
+
+    def stats(self) -> StatsResult:
+        """
+        Returns the index statistics, including:
+
+        * total number of vectors
+        * total numbe of vectors waiting to be indexed
+        * total size of the index in disk in bytes
+        """
+        return StatsResult.from_json(self._execute_request(payload="", path=STATS_PATH))
