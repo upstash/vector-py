@@ -29,7 +29,7 @@ jobs:
         run: |
           poetry run mypy --show-error-codes --install-types .
 
-      - name: Run mypy
+      - name: Run ruff
         run: |
           poetry run ruff format --check .
           poetry run ruff check .
