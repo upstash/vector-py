@@ -7,7 +7,6 @@ from upstash_vector import __version__
 from platform import python_version
 
 from upstash_vector.errors import UpstashError
-from upstash_vector.types import ResponseType
 
 
 def generate_headers(token) -> Dict[str, str]:
@@ -36,7 +35,7 @@ def execute_with_parameters(
     retry_interval: float,
     retries: int,
     payload: Any,
-) -> ResponseType:
+) -> Any:
     last_error = None
     response = None
     for attempts_left in range(max(0, retries), -1, -1):

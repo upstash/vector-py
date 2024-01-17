@@ -18,7 +18,8 @@ class Index(IndexOperations):
 
     # alternatively, configure retry mechanism as well
 
-    index = Index(url=<url>, token=<token>, retries=5, retry_interval=0.1) # retry 5 times, waiting 100ms between consequent requests
+    # retry 5 times, waiting 100ms between consequent requests
+    index = Index(url=<url>, token=<token>, retries=5, retry_interval=0.1)
     ```
     """
 
@@ -44,7 +45,7 @@ class Index(IndexOperations):
         )
 
     @classmethod
-    def from_env(cls, retries: int = 3, retry_interval: float = 1.0):
+    def from_env(cls, retries: int = 3, retry_interval: float = 1.0) -> "Index":
         """
         Load the credentials from environment, and returns a client.
         """

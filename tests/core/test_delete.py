@@ -1,19 +1,7 @@
-import os
 from upstash_vector import Index
-import pytest
-
-url = os.environ["URL"]
-token = os.environ["TOKEN"]
 
 
-@pytest.fixture(autouse=True)
-def reset_index():
-    Index(url=url, token=token).reset()
-
-
-def test_delete():
-    index = Index(url=url, token=token)
-
+def test_delete(index: Index):
     v1_id = "delete-id1"
     v1_metadata = {"metadata_field": "metadata_value"}
     v1_values = [0.1, 0.2]
@@ -24,7 +12,7 @@ def test_delete():
     v3_id = "delete-id3"
     v3_values = [0.5, 0.6]
 
-    res = index.upsert(
+    index.upsert(
         vectors=[
             (v1_id, v1_values, v1_metadata),
             (v2_id, v2_values),
