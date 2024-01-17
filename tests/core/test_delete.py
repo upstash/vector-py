@@ -29,7 +29,7 @@ def test_delete(index: Index):
     assert res[2] is not None
 
     del_res = index.delete(ids=v1_id)
-    assert del_res.deleted_count == 1
+    assert del_res.deleted == 1
 
     res = index.fetch(ids=[v1_id, v2_id], include_vectors=True, include_metadata=True)
     assert res[0] is None
@@ -44,7 +44,7 @@ def test_delete(index: Index):
     )
 
     del_res = index.delete(ids=[v1_id, v2_id])
-    assert del_res.deleted_count == 2
+    assert del_res.deleted == 2
 
     res = index.fetch(
         ids=[v1_id, v2_id, v3_id], include_vectors=True, include_metadata=True

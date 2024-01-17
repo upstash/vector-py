@@ -214,7 +214,7 @@ class IndexOperations:
         Returns the index statistics, including:
 
         * total number of vectors
-        * total numbe of vectors waiting to be indexed
-        * total size of the index in disk in bytes
+        * total number of vectors waiting to be indexed
+        * total size of the index on disk in bytes
         """
         return StatsResult.from_json(self._execute_request(payload="", path=STATS_PATH))

@@ -86,6 +86,14 @@ res = index.delete(["id1", "id2"])
 index.reset() 
 ```
 
+### Index Stats
+```python
+stats = index.stats()
+# stats.vector_count: total number of vectors in the index
+# stats.pending_vector_count: total number of vectors waiting to be indexed
+# stats.index_size: total size of the index on disk in bytes 
+```
+
 # Contributing
 
 ## Preparing the environment
@@ -98,7 +106,9 @@ poetry install
 ```
 
 ## Code Formatting
-```ruff format .```
+```bash 
+poetry run ruff format .
+```
 
 ## Running tests
 To run all the tests, make sure the poetry virtual environment activated with all 

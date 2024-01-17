@@ -42,7 +42,6 @@ types-setuptools = "^69.0.0.20240115"
 pytest = "^7.4.4"
 ruff = "^0.1.13"
 
-
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
