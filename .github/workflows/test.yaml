@@ -29,6 +29,11 @@ jobs:
         run: |
           poetry run mypy --show-error-codes --install-types .
 
+      - name: Run ruff
+        run: |
+          poetry run ruff format --check .
+          poetry run ruff check .
+
       - name: Run tests
         run: |
           export URL="${{secrets.URL}}"

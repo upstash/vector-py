@@ -40,6 +40,8 @@ types-pygments = "^2.17.0.20240106"
 types-colorama = "^0.4.15.20240106"
 types-setuptools = "^69.0.0.20240115"
 pytest = "^7.4.4"
+ruff = "^0.1.13"
+
 
 [build-system]
 requires = ["poetry-core"]

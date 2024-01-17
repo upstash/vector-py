@@ -21,26 +21,27 @@ index = Index(url=URL, token=TOKEN)
 ### Upsert Vectors
 There are couple ways to upsert vectors. Feel free to use whichever one feels the most comfortable.
 
-```pyhon
+```python
 index.upsert(
     vectors=[
         ("id1", [0.1, 0.2], {"metadata_field": "metadata_value"}),
         ("id2", [0.3, 0.4]),
     ]
 )
+```
 
-# or, alternatively
-
+```python
 index.upsert(
     vectors=[
         {"id": "id3", "vector": [0.1, 0.2], "metadata": {"metadata_f": "metadata_v"}},
         {"id": "id4", "vector": [0.5, 0.6]},
     ]
 )
+```
 
-# or, alternatively
-
+```python
 from upstash_vector import Vector
+
 index.upsert(
     vectors=[
         Vector(id="id5", vector=[1, 2], metadata={"metadata_f": "metadata_v"}),
@@ -81,7 +82,8 @@ res = index.delete(["id1", "id2"])
 
 ### Reset the Index
 ```python
-index.reset() # This will remove all the vectors that were upserted and index will be reset.
+# This will remove all the vectors that were upserted and index will be reset.
+index.reset() 
 ```
 
 # Contributing
@@ -90,6 +92,13 @@ index.reset() # This will remove all the vectors that were upserted and index wi
 This project uses [Poetry](https://python-poetry.org) for packaging and dependency management. Make sure you are able to create the poetry shell with relevant dependencies.
 
 You will also need a vector database on [Upstash](https://console.upstash.com/).
+
+```commandline
+poetry install 
+```
+
+## Code Formatting
+```ruff format .```
 
 ## Running tests
 To run all the tests, make sure the poetry virtual environment activated with all 

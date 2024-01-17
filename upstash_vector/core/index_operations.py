@@ -14,12 +14,10 @@ from upstash_vector.types import (
 
 from upstash_vector.utils import convert_to_vectors
 
-
 UPSERT_PATH = "/upsert"
 QUERY_PATH = "/query"
 DELETE_PATH = "/delete"
 RESET_PATH = "/reset"
-DELETE_PATH = "/delete"
 RANGE_PATH = "/range"
 FETCH_PATH = "/fetch"
 STATS_PATH = "/stats"
@@ -31,10 +29,10 @@ class IndexOperations:
 
     def upsert(
         self,
-        vectors: Sequence[Union[Dict, tuple, Vector]] = [],
+        vectors: Sequence[Union[Dict, tuple, Vector]],
     ) -> str:
         """
-        Used for upserting vectors to the index. There are 3 ways to upsert vector.
+        Upserts(update or insert) vectors. There are 3 ways to upsert vector.
 
         Example usages:
 
@@ -82,7 +80,7 @@ class IndexOperations:
         include_metadata: bool = False,
     ) -> List[QueryResult]:
         """
-        Used for querying vectors on the index.
+        Query `top_k` many similar vectors.
 
         :param vector: list of floats for the values of vector.
         :param top_k: number that indicates how many vectors will be returned as the query result.
@@ -113,9 +111,11 @@ class IndexOperations:
 
     def delete(self, ids: Union[str, List[str]]) -> DeleteResult:
         """
-        Deletes the given vector(s) with given ids from the index. As a response, returns how many vectors were deleted from the index.
+        Deletes the given vector(s) with given ids.
 
-        :param ids: Singular or list of ids of vector(s) to be deleted from the index.
+        Response contains deleted vector count.
+
+        :param ids: Singular or list of ids of vector(s) to be deleted.
 
         Example usage:
 
@@ -136,7 +136,7 @@ class IndexOperations:
 
     def reset(self) -> str:
         """
-        Resets the index. All the vectors are removed.
+        Resets the index. All vectors are removed.
 
         Example usage:
 
@@ -154,7 +154,7 @@ class IndexOperations:
         include_metadata: bool = False,
     ) -> RangeResult:
         """
-        Gets `limit` amount of vectors starting from `cursor` value, in order to scan through all the vectors on the index.
+        Scans the vectors starting from `cursor`, returns at most `limit` many vectors.
 
         :param cursor: marker that indicates where the scanning was left off when running through all existing vectors.
         :param limit: limits how many vectors will be fetched with the request.
@@ -187,7 +187,7 @@ class IndexOperations:
         include_metadata: bool = False,
     ) -> List[Optional[FetchResult]]:
         """
-        Used to fetch details of a vector from the index.
+        Fetches details of a vector.
 
         :param ids: List of vector ids to fetch details of.
         :param include_vectors: bool value that indicates whether the resulting top_k vectors will have their vector values shown.
