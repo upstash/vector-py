@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "upstash-vector"
-version = "0.1.2"
+version = "0.1.3"
 description = "Serverless Vector SDK from Upstash"
 license = "MIT"
 authors = ["Upstash <support@upstash.com>"]
@@ -9,7 +9,7 @@ readme = "README.md"
 repository = "https://github.com/upstash/vector-py"
 keywords = ["Upstash Vector", "Serverless Vector"]
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
