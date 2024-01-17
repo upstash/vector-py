@@ -182,7 +182,7 @@ class IndexOperations:
 
     def fetch(
         self,
-        ids: List[str],
+        ids: Union[str, List[str]],
         include_vectors: bool = False,
         include_metadata: bool = False,
     ) -> List[Optional[FetchResult]]:
@@ -199,6 +199,9 @@ class IndexOperations:
         res = index.fetch(["id1", "id2"], include_vectors=True, include_metadata=True)
         ```
         """
+        if not isinstance(ids, List):
+            ids = [ids]
+
         payload = {
             "ids": ids,
             "includeVectors": include_vectors,
