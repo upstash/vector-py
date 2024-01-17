@@ -1,21 +1,9 @@
-import os
 from upstash_vector import Index
-import pytest
 from pytest import raises
 import time
 
-url = os.environ["URL"]
-token = os.environ["TOKEN"]
 
-
-@pytest.fixture(autouse=True)
-def reset_index():
-    Index(url=url, token=token).reset()
-
-
-def test_query_with_vectors_with_metadata():
-    index = Index(url=url, token=token)
-
+def test_query_with_vectors_with_metadata(index: Index):
     v1_id = "id1"
     v1_metadata = {"metadata_field": "metadata_value"}
     v1_values = [0.1, 0.2]
@@ -74,9 +62,7 @@ def test_query_with_vectors_with_metadata():
         query_res[5]
 
 
-def test_query_with_vectors_without_metadata():
-    index = Index(url=url, token=token)
-
+def test_query_with_vectors_without_metadata(index: Index):
     v1_id = "id1"
     v1_metadata = {"metadata_field": "metadata_value"}
     v1_values = [0.1, 0.2]
@@ -132,9 +118,7 @@ def test_query_with_vectors_without_metadata():
     assert len(query_res) == 5
 
 
-def test_query_without_vectors_without_metadata():
-    index = Index(url=url, token=token)
-
+def test_query_without_vectors_without_metadata(index: Index):
     v1_id = "id1"
     v1_metadata = {"metadata_field": "metadata_value"}
     v1_values = [0.1, 0.2]

@@ -1,114 +1,78 @@
 from dataclasses import dataclass
-from typing import Any, Optional, List, Dict, Union
-
-VectorT = List[float]
-IdT = str
-CursorT = str
-ScoreT = float
-MetadataT = Optional[Dict]
-
-ResponseType = Any
-ResponseStr = str
+from typing import Optional, List, Dict
 
 
+@dataclass
 class Vector:
-    def __init__(self, id: IdT, vector: VectorT, metadata: MetadataT = None):
-        self.id = id
-        self.vector = vector
-        self.metadata = metadata
-
-    def __repr__(self):
-        return f"{self.id}, {self.vector}, {self.metadata}"
+    id: str
+    vector: List[float]
+    metadata: Optional[Dict] = None
 
 
 @dataclass
-class DeleteResponse:
-    def __init__(self, resp_obj):
-        self._json = resp_obj
+class FetchResult:
+    id: str
+    vector: Optional[List[float]] = None
+    metadata: Optional[Dict] = None
 
-    def __repr__(self):
-        return f"{self._json}"
-
-    @property
-    def deleted_count(self) -> int:
-        return self._json["deleted"]
-
-
-@dataclass
-class QuerySingularResponse:
-    def __init__(self, resp_obj):
-        self._json = resp_obj
-
-    def __repr__(self):
-        return f"{self._json}"
-
-    @property
-    def score(self) -> ScoreT:
-        return self._json["score"]
-
-    @property
-    def vector(self) -> Union[VectorT, None]:
-        if self._json.get("vector") is not None:
-            return self._json["vector"]
-        return None
-
-    @property
-    def id(self) -> IdT:
-        return self._json["id"]
-
-    @property
-    def metadata(self) -> MetadataT:
-        if self._json.get("metadata") is not None:
-            return self._json["metadata"]
-        return None
-
-
-QueryResponse = List[QuerySingularResponse]
+    @classmethod
+    def from_json(cls, obj: dict) -> "FetchResult":
+        return cls(
+            id=obj["id"],
+            vector=obj.get("vector"),
+            metadata=obj.get("metadata"),
+        )
 
 
 @dataclass
-class SingleVectorResponse:
-    def __init__(self, json_obj):
-        self._json = json_obj
+class QueryResult:
+    id: str
+    score: float
+    vector: Optional[List[float]] = None
+    metadata: Optional[Dict] = None
 
-    def __repr__(self):
-        return f"{self._json}"
-
-    @property
-    def id(self) -> IdT:
-        return self._json["id"]
-
-    @property
-    def vector(self) -> Union[VectorT, None]:
-        if self._json.get("vector") is not None:
-            return self._json["vector"]
-        return None
-
-    @property
-    def metadata(self) -> MetadataT:
-        if self._json.get("metadata") is not None:
-            return self._json["metadata"]
-
-        return None
-
-
-FetchResponse = List[Union[SingleVectorResponse, None]]
+    @classmethod
+    def from_json(cls, obj: dict) -> "QueryResult":
+        return cls(
+            id=obj["id"],
+            score=obj["score"],
+            vector=obj.get("vector"),
+            metadata=obj.get("metadata"),
+        )
 
 
 @dataclass
-class RangeResponse:
-    def __init__(self, resp_obj):
-        self._json = resp_obj
+class DeleteResult:
+    deleted_count: int
 
-    def __repr__(self):
-        return f"{self._json}"
+    @classmethod
+    def from_json(cls, obj: dict) -> "DeleteResult":
+        return cls(deleted_count=obj["deleted"])
 
-    @property
-    def next_cursor(self) -> CursorT:
-        return self._json["nextCursor"]
 
-    @property
-    def vectors(self) -> List[SingleVectorResponse]:
-        return [
-            SingleVectorResponse(vector_obj) for vector_obj in self._json["vectors"]
-        ]
+@dataclass
+class RangeResult:
+    next_cursor: str
+    vectors: List[FetchResult]
+
+    @classmethod
+    def from_json(cls, obj: dict) -> "RangeResult":
+        return cls(
+            next_cursor=obj["nextCursor"],
+            vectors=[FetchResult.from_json(v) for v in obj["vectors"]],
+        )
+
+
+@dataclass
+class StatsResult:
+    vector_count: int
+    pending_vector_count: int
+    index_size: int
+
+    @classmethod
+    def from_json(cls, obj: dict) -> "StatsResult":
+        return cls(
+            vector_count=obj["vectorCount"],
+            pending_vector_count=obj["pendingVectorCount"],
+            index_size=obj["indexSize"],
+        )
