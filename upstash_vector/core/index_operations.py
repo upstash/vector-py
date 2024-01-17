@@ -103,7 +103,6 @@ class IndexOperations:
             include_vectors=True,
             include_metadata=True,
         )
-        vector = query_res.vector
         ```
         """
         payload = {
