@@ -84,6 +84,7 @@ def test_fetch_without_vectors_without_metadata(index: Index):
     assert res[1].metadata is None
     assert res[1].vector is None
 
+
 def test_fetch_single(index: Index):
     v1_id = "v4-id1"
     v1_metadata = {"metadata_field": "metadata_value"}
