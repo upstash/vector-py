@@ -187,7 +187,7 @@ class IndexOperations:
         include_metadata: bool = False,
     ) -> List[Optional[FetchResult]]:
         """
-        Fetches details of a vector.
+        Fetches details of a set of vectors.
 
         :param ids: List of vector ids to fetch details of.
         :param include_vectors: bool value that indicates whether the resulting top_k vectors will have their vector values shown.
