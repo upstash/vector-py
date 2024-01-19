@@ -9,13 +9,21 @@ pip3 install upstash-vector
 ```
 
 ## Usage
-In order to use this client, head out to [Upstash Console](https://console.upstash.com) and create a vector database. There, get the URL and the token from the dashboard.
+In order to use this client, head out to [Upstash Console](https://console.upstash.com) and create a vector database. There, get the URL and the TOKEN from the dashboard.
 
 ### Initialize the client
 ```python
 from upstash_vector import Index
 
-index = Index(url=URL, token=TOKEN)
+index = Index(url=UPSTASH_VECTOR_REST_URL, token=UPSTASH_VECTOR_REST_TOKEN)
+```
+
+or alternatively, initialize from the environment
+
+```python
+from upstash_vector import Index
+
+index = Index.from_env()
 ```
 
 ### Upsert Vectors
@@ -60,11 +68,23 @@ query_res = index.query(
     include_vectors=True,
     include_metadata=True,
 )
+# query_res is a list of vectors with scores:
+# query_res[n].id: The identifier associated with the matching vector.
+# query_res[n].score: A measure of similarity indicating how closely the vector matches the query vector.
+# query_res[n].vector: The vector itself (included only if `include_vector` is set to `True`).
+# query_res[n].metadata: Additional information or attributes linked to the matching vector.
 ```
 
 ### Fetch Indexes
 ```python
 res = index.fetch(["id3", "id4"], include_vectors=True, include_metadata=True)
+# res.vectors: A list containing information for each fetched vector, including `id`, `vector`, and `metadata`.
+```
+
+or, for singular fetch:
+
+```python
+res = index.fetch("id1", include_vectors=True, include_metadata=True)
 ```
 
 ### Range over Vectors - Scan the Index
@@ -73,11 +93,21 @@ res = index.fetch(["id3", "id4"], include_vectors=True, include_metadata=True)
 res = index.range(cursor="", limit=3, include_vectors=True, include_metadata=True)
 while res.next_cursor != "":
     res = index.range(cursor=res.next_cursor, limit=3, include_vectors=True, include_metadata=True)
+
+# res.nex_cursor: A cursor indicating the position to start the next range query. If "", there are no more results.
+# res.vectors: A list containing information for each vector, including `id`, `vector`, and `metadata`.
 ```
 
 ### Delete Vectors
 ```python
 res = index.delete(["id1", "id2"])
+# res.deleted: An integer indicating how many vectors were deleted with the command.
+```
+
+or, for singular deletion:
+
+```python
+res = index.delete("id1")
 ```
 
 ### Reset the Index
