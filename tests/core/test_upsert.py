@@ -48,7 +48,7 @@ async def test_upsert_tuple_async(index: Index):
         ]
     )
 
-    res = index.fetch(ids=[v1_id, v2_id], include_vectors=True, include_metadata=True)
+    res = await index.fetch_async(ids=[v1_id, v2_id], include_vectors=True, include_metadata=True)
 
     assert res[0] is not None
     assert res[0].id == v1_id

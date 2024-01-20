@@ -82,7 +82,6 @@ class IndexOperations:
         """
         Upserts(update or insert) vectors asynchronously. For more details check Index.upsert.
 
-
         ```python
         from upstash_vector import Vector
         res = await index.upsert_async(
@@ -138,6 +137,43 @@ class IndexOperations:
             for obj in self._execute_request(payload=payload, path=QUERY_PATH)
         ]
 
+    async def query_async(
+        self,
+        vector: List[float],
+        top_k: int = 10,
+        include_vectors: bool = False,
+        include_metadata: bool = False,
+    ) -> List[QueryResult]:
+        """
+        Query `top_k` many similar vectors asynchronously.
+
+        :param vector: list of floats for the values of vector.
+        :param top_k: number that indicates how many vectors will be returned as the query result.
+        :param include_vectors: bool value that indicates whether the resulting top_k vectors will have their vector values shown.
+        :param include_metadata: bool value that indicates whether the resulting top_k vectors will have their metadata shown.
+
+        Example usage:
+
+        ```python
+        query_res = await index.query(
+            vector=[0.6, 0.9],
+            top_k=3,
+            include_vectors=True,
+            include_metadata=True,
+        )
+        ```
+        """
+        payload = {
+            "vector": vector,
+            "topK": top_k,
+            "includeVectors": include_vectors,
+            "includeMetadata": include_metadata,
+        }
+        return [
+            QueryResult.from_json(obj)
+            for obj in await self._execute_request_async(payload=payload, path=QUERY_PATH)
+        ]
+
     def delete(self, ids: Union[str, List[str]]) -> DeleteResult:
         """
         Deletes the given vector(s) with given ids.
@@ -163,6 +199,31 @@ class IndexOperations:
             self._execute_request(payload=ids, path=DELETE_PATH)
         )
 
+    async def delete_async(self, ids: Union[str, List[str]]) -> DeleteResult:
+        """
+        Deletes the given vector(s) with given ids asynchronously.
+
+        Response contains deleted vector count.
+
+        :param ids: Singular or list of ids of vector(s) to be deleted.
+
+        Example usage:
+
+        ```python
+        # deletes vectors with ids "0", "1", "2"
+        await index.delete_async(["0", "1", "2"])
+
+        # deletes single vector
+        index.delete_async("0")
+        ```
+        """
+        if not isinstance(ids, List):
+            ids = [ids]
+
+        return DeleteResult.from_json(
+            await self._execute_request_async(payload=ids, path=DELETE_PATH)
+        )
+
     def reset(self) -> str:
         """
         Resets the index. All vectors are removed.
@@ -174,6 +235,18 @@ class IndexOperations:
         ```
         """
         return self._execute_request(path=RESET_PATH, payload=None)
+
+    async def reset_async(self) -> str:
+        """
+        Resets the index asynchronously. All vectors are removed.
+
+        Example usage:
+
+        ```python
+        await index.reset_async()
+        ```
+        """
+        return await self._execute_request(path=RESET_PATH, payload=None)
 
     def range(
         self,
@@ -209,6 +282,40 @@ class IndexOperations:
             self._execute_request(payload=payload, path=RANGE_PATH)
         )
 
+    async def range_async(
+        self,
+        cursor: str = "",
+        limit: int = 1,
+        include_vectors: bool = False,
+        include_metadata: bool = False,
+    ) -> RangeResult:
+        """
+        Scans the vectors asynchronously starting from `cursor`, returns at most `limit` many vectors.
+
+        :param cursor: marker that indicates where the scanning was left off when running through all existing vectors.
+        :param limit: limits how many vectors will be fetched with the request.
+        :param include_vectors: bool value that indicates whether the resulting top_k vectors will have their vector values shown.
+        :param include_metadata: bool value that indicates whether the resulting top_k vectors will have their metadata shown.
+
+        Example usage:
+
+        ```python
+        res = await index.range_async(cursor="cursor", limit=4, include_vectors=True, include_metadata=True)
+        ```
+        """
+        if limit <= 0:
+            raise ClientError("limit must be greater than 0")
+
+        payload = {
+            "cursor": cursor,
+            "limit": limit,
+            "includeVectors": include_vectors,
+            "includeMetadata": include_metadata,
+        }
+        return RangeResult.from_json(
+            await self._execute_request_async(payload=payload, path=RANGE_PATH)
+        )
+
     def fetch(
         self,
         ids: Union[str, List[str]],
@@ -241,6 +348,38 @@ class IndexOperations:
             for vector in self._execute_request(payload=payload, path=FETCH_PATH)
         ]
 
+    async def fetch_async(
+        self,
+        ids: Union[str, List[str]],
+        include_vectors: bool = False,
+        include_metadata: bool = False,
+    ) -> List[Optional[FetchResult]]:
+        """
+        Fetches details of a set of vectors asynchronously.
+
+        :param ids: List of vector ids to fetch details of.
+        :param include_vectors: bool value that indicates whether the resulting top_k vectors will have their vector values shown.
+        :param include_metadata: bool value that indicates whether the resulting top_k vectors will have their metadata shown.
+
+        Example usage:
+
+        ```python
+        res = await index.fetch_async(["id1", "id2"], include_vectors=True, include_metadata=True)
+        ```
+        """
+        if not isinstance(ids, List):
+            ids = [ids]
+
+        payload = {
+            "ids": ids,
+            "includeVectors": include_vectors,
+            "includeMetadata": include_metadata,
+        }
+        return [
+            FetchResult.from_json(vector) if vector else None
+            for vector in await self._execute_request_async(payload=payload, path=FETCH_PATH)
+        ]
+
     def stats(self) -> StatsResult:
         """
         Returns the index statistics, including:
@@ -250,3 +389,13 @@ class IndexOperations:
         * total size of the index on disk in bytes
         """
         return StatsResult.from_json(self._execute_request(payload="", path=STATS_PATH))
+
+    async def stats_async(self) -> StatsResult:
+        """
+        Returns the index statistics asynchronously, including:
+
+        * total number of vectors
+        * total number of vectors waiting to be indexed
+        * total size of the index on disk in bytes
+        """
+        return StatsResult.from_json(await self._execute_request_async(payload="", path=STATS_PATH))
