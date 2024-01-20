@@ -1,5 +1,9 @@
 from requests import Session
-from upstash_vector.http import execute_with_parameters, generate_headers
+from upstash_vector.http import (
+    execute_with_parameters,
+    execute_with_parameters_async,
+    generate_headers,
+)
 from upstash_vector.core.index_operations import IndexOperations
 from typing import Any
 from os import environ
@@ -41,6 +45,14 @@ class Index(IndexOperations):
             headers=self._headers,
             retry_interval=self._retry_interval,
             retries=self._retries,
+            payload=payload,
+        )
+
+    async def _execute_request_async(self, payload: Any = "", path: str = ""):
+        url_with_path = f"{self._url}{path}"
+        return execute_with_parameters_async(
+            url=url_with_path,
+            headers=self._headers,
             payload=payload,
         )
 

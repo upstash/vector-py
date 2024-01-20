@@ -1,20 +1,20 @@
 import os
 import time
 from typing import Any, Dict
-
+from httpx import AsyncClient
 from requests import Session
-from upstash_vector import __version__
 from platform import python_version
 
+from upstash_vector import __version__
 from upstash_vector.errors import UpstashError
 
 
 def generate_headers(token) -> Dict[str, str]:
     headers = {
         "Authorization": f"Bearer {token}",
+        "Upstash-Telemetry-Sdk": f"upstash-vector-py@v{__version__}",
+        "Upstash-Telemetry-Runtime": f"python@v{python_version()}",
     }
-    headers["Upstash-Telemetry-Sdk"] = f"upstash-vector-py@v{__version__}"
-    headers["Upstash-Telemetry-Runtime"] = f"python@v{python_version()}"
 
     if os.getenv("VERCEL"):
         platform = "vercel"
@@ -51,6 +51,21 @@ def execute_with_parameters(
     if response is None:
         assert last_error is not None
         raise last_error
+
+    if response.get("error"):
+        raise UpstashError(response["error"])
+
+    return response["result"]
+
+
+async def execute_with_parameters_async(
+    url: str,
+    headers: Dict[str, str],
+    payload: Any,
+) -> Any:
+    with AsyncClient(timeout=30) as client:
+        request = await client.post(url=url, headers=headers, json=payload)
+        response = request.json()
 
     if response.get("error"):
         raise UpstashError(response["error"])

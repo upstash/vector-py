@@ -27,6 +27,9 @@ class IndexOperations:
     def _execute_request(self, payload, path):
         raise NotImplementedError("execute_request")
 
+    async def _execute_request_async(self, payload, path):
+        raise NotImplementedError("execute_request")
+
     def upsert(
         self,
         vectors: Sequence[Union[Dict, tuple, Vector]],
@@ -71,6 +74,32 @@ class IndexOperations:
         ]
 
         return self._execute_request(payload=payload, path=UPSERT_PATH)
+
+    async def upsert_async(
+        self,
+        vectors: Sequence[Union[Dict, tuple, Vector]],
+    ) -> str:
+        """
+        Upserts(update or insert) vectors asynchronously. For more details check Index.upsert.
+
+
+        ```python
+        from upstash_vector import Vector
+        res = await index.upsert_async(
+            vectors=[
+                Vector(id="id5", vector=[1, 2], metadata={"metadata_f": "metadata_v"}),
+                Vector(id="id6", vector=[6, 7]),
+            ]
+        )
+        ```
+        """
+        vectors = convert_to_vectors(vectors)
+        payload = [
+            {"id": vector.id, "vector": vector.vector, "metadata": vector.metadata}
+            for vector in vectors
+        ]
+
+        return await self._execute_request_async(payload=payload, path=UPSERT_PATH)
 
     def query(
         self,
