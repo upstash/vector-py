@@ -63,7 +63,7 @@ async def execute_with_parameters_async(
     headers: Dict[str, str],
     payload: Any,
 ) -> Any:
-    with AsyncClient(timeout=30) as client:
+    async with AsyncClient(timeout=30) as client:
         request = await client.post(url=url, headers=headers, json=payload)
         response = request.json()
 
