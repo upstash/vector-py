@@ -55,6 +55,7 @@ def test_delete(index: Index):
     assert res[1] is None
     assert res[2] is not None
 
+
 @pytest.mark.asyncio
 async def test_delete_async(index: Index):
     v1_id = "delete-id1"

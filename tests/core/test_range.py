@@ -25,6 +25,7 @@ def test_range(index: Index):
     with raises(ClientError):
         index.range(cursor="0", limit=0, include_vectors=True)
 
+
 @pytest.mark.asyncio
 async def test_range_async(index: Index):
     vectors = [
@@ -39,7 +40,9 @@ async def test_range_async(index: Index):
     assert res.next_cursor != ""
 
     while res.next_cursor != "":
-        res = await index.range_async(cursor=res.next_cursor, limit=8, include_vectors=True)
+        res = await index.range_async(
+            cursor=res.next_cursor, limit=8, include_vectors=True
+        )
         assert len(res.vectors) == 8
 
     with raises(ClientError):

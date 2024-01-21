@@ -171,7 +171,9 @@ class IndexOperations:
         }
         return [
             QueryResult.from_json(obj)
-            for obj in await self._execute_request_async(payload=payload, path=QUERY_PATH)
+            for obj in await self._execute_request_async(
+                payload=payload, path=QUERY_PATH
+            )
         ]
 
     def delete(self, ids: Union[str, List[str]]) -> DeleteResult:
@@ -377,7 +379,9 @@ class IndexOperations:
         }
         return [
             FetchResult.from_json(vector) if vector else None
-            for vector in await self._execute_request_async(payload=payload, path=FETCH_PATH)
+            for vector in await self._execute_request_async(
+                payload=payload, path=FETCH_PATH
+            )
         ]
 
     def stats(self) -> StatsResult:
@@ -398,4 +402,6 @@ class IndexOperations:
         * total number of vectors waiting to be indexed
         * total size of the index on disk in bytes
         """
-        return StatsResult.from_json(await self._execute_request_async(payload="", path=STATS_PATH))
+        return StatsResult.from_json(
+            await self._execute_request_async(payload="", path=STATS_PATH)
+        )

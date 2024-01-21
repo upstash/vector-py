@@ -27,6 +27,7 @@ def test_reset(index: Index):
     assert res[0] is None
     assert res[1] is None
 
+
 async def test_reset_async(index: Index):
     v1_id = "id1"
     v1_metadata = {"metadata_field": "metadata_value"}
@@ -42,13 +43,17 @@ async def test_reset_async(index: Index):
         ]
     )
 
-    res = await index.fetch_async(ids=[v1_id, v2_id], include_vectors=True, include_metadata=True)
+    res = await index.fetch_async(
+        ids=[v1_id, v2_id], include_vectors=True, include_metadata=True
+    )
     assert len(res) == 2
     assert res[0] is not None
     assert res[1] is not None
 
     index.reset()
 
-    res = await index.fetch_async(ids=[v1_id, v2_id], include_vectors=True, include_metadata=True)
+    res = await index.fetch_async(
+        ids=[v1_id, v2_id], include_vectors=True, include_metadata=True
+    )
     assert res[0] is None
     assert res[1] is None

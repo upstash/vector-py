@@ -126,7 +126,9 @@ async def test_fetch_single_async(index: Index):
         ]
     )
 
-    res = await index.fetch_async(ids=v1_id, include_vectors=True, include_metadata=True)
+    res = await index.fetch_async(
+        ids=v1_id, include_vectors=True, include_metadata=True
+    )
 
     assert res[0] is not None
     assert res[0].id == v1_id
