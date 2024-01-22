@@ -1,3 +1,4 @@
+from typing import Awaitable
 import pytest
 from pytest import raises
 import random
@@ -27,7 +28,8 @@ def test_range(index: Index):
 
 
 @pytest.mark.asyncio
-async def test_range_async(async_index: AsyncIndex):
+async def test_range_async(async_index: Awaitable[AsyncIndex]):
+    async_index = await async_index
     vectors = [
         {"id": f"id-{i}", "vector": [random.random() for _ in range(2)]}
         for i in range(20)

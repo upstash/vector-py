@@ -1,6 +1,7 @@
+from typing import Awaitable
 import pytest
 
-from tests import assert_eventually
+from tests import assert_eventually, assert_eventually_async
 from upstash_vector import Index, AsyncIndex
 
 
@@ -19,7 +20,8 @@ def test_stats(index: Index):
 
 
 @pytest.mark.asyncio
-async def test_stats_async(async_index: AsyncIndex):
+async def test_stats_async(async_index: Awaitable[AsyncIndex]):
+    async_index = await async_index
     stats = await async_index.stats()
 
     assert stats.vector_count == 0
@@ -30,4 +32,4 @@ async def test_stats_async(async_index: AsyncIndex):
     async def assertion():
         assert (await async_index.stats()).vector_count == 1
 
-    await assert_eventually(assertion)
+    await assert_eventually_async(assertion)

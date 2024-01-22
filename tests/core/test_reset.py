@@ -1,3 +1,5 @@
+import pytest
+from typing import Awaitable
 from upstash_vector import Index, AsyncIndex
 
 
@@ -28,7 +30,9 @@ def test_reset(index: Index):
     assert res[1] is None
 
 
-async def test_reset_async(async_index: AsyncIndex):
+@pytest.mark.asyncio
+async def test_reset_async(async_index: Awaitable[AsyncIndex]):
+    async_index = await async_index
     v1_id = "id1"
     v1_metadata = {"metadata_field": "metadata_value"}
     v1_values = [0.1, 0.2]

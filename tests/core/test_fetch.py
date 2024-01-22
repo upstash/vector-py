@@ -1,3 +1,5 @@
+from typing import Awaitable
+
 import pytest
 
 from upstash_vector import Index, AsyncIndex
@@ -111,7 +113,9 @@ def test_fetch_single(index: Index):
 
 
 @pytest.mark.asyncio
-async def test_fetch_single_async(async_index: AsyncIndex):
+async def test_fetch_single_async(async_index: Awaitable[AsyncIndex]):
+    async_index = await async_index
+
     v1_id = "v4-id1"
     v1_metadata = {"metadata_field": "metadata_value"}
     v1_values = [0.1, 0.2]

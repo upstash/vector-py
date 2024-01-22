@@ -1,4 +1,8 @@
+import asyncio
 import pytest
+
+pytest_plugins = ("pytest_asyncio",)
+
 from os import environ
 from upstash_vector import Index, AsyncIndex
 
