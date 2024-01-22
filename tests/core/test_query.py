@@ -1,7 +1,7 @@
 from pytest import raises
 import pytest
 
-from upstash_vector import Index
+from upstash_vector import Index, AsyncIndex
 import time
 
 
@@ -177,7 +177,7 @@ def test_query_without_vectors_without_metadata(index: Index):
 
 
 @pytest.mark.asyncio
-async def test_query_without_vectors_without_metadata_async(index: Index):
+async def test_query_without_vectors_without_metadata_async(async_index: AsyncIndex):
     v1_id = "id1"
     v1_metadata = {"metadata_field": "metadata_value"}
     v1_values = [0.1, 0.2]
@@ -196,7 +196,7 @@ async def test_query_without_vectors_without_metadata_async(index: Index):
     v5_values = [124, 0.8]
     v5_metadata = {"metadata_field_5": "metadata_value_5"}
 
-    await index.upsert_async(
+    await async_index.upsert(
         vectors=[
             (v1_id, v1_values, v1_metadata),
             (v2_id, v2_values),
@@ -207,7 +207,7 @@ async def test_query_without_vectors_without_metadata_async(index: Index):
     )
 
     time.sleep(1)
-    query_res = await index.query_async(
+    query_res = await async_index.query(
         v1_values, top_k=1, include_metadata=False, include_vectors=False
     )
     assert len(query_res) == 1
@@ -217,7 +217,7 @@ async def test_query_without_vectors_without_metadata_async(index: Index):
     assert query_res[0].score == 1
     assert query_res[0].vector is None
 
-    query_res = await index.query_async(
+    query_res = await async_index.query(
         v1_values, top_k=2, include_metadata=False, include_vectors=False
     )
     assert len(query_res) == 2
@@ -227,7 +227,7 @@ async def test_query_without_vectors_without_metadata_async(index: Index):
     assert query_res[1].score < 1
     assert query_res[1].vector is None
 
-    query_res = await index.query_async(
+    query_res = await async_index.query(
         v1_values, top_k=5, include_metadata=False, include_vectors=False
     )
     assert len(query_res) == 5

@@ -1,6 +1,6 @@
 import pytest
 
-from upstash_vector import Index
+from upstash_vector import Index, AsyncIndex
 
 
 def test_fetch_with_vectors_with_metadata(index: Index):
@@ -111,7 +111,7 @@ def test_fetch_single(index: Index):
 
 
 @pytest.mark.asyncio
-async def test_fetch_single_async(index: Index):
+async def test_fetch_single_async(async_index: AsyncIndex):
     v1_id = "v4-id1"
     v1_metadata = {"metadata_field": "metadata_value"}
     v1_values = [0.1, 0.2]
@@ -119,14 +119,14 @@ async def test_fetch_single_async(index: Index):
     v2_id = "v4-id2"
     v2_values = [0.3, 0.4]
 
-    await index.upsert_async(
+    await async_index.upsert(
         vectors=[
             (v1_id, v1_values, v1_metadata),
             (v2_id, v2_values),
         ]
     )
 
-    res = await index.fetch_async(
+    res = await async_index.fetch(
         ids=v1_id, include_vectors=True, include_metadata=True
     )
 

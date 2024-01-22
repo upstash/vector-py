@@ -1,6 +1,6 @@
 import pytest
 
-from upstash_vector import Index
+from upstash_vector import Index, AsyncIndex
 
 
 def test_delete(index: Index):
@@ -57,7 +57,7 @@ def test_delete(index: Index):
 
 
 @pytest.mark.asyncio
-async def test_delete_async(index: Index):
+async def test_delete_async(async_index: AsyncIndex):
     v1_id = "delete-id1"
     v1_metadata = {"metadata_field": "metadata_value"}
     v1_values = [0.1, 0.2]
@@ -68,7 +68,7 @@ async def test_delete_async(index: Index):
     v3_id = "delete-id3"
     v3_values = [0.5, 0.6]
 
-    index.upsert(
+    await async_index.upsert(
         vectors=[
             (v1_id, v1_values, v1_metadata),
             (v2_id, v2_values),
@@ -76,7 +76,7 @@ async def test_delete_async(index: Index):
         ]
     )
 
-    res = index.fetch(
+    res = await async_index.fetch(
         ids=[v1_id, v2_id, v3_id], include_vectors=True, include_metadata=True
     )
     assert len(res) == 3
@@ -84,14 +84,16 @@ async def test_delete_async(index: Index):
     assert res[1] is not None
     assert res[2] is not None
 
-    del_res = await index.delete_async(ids=v1_id)
+    del_res = await async_index.delete(ids=v1_id)
     assert del_res.deleted == 1
 
-    res = index.fetch(ids=[v1_id, v2_id], include_vectors=True, include_metadata=True)
+    res = await async_index.fetch(
+        ids=[v1_id, v2_id], include_vectors=True, include_metadata=True
+    )
     assert res[0] is None
     assert res[1] is not None
 
-    index.upsert(
+    await async_index.upsert(
         vectors=[
             (v1_id, v1_values, v1_metadata),
             (v2_id, v2_values),
@@ -99,10 +101,10 @@ async def test_delete_async(index: Index):
         ]
     )
 
-    del_res = await index.delete_async(ids=[v1_id, v2_id])
+    del_res = await async_index.delete(ids=[v1_id, v2_id])
     assert del_res.deleted == 2
 
-    res = index.fetch(
+    res = await async_index.fetch(
         ids=[v1_id, v2_id, v3_id], include_vectors=True, include_metadata=True
     )
     assert res[0] is None

@@ -59,13 +59,13 @@ def execute_with_parameters(
 
 
 async def execute_with_parameters_async(
+    client: AsyncClient,
     url: str,
     headers: Dict[str, str],
     payload: Any,
 ) -> Any:
-    async with AsyncClient(timeout=30) as client:
-        request = await client.post(url=url, headers=headers, json=payload)
-        response = request.json()
+    request = await client.post(url=url, headers=headers, json=payload)
+    response = request.json()
 
     if response.get("error"):
         raise UpstashError(response["error"])
