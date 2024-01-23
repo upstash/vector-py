@@ -20,8 +20,8 @@ def test_stats(index: Index):
 
 
 @pytest.mark.asyncio
-async def test_stats_async(async_index: Awaitable[AsyncIndex]):
-    async_index = await async_index
+async def test_stats_async(async_index_needs_await: Awaitable[AsyncIndex]):
+    async_index = await async_index_needs_await
     stats = await async_index.stats()
 
     assert stats.vector_count == 0
