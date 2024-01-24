@@ -59,8 +59,7 @@ def test_delete(index: Index):
 
 
 @pytest.mark.asyncio
-async def test_delete_async(async_index_needs_await: Awaitable[AsyncIndex]):
-    async_index = await async_index_needs_await
+async def test_delete_async(async_index: AsyncIndex):
     v1_id = "delete-id1"
     v1_metadata = {"metadata_field": "metadata_value"}
     v1_values = [0.1, 0.2]

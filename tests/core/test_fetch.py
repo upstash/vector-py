@@ -113,9 +113,7 @@ def test_fetch_single(index: Index):
 
 
 @pytest.mark.asyncio
-async def test_fetch_single_async(async_index_needs_await: Awaitable[AsyncIndex]):
-    async_index = await async_index_needs_await
-
+async def test_fetch_single_async(async_index: AsyncIndex):
     v1_id = "v4-id1"
     v1_metadata = {"metadata_field": "metadata_value"}
     v1_values = [0.1, 0.2]

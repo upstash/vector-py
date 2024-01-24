@@ -28,8 +28,7 @@ def test_range(index: Index):
 
 
 @pytest.mark.asyncio
-async def test_range_async(async_index_needs_await: Awaitable[AsyncIndex]):
-    async_index = await async_index_needs_await
+async def test_range_async(async_index: AsyncIndex):
     vectors = [
         {"id": f"id-{i}", "vector": [random.random() for _ in range(2)]}
         for i in range(20)

@@ -1,4 +1,6 @@
 import pytest
+import pytest_asyncio
+
 from os import environ
 
 from upstash_vector import Index, AsyncIndex
@@ -13,8 +15,8 @@ def index():
     return idx
 
 
-@pytest.fixture
-async def async_index_needs_await():
+@pytest_asyncio.fixture
+async def async_index():
     idx = AsyncIndex(environ["URL"], environ["TOKEN"])
     await idx.reset()
     return idx
