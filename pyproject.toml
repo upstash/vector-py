@@ -31,7 +31,6 @@ packages = [{ include = "upstash_vector" }]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-requests = "^2.31.0"
 httpx = "^0.25.0"
 
 [tool.poetry.group.dev.dependencies]

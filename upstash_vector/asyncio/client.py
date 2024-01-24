@@ -20,7 +20,7 @@ class AsyncIndex(AsyncIndexOperations):
     # alternatively, configure retry mechanism as well
 
     # retry 5 times
-    index = Index(url=<url>, token=<token>, retries=5)
+    index = AsyncIndex(url=<url>, token=<token>, retries=5)
     ```
     """
 

@@ -237,7 +237,7 @@ class AsyncIndexOperations:
         Example usages:
 
         ```python
-        res = await index.upsert_async(
+        res = await index.upsert(
             vectors=[
                 ("id1", [0.1, 0.2], {"metadata_field": "metadata_value"}),
                 ("id2", [0.3,0.4])
@@ -246,7 +246,7 @@ class AsyncIndexOperations:
 
         # OR
 
-        res = await index.upsert_async(
+        res = await index.upsert(
             vectors=[
                 {"id": "id3", "vector": [0.1, 0.2], "metadata": {"metadata_f": "metadata_v"}},
                 {"id": "id4", "vector": [0.5, 0.6]},
@@ -257,7 +257,7 @@ class AsyncIndexOperations:
 
         ```python
         from upstash_vector import Vector
-        res = await index.upsert_async(
+        res = await index.upsert(
             vectors=[
                 Vector(id="id5", vector=[1, 2], metadata={"metadata_f": "metadata_v"}),
                 Vector(id="id6", vector=[6, 7]),
@@ -324,10 +324,10 @@ class AsyncIndexOperations:
 
         ```python
         # deletes vectors with ids "0", "1", "2"
-        await index.delete_async(["0", "1", "2"])
+        await index.delete(["0", "1", "2"])
 
         # deletes single vector
-        index.delete_async("0")
+        await index.delete("0")
         ```
         """
         if not isinstance(ids, List):
@@ -344,7 +344,7 @@ class AsyncIndexOperations:
         Example usage:
 
         ```python
-        await index.reset_async()
+        await index.reset()
         ```
         """
         return await self._execute_request_async(path=RESET_PATH, payload=None)
@@ -367,7 +367,7 @@ class AsyncIndexOperations:
         Example usage:
 
         ```python
-        res = await index.range_async(cursor="cursor", limit=4, include_vectors=True, include_metadata=True)
+        res = await index.range(cursor="cursor", limit=4, include_vectors=True, include_metadata=True)
         ```
         """
         if limit <= 0:
@@ -399,7 +399,7 @@ class AsyncIndexOperations:
         Example usage:
 
         ```python
-        res = await index.fetch_async(["id1", "id2"], include_vectors=True, include_metadata=True)
+        res = await index.fetch(["id1", "id2"], include_vectors=True, include_metadata=True)
         ```
         """
         if not isinstance(ids, List):
