@@ -1,5 +1,3 @@
-from typing import Awaitable
-
 from pytest import raises
 import pytest
 

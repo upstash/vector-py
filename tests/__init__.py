@@ -1,4 +1,5 @@
 import time
+import asyncio
 
 
 def assert_eventually(assertion, retry_delay=0.5, timeout=5.0):
@@ -29,7 +30,7 @@ async def assert_eventually_async(assertion, retry_delay=0.5, timeout=5.0):
             return
         except AssertionError as e:
             last_err = e
-            time.sleep(retry_delay)
+            await asyncio.sleep(retry_delay)
 
     if last_err is None:
         raise AssertionError("Couldn't run the assertion")

@@ -1,4 +1,3 @@
-from typing import Awaitable
 import pytest
 
 from tests import assert_eventually, assert_eventually_async

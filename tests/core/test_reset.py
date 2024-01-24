@@ -1,5 +1,4 @@
 import pytest
-from typing import Awaitable
 from upstash_vector import Index, AsyncIndex
 
 

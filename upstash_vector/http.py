@@ -1,4 +1,6 @@
 import os
+import time
+import asyncio
 from typing import Any, Dict
 from httpx import Client, AsyncClient
 from platform import python_version
@@ -30,9 +32,26 @@ def execute_with_parameters(
     url: str,
     client: Client,
     headers: Dict[str, str],
+    retries: int,
+    retry_interval: float,
     payload: Any,
 ) -> Any:
-    response = client.post(url=url, headers=headers, json=payload).json()
+    response = None
+    last_error = None
+
+    for attempts_left in range(max(0, retries), -1, -1):
+        try:
+            response = client.post(url=url, headers=headers, json=payload).json()
+            break
+
+        except Exception as e:
+            last_error = e
+            if attempts_left > 0:
+                time.sleep(retry_interval)
+
+    if response is None:
+        assert last_error is not None
+        raise last_error
 
     if response.get("error"):
         raise UpstashError(response["error"])
@@ -44,10 +63,27 @@ async def execute_with_parameters_async(
     client: AsyncClient,
     url: str,
     headers: Dict[str, str],
+    retries: int,
+    retry_interval: float,
     payload: Any,
 ) -> Any:
-    request = await client.post(url=url, headers=headers, json=payload)
-    response = request.json()
+    response = None
+    last_error = None
+
+    for attempts_left in range(max(0, retries), -1, -1):
+        try:
+            request = await client.post(url=url, headers=headers, json=payload)
+            response = request.json()
+            break
+
+        except Exception as e:
+            last_error = e
+            if attempts_left > 0:
+                await asyncio.sleep(retry_interval)
+
+    if response is None:
+        assert last_error is not None
+        raise last_error
 
     if response.get("error"):
         raise UpstashError(response["error"])
