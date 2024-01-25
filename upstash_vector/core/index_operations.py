@@ -105,7 +105,7 @@ class IndexOperations:
             "includeMetadata": include_metadata,
         }
         return [
-            QueryResult.from_json(obj)
+            QueryResult._from_json(obj)
             for obj in self._execute_request(payload=payload, path=QUERY_PATH)
         ]
 
@@ -130,7 +130,7 @@ class IndexOperations:
         if not isinstance(ids, List):
             ids = [ids]
 
-        return DeleteResult.from_json(
+        return DeleteResult._from_json(
             self._execute_request(payload=ids, path=DELETE_PATH)
         )
 
@@ -176,7 +176,7 @@ class IndexOperations:
             "includeVectors": include_vectors,
             "includeMetadata": include_metadata,
         }
-        return RangeResult.from_json(
+        return RangeResult._from_json(
             self._execute_request(payload=payload, path=RANGE_PATH)
         )
 
@@ -208,7 +208,7 @@ class IndexOperations:
             "includeMetadata": include_metadata,
         }
         return [
-            FetchResult.from_json(vector) if vector else None
+            FetchResult._from_json(vector) if vector else None
             for vector in self._execute_request(payload=payload, path=FETCH_PATH)
         ]
 
@@ -220,7 +220,7 @@ class IndexOperations:
         * total number of vectors waiting to be indexed
         * total size of the index on disk in bytes
         """
-        return StatsResult.from_json(
+        return StatsResult._from_json(
             self._execute_request(payload=None, path=STATS_PATH)
         )
 
@@ -308,7 +308,7 @@ class AsyncIndexOperations:
             "includeMetadata": include_metadata,
         }
         return [
-            QueryResult.from_json(obj)
+            QueryResult._from_json(obj)
             for obj in await self._execute_request_async(
                 payload=payload, path=QUERY_PATH
             )
@@ -335,7 +335,7 @@ class AsyncIndexOperations:
         if not isinstance(ids, List):
             ids = [ids]
 
-        return DeleteResult.from_json(
+        return DeleteResult._from_json(
             await self._execute_request_async(payload=ids, path=DELETE_PATH)
         )
 
@@ -381,7 +381,7 @@ class AsyncIndexOperations:
             "includeVectors": include_vectors,
             "includeMetadata": include_metadata,
         }
-        return RangeResult.from_json(
+        return RangeResult._from_json(
             await self._execute_request_async(payload=payload, path=RANGE_PATH)
         )
 
@@ -413,7 +413,7 @@ class AsyncIndexOperations:
             "includeMetadata": include_metadata,
         }
         return [
-            FetchResult.from_json(vector) if vector else None
+            FetchResult._from_json(vector) if vector else None
             for vector in await self._execute_request_async(
                 payload=payload, path=FETCH_PATH
             )
@@ -427,6 +427,6 @@ class AsyncIndexOperations:
         * total number of vectors waiting to be indexed
         * total size of the index on disk in bytes
         """
-        return StatsResult.from_json(
+        return StatsResult._from_json(
             await self._execute_request_async(payload=None, path=STATS_PATH)
         )
