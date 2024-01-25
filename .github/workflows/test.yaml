@@ -27,7 +27,7 @@ jobs:
 
       - name: Run mypy
         run: |
-          poetry run mypy --show-error-codes --install-types .
+          poetry run mypy --show-error-codes --install-types --non-interactive .
 
       - name: Run ruff
         run: |

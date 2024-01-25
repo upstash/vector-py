@@ -1,11 +1,16 @@
 from dataclasses import dataclass
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Union, Protocol
+
+
+class SupportsToList(Protocol):
+    def tolist(self) -> List[float]:
+        ...
 
 
 @dataclass
 class Vector:
     id: str
-    vector: List[float]
+    vector: Union[List[float], SupportsToList]
     metadata: Optional[Dict] = None
 
 
