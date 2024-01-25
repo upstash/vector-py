@@ -250,8 +250,8 @@ def test_upsert_vector_with_numpy(index: Index):
 
     index.upsert(
         vectors=[
-            Vector(id=v1_id, vector=v1_values, metadata=v1_metadata),  # type: ignore
-            Vector(id=v2_id, vector=v2_values),  # type: ignore
+            Vector(id=v1_id, vector=v1_values, metadata=v1_metadata),
+            Vector(id=v2_id, vector=v2_values),
         ]
     )
 
@@ -336,8 +336,8 @@ def test_upsert_vector_with_pandas(index: Index):
 
     index.upsert(
         vectors=[
-            Vector(id=v1_id, vector=v1_values, metadata=v1_metadata),  # type: ignore
-            Vector(id=v2_id, vector=v2_values),  # type: ignore
+            Vector(id=v1_id, vector=v1_values, metadata=v1_metadata),
+            Vector(id=v2_id, vector=v2_values),
         ]
     )
 
