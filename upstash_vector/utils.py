@@ -5,7 +5,7 @@ from typing import List, Dict
 
 def _convert_to_list(obj):
     if isinstance(obj, list):
-        return list
+        return obj
     elif hasattr(obj, "tolist") and callable(getattr(obj, "tolist")):
         return obj.tolist()
 
