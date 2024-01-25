@@ -31,7 +31,7 @@ packages = [{ include = "upstash_vector" }]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-requests = "^2.31.0"
+httpx = "^0.25.0"
 
 [tool.poetry.group.types]
 optional = true
@@ -49,6 +49,7 @@ types-pygments = "^2.17.0.20240106"
 types-colorama = "^0.4.15.20240106"
 types-setuptools = "^69.0.0.20240115"
 pytest = "^7.4.4"
+pytest-asyncio="^0.20.0"
 ruff = "^0.1.13"
 black = "^23.12.1"
 numpy = [
