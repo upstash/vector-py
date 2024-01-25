@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "upstash-vector"
-version = "0.1.4"
+version = "0.1.5"
 description = "Serverless Vector SDK from Upstash"
 license = "MIT"
 authors = ["Upstash <support@upstash.com>"]
