@@ -33,6 +33,15 @@ packages = [{ include = "upstash_vector" }]
 python = "^3.8"
 requests = "^2.31.0"
 
+[tool.poetry.group.types]
+optional = true
+
+[tool.poetry.group.types.dependencies]
+pandas-stubs = [
+    {version = "^2.1.1.230928", python = ">=3.9"},
+    {version = "^1.5.3.230321", python = ">=3.8,<3.9"}
+]
+
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.8.0"
 types-requests = "^2.31.0.20240106"
@@ -42,6 +51,11 @@ types-setuptools = "^69.0.0.20240115"
 pytest = "^7.4.4"
 ruff = "^0.1.13"
 black = "^23.12.1"
+numpy = [
+  { version = ">=1.22", python = ">=3.9" },
+  { version = ">=1.21", python = ">=3.8,<3.9" },
+]
+pandas = ">=1.3.5"
 
 [build-system]
 requires = ["poetry-core"]
