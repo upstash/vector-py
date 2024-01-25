@@ -5,8 +5,6 @@ from os import environ
 
 from upstash_vector import Index, AsyncIndex
 
-pytest_plugins = ("pytest_asyncio",)
-
 
 @pytest.fixture
 def index():

@@ -53,7 +53,7 @@ def execute_with_parameters(
         assert last_error is not None
         raise last_error
 
-    if response.get("error"):
+    if "error" in response:
         raise UpstashError(response["error"])
 
     return response["result"]
@@ -72,8 +72,8 @@ async def execute_with_parameters_async(
 
     for attempts_left in range(max(0, retries), -1, -1):
         try:
-            request = await client.post(url=url, headers=headers, json=payload)
-            response = request.json()
+            resp = await client.post(url=url, headers=headers, json=payload)
+            response = resp.json()
             break
 
         except Exception as e:
@@ -85,7 +85,7 @@ async def execute_with_parameters_async(
         assert last_error is not None
         raise last_error
 
-    if response.get("error"):
+    if "error" in response:
         raise UpstashError(response["error"])
 
     return response["result"]

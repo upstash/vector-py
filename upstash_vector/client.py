@@ -1,4 +1,4 @@
-from httpx import Client, HTTPTransport, AsyncClient, AsyncHTTPTransport
+from httpx import Client, AsyncClient
 from typing import Any
 from os import environ
 
@@ -23,8 +23,8 @@ class Index(IndexOperations):
 
     # alternatively, configure retry mechanism as well
 
-    # retry 5 times
-    index = Index(url=<url>, token=<token>, retries=5, retry_interval = 1.0)
+    # retry 5 times, waiting 100ms between consequent requests
+    index = Index(url=<url>, token=<token>, retries=5, retry_interval=0.1)
     ```
     """
 
@@ -32,7 +32,7 @@ class Index(IndexOperations):
         self, url: str, token: str, retries: int = 3, retry_interval: float = 1.0
     ):
         self._url = url
-        self._client = Client(transport=HTTPTransport(retries=retries))
+        self._client = Client()
         self._retries = retries
         self._retry_interval = retry_interval
         self._headers = generate_headers(token)
@@ -75,8 +75,8 @@ class AsyncIndex(AsyncIndexOperations):
 
     # alternatively, configure retry mechanism as well
 
-    # retry 5 times
-    index = AsyncIndex(url=<url>, token=<token>, retries=5, retry_interval=1.0)
+    # retry 5 times, waiting 100ms between consequent requests
+    index = AsyncIndex(url=<url>, token=<token>, retries=5, retry_interval=0.1)
     ```
     """
 
@@ -89,7 +89,7 @@ class AsyncIndex(AsyncIndexOperations):
     ):
         self._url = url
         self._headers = generate_headers(token)
-        self._client = AsyncClient(transport=AsyncHTTPTransport(retries=retries))
+        self._client = AsyncClient()
         self._retries = retries
         self._retry_interval = retry_interval
 

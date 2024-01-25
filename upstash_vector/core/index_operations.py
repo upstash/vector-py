@@ -220,7 +220,9 @@ class IndexOperations:
         * total number of vectors waiting to be indexed
         * total size of the index on disk in bytes
         """
-        return StatsResult.from_json(self._execute_request(payload="", path=STATS_PATH))
+        return StatsResult.from_json(
+            self._execute_request(payload=None, path=STATS_PATH)
+        )
 
 
 class AsyncIndexOperations:
@@ -426,5 +428,5 @@ class AsyncIndexOperations:
         * total size of the index on disk in bytes
         """
         return StatsResult.from_json(
-            await self._execute_request_async(payload="", path=STATS_PATH)
+            await self._execute_request_async(payload=None, path=STATS_PATH)
         )
