@@ -41,6 +41,7 @@ types-colorama = "^0.4.15.20240106"
 types-setuptools = "^69.0.0.20240115"
 pytest = "^7.4.4"
 ruff = "^0.1.13"
+black = "^23.12.1"
 
 [build-system]
 requires = ["poetry-core"]
