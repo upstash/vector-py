@@ -21,7 +21,7 @@ class FetchResult:
     metadata: Optional[Dict] = None
 
     @classmethod
-    def from_json(cls, obj: dict) -> "FetchResult":
+    def _from_json(cls, obj: dict) -> "FetchResult":
         return cls(
             id=obj["id"],
             vector=obj.get("vector"),
@@ -37,7 +37,7 @@ class QueryResult:
     metadata: Optional[Dict] = None
 
     @classmethod
-    def from_json(cls, obj: dict) -> "QueryResult":
+    def _from_json(cls, obj: dict) -> "QueryResult":
         return cls(
             id=obj["id"],
             score=obj["score"],
@@ -51,7 +51,7 @@ class DeleteResult:
     deleted: int
 
     @classmethod
-    def from_json(cls, obj: dict) -> "DeleteResult":
+    def _from_json(cls, obj: dict) -> "DeleteResult":
         return cls(deleted=obj["deleted"])
 
 
@@ -61,10 +61,10 @@ class RangeResult:
     vectors: List[FetchResult]
 
     @classmethod
-    def from_json(cls, obj: dict) -> "RangeResult":
+    def _from_json(cls, obj: dict) -> "RangeResult":
         return cls(
             next_cursor=obj["nextCursor"],
-            vectors=[FetchResult.from_json(v) for v in obj["vectors"]],
+            vectors=[FetchResult._from_json(v) for v in obj["vectors"]],
         )
 
 
@@ -75,7 +75,7 @@ class StatsResult:
     index_size: int
 
     @classmethod
-    def from_json(cls, obj: dict) -> "StatsResult":
+    def _from_json(cls, obj: dict) -> "StatsResult":
         return cls(
             vector_count=obj["vectorCount"],
             pending_vector_count=obj["pendingVectorCount"],
