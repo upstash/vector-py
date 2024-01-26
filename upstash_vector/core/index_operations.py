@@ -7,12 +7,13 @@ from upstash_vector.types import (
     DeleteResult,
     RangeResult,
     StatsResult,
+    SupportsToList,
     Vector,
     FetchResult,
     QueryResult,
 )
 
-from upstash_vector.utils import convert_to_vectors
+from upstash_vector.utils import convert_to_list, convert_to_vectors
 
 UPSERT_PATH = "/upsert"
 QUERY_PATH = "/query"
@@ -74,7 +75,7 @@ class IndexOperations:
 
     def query(
         self,
-        vector: List[float],
+        vector: Union[List[float], SupportsToList],
         top_k: int = 10,
         include_vectors: bool = False,
         include_metadata: bool = False,
@@ -99,7 +100,7 @@ class IndexOperations:
         ```
         """
         payload = {
-            "vector": vector,
+            "vector": convert_to_list(vector),
             "topK": top_k,
             "includeVectors": include_vectors,
             "includeMetadata": include_metadata,
@@ -127,7 +128,7 @@ class IndexOperations:
         index.delete("0")
         ```
         """
-        if not isinstance(ids, List):
+        if not isinstance(ids, list):
             ids = [ids]
 
         return DeleteResult._from_json(
@@ -199,7 +200,7 @@ class IndexOperations:
         res = index.fetch(["id1", "id2"], include_vectors=True, include_metadata=True)
         ```
         """
-        if not isinstance(ids, List):
+        if not isinstance(ids, list):
             ids = [ids]
 
         payload = {
@@ -277,7 +278,7 @@ class AsyncIndexOperations:
 
     async def query(
         self,
-        vector: List[float],
+        vector: Union[List[float], SupportsToList],
         top_k: int = 10,
         include_vectors: bool = False,
         include_metadata: bool = False,
@@ -302,7 +303,7 @@ class AsyncIndexOperations:
         ```
         """
         payload = {
-            "vector": vector,
+            "vector": convert_to_list(vector),
             "topK": top_k,
             "includeVectors": include_vectors,
             "includeMetadata": include_metadata,
@@ -332,7 +333,7 @@ class AsyncIndexOperations:
         await index.delete("0")
         ```
         """
-        if not isinstance(ids, List):
+        if not isinstance(ids, list):
             ids = [ids]
 
         return DeleteResult._from_json(
@@ -404,7 +405,7 @@ class AsyncIndexOperations:
         res = await index.fetch(["id1", "id2"], include_vectors=True, include_metadata=True)
         ```
         """
-        if not isinstance(ids, List):
+        if not isinstance(ids, list):
             ids = [ids]
 
         payload = {
