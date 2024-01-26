@@ -20,6 +20,11 @@ index = Index(url=UPSTASH_VECTOR_REST_URL, token=UPSTASH_VECTOR_REST_TOKEN)
 
 or alternatively, initialize from the environment
 
+```bash
+export UPSTASH_VECTOR_REST_URL [URL]
+export UPSTASH_VECTOR_REST_TOKEN [TOKEN]
+```
+
 ```python
 from upstash_vector import Index
 
