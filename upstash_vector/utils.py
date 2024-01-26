@@ -1,9 +1,9 @@
 from upstash_vector.types import Vector
 from upstash_vector.errors import ClientError
-from typing import List, Dict
+from typing import List
 
 
-def _convert_to_list(obj):
+def convert_to_list(obj):
     if isinstance(obj, list):
         return obj
     elif hasattr(obj, "tolist") and callable(getattr(obj, "tolist")):
@@ -19,9 +19,9 @@ def _tuple_to_vector(vector) -> Vector:
         raise ClientError("Tuple must be in the format (id, vector, metadata)")
 
     if len(vector) == 2:
-        return Vector(id=vector[0], vector=_convert_to_list(vector[1]))
+        return Vector(id=vector[0], vector=convert_to_list(vector[1]))
 
-    return Vector(id=vector[0], vector=_convert_to_list(vector[1]), metadata=vector[2])
+    return Vector(id=vector[0], vector=convert_to_list(vector[1]), metadata=vector[2])
 
 
 def _dict_to_vector(vector) -> Vector:
@@ -33,17 +33,17 @@ def _dict_to_vector(vector) -> Vector:
         metadata = vector["metadata"]
 
     return Vector(
-        id=vector["id"], vector=_convert_to_list(vector["vector"]), metadata=metadata
+        id=vector["id"], vector=convert_to_list(vector["vector"]), metadata=metadata
     )
 
 
 def _tuple_or_dict_to_vectors(vector) -> Vector:
     if isinstance(vector, Vector):
-        vector.vector = _convert_to_list(vector.vector)
+        vector.vector = convert_to_list(vector.vector)
         return vector
     elif isinstance(vector, tuple):
         return _tuple_to_vector(vector)
-    elif isinstance(vector, Dict):
+    elif isinstance(vector, dict):
         return _dict_to_vector(vector)
     else:
         raise ClientError(

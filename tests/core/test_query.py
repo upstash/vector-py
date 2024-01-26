@@ -3,6 +3,9 @@ from tests import assert_eventually, assert_eventually_async
 
 from upstash_vector import Index, AsyncIndex
 
+import numpy as np
+import pandas as pd
+
 
 def test_query_with_vectors_with_metadata(index: Index):
     v1_id = "id1"
@@ -174,6 +177,30 @@ def test_query_without_vectors_without_metadata(index: Index):
             v1_values, top_k=5, include_metadata=False, include_vectors=False
         )
         assert len(query_res) == 5
+
+    assert_eventually(assertion)
+
+
+def test_query_with_numpy_and_pandas_vectors(index: Index):
+    index.upsert(
+        vectors=[
+            ("id-0", [0.1, 0.2]),
+            ("id-1", [0.7, 0.8]),
+        ]
+    )
+
+    def assertion():
+        query_res = index.query(np.array([0.1, 0.2]), top_k=1)
+        assert len(query_res) == 1
+
+        assert query_res[0].id == "id-0"
+        assert query_res[0].score == 1
+
+        query_res = index.query(pd.array([0.7, 0.8]), top_k=1)
+        assert len(query_res) == 1
+
+        assert query_res[0].id == "id-1"
+        assert query_res[0].score == 1
 
     assert_eventually(assertion)
 
@@ -351,5 +378,30 @@ async def test_query_without_vectors_without_metadata_async(async_index: AsyncIn
             v1_values, top_k=5, include_metadata=False, include_vectors=False
         )
         assert len(query_res) == 5
+
+    await assert_eventually_async(assertion)
+
+
+@pytest.mark.asyncio
+async def test_query_with_numpy_and_pandas_vectors_async(async_index: AsyncIndex):
+    await async_index.upsert(
+        vectors=[
+            ("id-0", [0.1, 0.2]),
+            ("id-1", [0.7, 0.8]),
+        ]
+    )
+
+    async def assertion():
+        query_res = await async_index.query(np.array([0.1, 0.2]), top_k=1)
+        assert len(query_res) == 1
+
+        assert query_res[0].id == "id-0"
+        assert query_res[0].score == 1
+
+        query_res = await async_index.query(pd.array([0.7, 0.8]), top_k=1)
+        assert len(query_res) == 1
+
+        assert query_res[0].id == "id-1"
+        assert query_res[0].score == 1
 
     await assert_eventually_async(assertion)
