@@ -121,12 +121,14 @@ res = index.delete("id1")
 index.reset() 
 ```
 
-### Index Stats
+### Index Info
 ```python
-stats = index.stats()
-# stats.vector_count: total number of vectors in the index
-# stats.pending_vector_count: total number of vectors waiting to be indexed
-# stats.index_size: total size of the index on disk in bytes 
+info = index.info()
+# info.vector_count: total number of vectors in the index
+# info.pending_vector_count: total number of vectors waiting to be indexed
+# info.index_size: total size of the index on disk in bytes 
+# info.dimension: how many dimensions the index has 
+# info.similarity_function: similarity function chosen for the index
 ```
 
 # Contributing
