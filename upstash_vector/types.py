@@ -3,8 +3,7 @@ from typing import Optional, List, Dict, Union, Protocol
 
 
 class SupportsToList(Protocol):
-    def tolist(self) -> List[float]:
-        ...
+    def tolist(self) -> List[float]: ...
 
 
 @dataclass
@@ -84,5 +83,5 @@ class InfoResult:
             pending_vector_count=obj["pendingVectorCount"],
             index_size=obj["indexSize"],
             dimension=obj["dimension"],
-            similarity_function=obj["similarityFunction"]
+            similarity_function=obj["similarityFunction"],
         )
