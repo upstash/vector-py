@@ -215,7 +215,7 @@ class IndexOperations:
 
     def info(self) -> InfoResult:
         """
-        Returns the index statistics, including:
+        Returns the index info, including:
 
         * total number of vectors
         * total number of vectors waiting to be indexed
@@ -424,11 +424,13 @@ class AsyncIndexOperations:
 
     async def info(self) -> InfoResult:
         """
-        Returns the index statistics asynchronously, including:
+        Returns the index info asynchronously, including:
 
         * total number of vectors
         * total number of vectors waiting to be indexed
         * total size of the index on disk in bytes
+        * dimension count for the index
+        * similarity function selected for the index
         """
         return InfoResult._from_json(
             await self._execute_request_async(payload=None, path=INFO_PATH)
