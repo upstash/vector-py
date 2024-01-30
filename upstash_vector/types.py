@@ -69,15 +69,20 @@ class RangeResult:
 
 
 @dataclass
-class StatsResult:
+class InfoResult:
     vector_count: int
     pending_vector_count: int
     index_size: int
+    dimension: int
+    similarity_function: str
 
     @classmethod
-    def _from_json(cls, obj: dict) -> "StatsResult":
+    def _from_json(cls, obj: dict) -> "InfoResult":
+        print(obj)
         return cls(
             vector_count=obj["vectorCount"],
             pending_vector_count=obj["pendingVectorCount"],
             index_size=obj["indexSize"],
+            dimension=obj["dimension"],
+            similarity_function=obj["similarityFunction"]
         )

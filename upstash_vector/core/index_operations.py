@@ -6,7 +6,7 @@ from upstash_vector.errors import ClientError
 from upstash_vector.types import (
     DeleteResult,
     RangeResult,
-    StatsResult,
+    InfoResult,
     SupportsToList,
     Vector,
     FetchResult,
@@ -21,7 +21,7 @@ DELETE_PATH = "/delete"
 RESET_PATH = "/reset"
 RANGE_PATH = "/range"
 FETCH_PATH = "/fetch"
-STATS_PATH = "/stats"
+INFO_PATH = "/info"
 
 
 class IndexOperations:
@@ -213,7 +213,7 @@ class IndexOperations:
             for vector in self._execute_request(payload=payload, path=FETCH_PATH)
         ]
 
-    def stats(self) -> StatsResult:
+    def info(self) -> InfoResult:
         """
         Returns the index statistics, including:
 
@@ -221,8 +221,8 @@ class IndexOperations:
         * total number of vectors waiting to be indexed
         * total size of the index on disk in bytes
         """
-        return StatsResult._from_json(
-            self._execute_request(payload=None, path=STATS_PATH)
+        return InfoResult._from_json(
+            self._execute_request(payload=None, path=INFO_PATH)
         )
 
 
@@ -420,7 +420,7 @@ class AsyncIndexOperations:
             )
         ]
 
-    async def stats(self) -> StatsResult:
+    async def info(self) -> InfoResult:
         """
         Returns the index statistics asynchronously, including:
 
@@ -428,6 +428,6 @@ class AsyncIndexOperations:
         * total number of vectors waiting to be indexed
         * total size of the index on disk in bytes
         """
-        return StatsResult._from_json(
-            await self._execute_request_async(payload=None, path=STATS_PATH)
+        return InfoResult._from_json(
+            await self._execute_request_async(payload=None, path=INFO_PATH)
         )
