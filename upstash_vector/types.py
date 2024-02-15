@@ -78,7 +78,6 @@ class InfoResult:
 
     @classmethod
     def _from_json(cls, obj: dict) -> "InfoResult":
-        print(obj)
         return cls(
             vector_count=obj["vectorCount"],
             pending_vector_count=obj["pendingVectorCount"],
