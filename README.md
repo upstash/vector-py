@@ -1,5 +1,10 @@
 # Upstash Vector Python SDK
-The Upstash Vector python client
+The Upstash Vector Python client
+
+> [!NOTE]  
+> **This project is in GA Stage.**
+>
+> The Upstash Professional Support fully covers this project. It receives regular updates, and bug fixes. The Upstash team is committed to maintaining and improving its functionality.
 
 ## Installation
 
