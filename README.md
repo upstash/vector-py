@@ -77,6 +77,7 @@ query_res = index.query(
     top_k=top_k,
     include_vectors=True,
     include_metadata=True,
+    filter="metadata_f = 'metadata_v'"
 )
 # query_res is a list of vectors with scores:
 # query_res[n].id: The identifier associated with the matching vector.
