@@ -79,6 +79,7 @@ class IndexOperations:
         top_k: int = 10,
         include_vectors: bool = False,
         include_metadata: bool = False,
+        filter: str = "",
     ) -> List[QueryResult]:
         """
         Query `top_k` many similar vectors.
@@ -87,6 +88,7 @@ class IndexOperations:
         :param top_k: number that indicates how many vectors will be returned as the query result.
         :param include_vectors: bool value that indicates whether the resulting top_k vectors will have their vector values shown.
         :param include_metadata: bool value that indicates whether the resulting top_k vectors will have their metadata shown.
+        :param filter: filter expression to narrow down the query results.
 
         Example usage:
 
@@ -104,6 +106,7 @@ class IndexOperations:
             "topK": top_k,
             "includeVectors": include_vectors,
             "includeMetadata": include_metadata,
+            "filter": filter,
         }
         return [
             QueryResult._from_json(obj)
@@ -284,6 +287,7 @@ class AsyncIndexOperations:
         top_k: int = 10,
         include_vectors: bool = False,
         include_metadata: bool = False,
+        filter: str = "",
     ) -> List[QueryResult]:
         """
         Query `top_k` many similar vectors asynchronously.
@@ -309,6 +313,7 @@ class AsyncIndexOperations:
             "topK": top_k,
             "includeVectors": include_vectors,
             "includeMetadata": include_metadata,
+            "filter": filter,
         }
         return [
             QueryResult._from_json(obj)
