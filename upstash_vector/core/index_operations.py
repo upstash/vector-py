@@ -79,7 +79,7 @@ class IndexOperations:
         top_k: int = 10,
         include_vectors: bool = False,
         include_metadata: bool = False,
-        filter: str = ""
+        filter: str = "",
     ) -> List[QueryResult]:
         """
         Query `top_k` many similar vectors.
@@ -287,7 +287,7 @@ class AsyncIndexOperations:
         top_k: int = 10,
         include_vectors: bool = False,
         include_metadata: bool = False,
-        filter: str = ""
+        filter: str = "",
     ) -> List[QueryResult]:
         """
         Query `top_k` many similar vectors asynchronously.

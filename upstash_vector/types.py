@@ -3,8 +3,7 @@ from typing import Optional, List, Dict, Union, Protocol
 
 
 class SupportsToList(Protocol):
-    def tolist(self) -> List[float]:
-        ...
+    def tolist(self) -> List[float]: ...
 
 
 @dataclass

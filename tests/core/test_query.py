@@ -204,6 +204,7 @@ def test_query_with_numpy_and_pandas_vectors(index: Index):
 
     assert_eventually(assertion)
 
+
 def test_query_with_filtering(index: Index):
     v1_id = "id1"
     v1_metadata = {"metadata_field": "metadata_value", "foo": "bar"}
@@ -242,7 +243,11 @@ def test_query_with_filtering(index: Index):
         assert query_res[1].vector == v2_values
 
         query_res = index.query(
-            v1_values, top_k=2, include_metadata=True, include_vectors=True, filter="foo = 'bar'"
+            v1_values,
+            top_k=2,
+            include_metadata=True,
+            include_vectors=True,
+            filter="foo = 'bar'",
         )
         assert len(query_res) == 2
 
@@ -460,6 +465,7 @@ async def test_query_with_numpy_and_pandas_vectors_async(async_index: AsyncIndex
 
     await assert_eventually_async(assertion)
 
+
 @pytest.mark.asyncio
 async def test_query_with_filtering_async(async_index: AsyncIndex):
     v1_id = "id1"
@@ -499,7 +505,11 @@ async def test_query_with_filtering_async(async_index: AsyncIndex):
         assert query_res[1].vector == v2_values
 
         query_res = await async_index.query(
-            v1_values, top_k=2, include_metadata=True, include_vectors=True, filter="foo = 'bar'"
+            v1_values,
+            top_k=2,
+            include_metadata=True,
+            include_vectors=True,
+            filter="foo = 'bar'",
         )
         assert len(query_res) == 2
 
