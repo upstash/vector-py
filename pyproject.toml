@@ -31,7 +31,7 @@ packages = [{ include = "upstash_vector" }]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-httpx = "^0.24.1"
+httpx = ">=0.24.0, <0.28"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.8.0"
