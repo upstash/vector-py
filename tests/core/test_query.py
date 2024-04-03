@@ -524,3 +524,135 @@ async def test_query_with_filtering_async(async_index: AsyncIndex):
         assert query_res[1].vector == v3_values
 
     await assert_eventually_async(assertion)
+
+def test_query_with_data(index: Index):
+    v1_id = "id1"
+    v1_metadata = {"metadata_field": "metadata_value"}
+    v1_data = "Hello-world"
+
+    index.upsert(
+        vectors=[
+            (v1_id, v1_data, v1_metadata),
+        ]
+    )
+
+    def assertion():
+        query_res = index.query(
+            data=v1_data, top_k=1, include_metadata=False, include_vectors=True
+        )
+        assert len(query_res) == 1
+
+        assert query_res[0].id == v1_id
+        assert query_res[0].metadata == v1_metadata
+        assert query_res[0].score == 1
+
+    assert_eventually(assertion)
+
+@pytest.mark.asyncio
+async def test_query_with_data_async(async_index: AsyncIndex):
+    v1_id = "id1"
+    v1_metadata = {"metadata_field": "metadata_value"}
+    v1_data = "Hello-world"
+
+    await async_index.upsert(
+        vectors=[
+            (v1_id, v1_data, v1_metadata),
+        ]
+    )
+
+    async def assertion():
+        query_res = await async_index.query(
+            data=v1_data, top_k=1, include_metadata=False, include_vectors=True
+        )
+        assert len(query_res) == 1
+
+        assert query_res[0].id == v1_id
+        assert query_res[0].metadata == v1_metadata
+        assert query_res[0].score == 1
+
+    await assert_eventually_async(assertion)
+
+def test_query_with_multiple_data(index: Index):
+    v1_id = "id1"
+    v1_metadata = {"metadata_field": "cookie"}
+    v1_data = "cookie"
+
+    v2_id = "id2"
+    v2_metadata = {"metadata_field": "car"}
+    v2_data = "car"
+
+    index.upsert(
+        vectors=[
+            (v1_id, v1_data, v1_metadata),
+            (v2_id, v2_data, v2_metadata),
+        ]
+    )
+
+    def assertion():
+        query_res = index.query(
+            data=v1_data, top_k=1, include_metadata=False, include_vectors=True
+        )
+        assert len(query_res) == 1
+
+        assert query_res[0].id == v1_id
+        assert query_res[0].metadata == v1_metadata
+        assert query_res[0].score == 1
+
+        query_res = index.query(
+            data=v2_data, top_k=1, include_metadata=False, include_vectors=True
+        )
+        assert len(query_res) == 1
+
+        assert query_res[0].id == v2_id
+        assert query_res[0].metadata == v2_metadata
+        assert query_res[0].score == 1
+
+        query_res = index.query(
+            data=v1_data, top_k=2, include_metadata=False, include_vectors=True
+        )
+        assert len(query_res) == 2
+
+    assert_eventually(assertion)
+
+@pytest.mark.asyncio
+async def test_query_with_multiple_data_async(async_index: AsyncIndex):
+    v1_id = "id1"
+    v1_metadata = {"metadata_field": "cookie"}  
+    v1_data = "cookie"
+
+    v2_id = "id2"
+    v2_metadata = {"metadata_field": "car"}
+    v2_data = "car"
+
+    await async_index.upsert(
+        vectors=[
+            (v1_id, v1_data, v1_metadata),
+            (v2_id, v2_data, v2_metadata),
+        ]
+    )
+
+    async def assertion():
+        query_res = await async_index.query(
+            data=v1_data, top_k=1, include_metadata=False, include_vectors=True
+        )
+        assert len(query_res) == 1
+
+        assert query_res[0].id == v1_id
+        assert query_res[0].metadata == v1_metadata
+        assert query_res[0].score == 1
+
+        query_res = await async_index.query(
+            data=v2_data, top_k=1, include_metadata=False, include_vectors=True
+        )
+        assert len(query_res) == 1
+
+        assert query_res[0].id == v2_id
+        assert query_res[0].metadata == v2_metadata
+        assert query_res[0].score == 1
+
+        query_res = await async_index.query(
+            data=v1_data, top_k=2, include_metadata=False, include_vectors=True
+        )
+        assert len(query_res) == 2
+
+    await assert_eventually_async(assertion)

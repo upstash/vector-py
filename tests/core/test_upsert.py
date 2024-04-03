@@ -1,7 +1,9 @@
 import pytest
+from pytest import raises
 
 from upstash_vector import Index, AsyncIndex
-from upstash_vector.types import Vector
+from upstash_vector.errors import UpstashError
+from upstash_vector.types import DataPayload, Vector
 
 import numpy as np
 import pandas as pd
@@ -352,3 +354,88 @@ def test_upsert_vector_with_pandas(index: Index):
     assert res[1].id == v2_id
     assert res[1].metadata is None
     assert res[1].vector == v2_values
+
+def test_upsert_data(index: Index):
+    v1_id = "vector_id1"
+    v1_metadata = {"metadata_field": "metadata_value"}
+    v1_data = "Hello-World"
+
+    v2_id = "vector_id2"
+    v2_data = "Goodbye-World"
+
+    index.upsert(
+        vectors=[
+            DataPayload(id=v1_id, data=v1_data, metadata=v1_metadata),
+            DataPayload(id=v2_id, data=v2_data),
+        ]
+    )
+
+    res = index.fetch(ids=[v1_id, v2_id], include_vectors=True, include_metadata=True)
+
+    assert res[0] is not None
+    assert res[0].id == v1_id
+    assert res[0].metadata == v1_metadata
+
+    assert res[1] is not None
+    assert res[1].id == v2_id
+    assert res[1].metadata is None
+
+
+@pytest.mark.asyncio
+async def test_upsert_data_async(async_index: AsyncIndex):
+    v1_id = "vector_id1"
+    v1_metadata = {"metadata_field": "metadata_value"}
+    v1_data = "Hello-World"
+
+    v2_id = "vector_id2"
+    v2_data = "Goodbye-World"
+
+    await async_index.upsert(
+        vectors=[
+            DataPayload(id=v1_id, data=v1_data, metadata=v1_metadata),
+            DataPayload(id=v2_id, data=v2_data),
+        ]
+    )
+
+    res = await async_index.fetch(ids=[v1_id, v2_id], include_vectors=True, include_metadata=True)
+
+    assert res[0] is not None
+    assert res[0].id == v1_id
+    assert res[0].metadata == v1_metadata
+
+    assert res[1] is not None
+    assert res[1].id == v2_id
+    assert res[1].metadata is None
+
+def test_upsert_data_with_vectors(index: Index):
+    v1_id = "vector_id1"
+    v1_metadata = {"metadata_field": "metadata_value"}
+    v1_data = "Hello-World"
+
+    v2_id = "vector_id2"
+    v2_data = "Goodbye-World"
+
+    with raises(UpstashError):
+        index.upsert(
+            vectors=[
+                DataPayload(id=v1_id, data=v1_data, metadata=v1_metadata),
+                DataPayload(id=v2_id, data=v2_data),
+            ]
+        )
+
+@pytest.mark.asyncio
+async def test_upsert_data_with_vectors_async(async_index: AsyncIndex):
+    v1_id = "vector_id1"
+    v1_metadata = {"metadata_field": "metadata_value"}
+    v1_data = "Hello-World"
+
+    v2_id = "vector_id2"
+    v2_values = [0.1, 0.2]
+
+    with raises(UpstashError):
+        await async_index.upsert(
+            vectors=[
+                DataPayload(id=v1_id, data=v1_data, metadata=v1_metadata),
+                Vector(id=v2_id, vector=v2_values),
+            ]
+        )

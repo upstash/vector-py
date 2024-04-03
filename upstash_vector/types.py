@@ -10,9 +10,14 @@ class SupportsToList(Protocol):
 @dataclass
 class Vector:
     id: str
-    vector: Union[List[float], SupportsToList]
+    vector: Optional[Union[List[float], SupportsToList]]
     metadata: Optional[Dict] = None
 
+@dataclass
+class DataPayload:
+    id: str
+    data: str
+    metadata: Optional[Dict] = None
 
 @dataclass
 class FetchResult:
