@@ -18,3 +18,18 @@ async def async_index():
     idx = AsyncIndex(environ["URL"], environ["TOKEN"])
     await idx.reset()
     return idx
+
+
+@pytest.fixture
+def embedding_index():
+    idx = Index(environ["EMBEDDING_URL"], environ["EMBEDDING_TOKEN"])
+    idx.reset()
+    return idx
+
+
+@pytest_asyncio.fixture
+async def async_embedding_index():
+    idx = AsyncIndex(environ["EMBEDDING_URL"], environ["EMBEDDING_TOKEN"])
+    await idx.reset()
+    return idx
+

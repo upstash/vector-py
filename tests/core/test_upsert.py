@@ -356,7 +356,7 @@ def test_upsert_vector_with_pandas(index: Index):
     assert res[1].vector == v2_values
 
 
-def test_upsert_data(index: Index):
+def test_upsert_data(embedding_index: Index):
     v1_id = "vector_id1"
     v1_metadata = {"metadata_field": "metadata_value"}
     v1_data = "Hello-World"
@@ -364,14 +364,14 @@ def test_upsert_data(index: Index):
     v2_id = "vector_id2"
     v2_data = "Goodbye-World"
 
-    index.upsert(
+    embedding_index.upsert(
         vectors=[
             Data(id=v1_id, data=v1_data, metadata=v1_metadata),
             Data(id=v2_id, data=v2_data),
         ]
     )
 
-    res = index.fetch(ids=[v1_id, v2_id], include_vectors=True, include_metadata=True)
+    res = embedding_index.fetch(ids=[v1_id, v2_id], include_vectors=True, include_metadata=True)
 
     assert res[0] is not None
     assert res[0].id == v1_id
@@ -383,7 +383,7 @@ def test_upsert_data(index: Index):
 
 
 @pytest.mark.asyncio
-async def test_upsert_data_async(async_index: AsyncIndex):
+async def test_upsert_data_async(async_embedding_index: AsyncIndex):
     v1_id = "vector_id1"
     v1_metadata = {"metadata_field": "metadata_value"}
     v1_data = "Hello-World"
@@ -391,14 +391,14 @@ async def test_upsert_data_async(async_index: AsyncIndex):
     v2_id = "vector_id2"
     v2_data = "Goodbye-World"
 
-    await async_index.upsert(
+    await async_embedding_index.upsert(
         vectors=[
             Data(id=v1_id, data=v1_data, metadata=v1_metadata),
             Data(id=v2_id, data=v2_data),
         ]
     )
 
-    res = await async_index.fetch(
+    res = await async_embedding_index.fetch(
         ids=[v1_id, v2_id], include_vectors=True, include_metadata=True
     )
 
@@ -411,19 +411,19 @@ async def test_upsert_data_async(async_index: AsyncIndex):
     assert res[1].metadata is None
 
 
-def test_upsert_data_with_vectors(index: Index):
+def test_upsert_data_with_vectors(embedding_index: Index):
     v1_id = "vector_id1"
     v1_metadata = {"metadata_field": "metadata_value"}
     v1_data = "Hello-World"
 
     v2_id = "vector_id2"
-    v2_data = "Goodbye-World"
+    v2_values = [0.1, 0.2]
 
-    with raises(UpstashError):
-        index.upsert(
+    with raises(ClientError):
+        embedding_index.upsert(
             vectors=[
                 Data(id=v1_id, data=v1_data, metadata=v1_metadata),
-                Data(id=v2_id, data=v2_data),
+                Vector(id=v2_id, vector=v2_values),
             ]
         )
 
@@ -437,7 +437,7 @@ async def test_upsert_data_with_vectors_async(async_index: AsyncIndex):
     v2_id = "vector_id2"
     v2_values = [0.1, 0.2]
 
-    with raises(UpstashError):
+    with raises(ClientError):
         await async_index.upsert(
             vectors=[
                 Data(id=v1_id, data=v1_data, metadata=v1_metadata),
@@ -456,8 +456,8 @@ def test_invalid_payload(index: Index):
     with raises(ClientError):
         index.upsert(
             vectors=[
-                Data(v1_id, v1_data, v1_metadata),
-                (v2_id, v2_vector, v2_metadata),
+                Data(v1_id, v1_data),
+                (v2_id, v2_vector),
             ]
         )
 
@@ -473,7 +473,7 @@ async def test_invalid_payload_async(async_index: AsyncIndex):
     with raises(ClientError):
         await async_index.upsert(
             vectors=[
-                Data(v1_id, v1_data, v1_metadata),
-                (v2_id, v2_vector, v2_metadata),
+                Data(v1_id, v1_data),
+                (v2_id, v2_vector),
             ]
         )
