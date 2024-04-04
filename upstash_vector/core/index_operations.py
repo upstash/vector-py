@@ -4,7 +4,7 @@
 from typing import Sequence, Union, List, Dict, Optional
 from upstash_vector.errors import ClientError
 from upstash_vector.types import (
-    DataPayload,
+    Data,
     DeleteResult,
     RangeResult,
     InfoResult,
@@ -14,12 +14,12 @@ from upstash_vector.types import (
     Vector,
 )
 
-from upstash_vector.utils import convert_to_list, convert_to_vectors
+from upstash_vector.utils import convert_to_list, convert_to_vectors, convert_to_payload
 
 UPSERT_PATH = "/upsert"
 UPSERT_DATA_PATH = "/upsert-data"
 QUERY_PATH = "/query"
-QUERY_DATA_PATH = "/query"
+QUERY_DATA_PATH = "/query-data"
 DELETE_PATH = "/delete"
 RESET_PATH = "/reset"
 RANGE_PATH = "/range"
@@ -33,7 +33,7 @@ class IndexOperations:
 
     def upsert(
         self,
-        vectors: Sequence[Union[Dict, tuple, Vector, DataPayload]],
+        vectors: Sequence[Union[Dict, tuple, Vector, Data]],
     ) -> str:
         """
         Upserts(update or insert) vectors. There are 3 ways to upsert vectors.
@@ -68,29 +68,25 @@ class IndexOperations:
         )
         ```
 
-        #OR 
+        #OR
 
         ```python
-        from upstash_vector import Vector
+        from upstash_vector import Data
         res = index.upsert(
             vectors=[
-                DataPayload(id="id5", data="Goodbye-World", metadata={"metadata_f": "metadata_v"}),
-                DataPayload(id="id6", data="Hello-World"),
+                Data(id="id5", data="Goodbye-World", metadata={"metadata_f": "metadata_v"}),
+                Data(id="id6", data="Hello-World"),
             ]
         )
         ```
         """
 
         vectors = convert_to_vectors(vectors)
-        payload = [
-            {"id": vector.id, "vector": vector.vector, "metadata": vector.metadata} if isinstance(vector, Vector)
-            else {"id": vector.id, "data": vector.data, "metadata": vector.metadata} 
-            for vector in vectors
-        ]
+        payload = convert_to_payload(vectors)
 
         path = UPSERT_PATH
         for vector in vectors:
-            if isinstance(vector, DataPayload):
+            if isinstance(vector, Data):
                 path = UPSERT_DATA_PATH
                 break
 
@@ -151,9 +147,9 @@ class IndexOperations:
         if data is not None:
             payload["data"] = data
             path = QUERY_DATA_PATH
-        else: 
-            payload["vector"] = convert_to_list(vector),
-            
+        else:
+            payload["vector"] = (convert_to_list(vector),)
+
         return [
             QueryResult._from_json(obj)
             for obj in self._execute_request(payload=payload, path=path)
@@ -283,7 +279,7 @@ class AsyncIndexOperations:
 
     async def upsert(
         self,
-        vectors: Sequence[Union[Dict, tuple, Vector, DataPayload]],
+        vectors: Sequence[Union[Dict, tuple, Vector, Data]],
     ) -> str:
         """
         Upserts(update or insert) vectors asynchronously. There are 3 ways to upsert vectors.
@@ -319,28 +315,24 @@ class AsyncIndexOperations:
         )
         ```
 
-        # OR 
+        # OR
 
         ```python
-        from upstash_vector import Vector
+        from upstash_vector import Data
         res = await index.upsert(
             vectors=[
-                DataPayload(id="id5", data="Goodbye-World", metadata={"metadata_f": "metadata_v"}),
-                DataPayload(id="id6", data="Hello-World"),
+                Data(id="id5", data="Goodbye-World", metadata={"metadata_f": "metadata_v"}),
+                Data(id="id6", data="Hello-World"),
             ]
         )
         ```
         """
         vectors = convert_to_vectors(vectors)
-        payload = [
-            {"id": vector.id, "vector": vector.vector, "metadata": vector.metadata} if isinstance(vector, Vector)
-            else {"id": vector.id, "data": vector.data, "metadata": vector.metadata} 
-            for vector in vectors
-        ]
+        payload = convert_to_payload(vectors)
 
         path = UPSERT_PATH
         for vector in vectors:
-            if isinstance(vector, DataPayload):
+            if isinstance(vector, Data):
                 path = UPSERT_DATA_PATH
                 break
 
@@ -401,9 +393,9 @@ class AsyncIndexOperations:
         if data is not None:
             payload["data"] = data
             path = QUERY_DATA_PATH
-        else: 
-            payload["vector"] = convert_to_list(vector),
-            
+        else:
+            payload["vector"] = (convert_to_list(vector),)
+
         return [
             QueryResult._from_json(obj)
             for obj in await self._execute_request_async(payload=payload, path=path)

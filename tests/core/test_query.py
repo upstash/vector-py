@@ -525,6 +525,7 @@ async def test_query_with_filtering_async(async_index: AsyncIndex):
 
     await assert_eventually_async(assertion)
 
+
 def test_query_with_data(index: Index):
     v1_id = "id1"
     v1_metadata = {"metadata_field": "metadata_value"}
@@ -538,7 +539,7 @@ def test_query_with_data(index: Index):
 
     def assertion():
         query_res = index.query(
-            data=v1_data, top_k=1, include_metadata=False, include_vectors=True
+            data=v1_data, top_k=1, include_metadata=True, include_vectors=True
         )
         assert len(query_res) == 1
 
@@ -547,6 +548,7 @@ def test_query_with_data(index: Index):
         assert query_res[0].score == 1
 
     assert_eventually(assertion)
+
 
 @pytest.mark.asyncio
 async def test_query_with_data_async(async_index: AsyncIndex):
@@ -562,7 +564,7 @@ async def test_query_with_data_async(async_index: AsyncIndex):
 
     async def assertion():
         query_res = await async_index.query(
-            data=v1_data, top_k=1, include_metadata=False, include_vectors=True
+            data=v1_data, top_k=1, include_metadata=True, include_vectors=True
         )
         assert len(query_res) == 1
 
@@ -571,6 +573,7 @@ async def test_query_with_data_async(async_index: AsyncIndex):
         assert query_res[0].score == 1
 
     await assert_eventually_async(assertion)
+
 
 def test_query_with_multiple_data(index: Index):
     v1_id = "id1"
@@ -590,7 +593,7 @@ def test_query_with_multiple_data(index: Index):
 
     def assertion():
         query_res = index.query(
-            data=v1_data, top_k=1, include_metadata=False, include_vectors=True
+            data=v1_data, top_k=1, include_metadata=True, include_vectors=True
         )
         assert len(query_res) == 1
 
@@ -599,7 +602,7 @@ def test_query_with_multiple_data(index: Index):
         assert query_res[0].score == 1
 
         query_res = index.query(
-            data=v2_data, top_k=1, include_metadata=False, include_vectors=True
+            data=v2_data, top_k=1, include_metadata=True, include_vectors=True
         )
         assert len(query_res) == 1
 
@@ -614,10 +617,11 @@ def test_query_with_multiple_data(index: Index):
 
     assert_eventually(assertion)
 
+
 @pytest.mark.asyncio
 async def test_query_with_multiple_data_async(async_index: AsyncIndex):
     v1_id = "id1"
-    v1_metadata = {"metadata_field": "cookie"}  
+    v1_metadata = {"metadata_field": "cookie"}
     v1_data = "cookie"
 
     v2_id = "id2"
@@ -633,7 +637,7 @@ async def test_query_with_multiple_data_async(async_index: AsyncIndex):
 
     async def assertion():
         query_res = await async_index.query(
-            data=v1_data, top_k=1, include_metadata=False, include_vectors=True
+            data=v1_data, top_k=1, include_metadata=True, include_vectors=True
         )
         assert len(query_res) == 1
 
@@ -642,7 +646,7 @@ async def test_query_with_multiple_data_async(async_index: AsyncIndex):
         assert query_res[0].score == 1
 
         query_res = await async_index.query(
-            data=v2_data, top_k=1, include_metadata=False, include_vectors=True
+            data=v2_data, top_k=1, include_metadata=True, include_vectors=True
         )
         assert len(query_res) == 1
 

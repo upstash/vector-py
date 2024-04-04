@@ -13,11 +13,13 @@ class Vector:
     vector: Union[List[float], SupportsToList]
     metadata: Optional[Dict] = None
 
+
 @dataclass
-class DataPayload:
+class Data:
     id: str
     data: str
     metadata: Optional[Dict] = None
+
 
 @dataclass
 class FetchResult:
