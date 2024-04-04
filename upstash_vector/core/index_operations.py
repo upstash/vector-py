@@ -148,7 +148,7 @@ class IndexOperations:
             payload["data"] = data
             path = QUERY_DATA_PATH
         else:
-            payload["vector"] = (convert_to_list(vector),)
+            payload["vector"] = convert_to_list(vector)
 
         return [
             QueryResult._from_json(obj)
@@ -394,7 +394,7 @@ class AsyncIndexOperations:
             payload["data"] = data
             path = QUERY_DATA_PATH
         else:
-            payload["vector"] = (convert_to_list(vector),)
+            payload["vector"] = convert_to_list(vector)
 
         return [
             QueryResult._from_json(obj)
