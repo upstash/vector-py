@@ -14,41 +14,40 @@ def convert_to_list(obj):
     )
 
 
-def _tuple_to_vector(vector) -> Union[Vector, Data]:
-    if len(vector) < 2 or len(vector) > 3:
+def _get_payload_element(
+        id,
+        payload: Union[str, List[float]],
+        metadata: Dict[str, Any] = None
+) -> Union[Vector, Data]:
+
+    if isinstance(payload, str):
+        return Data(id=id, data=payload, metadata=metadata)
+
+    return Vector(id=id, vector=convert_to_list(payload), metadata=metadata)
+
+
+def _get_payload_element_from_dict(
+        id,
+        vector: Union[str, List[float]] = None,
+        data: str = None,
+        metadata: Dict[str, Any] = None
+) -> Union[Vector, Data]:
+    is_vector, is_data = not vector is None, not data is None
+
+    if not is_vector and not is_data:
         raise ClientError(
-            "Tuple must be in the format (id, vector, metadata) or (id, data, metadata)"
+            "Vector dict must have one of `vector` or `data` fields defined."
         )
 
-    metadata = None
-    if len(vector) == 3:
-        metadata = vector[2]
+    if is_vector and is_data:
+        raise ClientError("only one of `data` or `vector` field can be given.")
 
-    if isinstance(vector[1], str):
-        return Data(id=vector[0], data=vector[1], metadata=metadata)
-
-    return Vector(id=vector[0], vector=convert_to_list(vector[1]), metadata=metadata)
-
-
-def _dict_to_vector(vector) -> Union[Vector, Data]:
-    if vector["id"] is None or (vector["vector"] is None and vector["data"] is None):
-        raise ClientError(
-            "Vector dict must have 'id' and 'vector' or 'data' fields defined."
-        )
-
-    if vector["vector"] is not None and vector["data"] is not None:
-        raise ClientError("either data or vector field can be given.")
-
-    metadata = None
-    if vector.get("metadata") is not None:
-        metadata = vector["metadata"]
-
-    if vector["vector"] is not None:
+    if is_vector:
         return Vector(
-            id=vector["id"], vector=convert_to_list(vector["vector"]), metadata=metadata
+            id=id, vector=convert_to_list(vector), metadata=metadata
         )
 
-    return Data(id=vector["id"], data=vector["data"], metadata=metadata)
+    return Data(id=id, data=data, metadata=metadata)
 
 
 def _tuple_or_dict_to_vectors(vector) -> Union[Vector, Data]:
@@ -58,9 +57,9 @@ def _tuple_or_dict_to_vectors(vector) -> Union[Vector, Data]:
     elif isinstance(vector, Data):
         return vector
     elif isinstance(vector, tuple):
-        return _tuple_to_vector(vector)
+        return _get_payload_element(*vector)
     elif isinstance(vector, dict):
-        return _dict_to_vector(vector)
+        return _get_payload_element_from_dict(**vector)
     else:
         raise ClientError(
             f"Given object type is undefined for converting to vector: {vector}"
