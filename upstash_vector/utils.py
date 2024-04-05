@@ -15,7 +15,7 @@ def convert_to_list(obj):
 
 
 def _get_payload_element(
-        id,
+        id: Union[int, str],
         payload: Union[str, List[float]],
         metadata: Dict[str, Any] = None
 ) -> Union[Vector, Data]:
@@ -27,8 +27,8 @@ def _get_payload_element(
 
 
 def _get_payload_element_from_dict(
-        id,
-        vector: Union[str, List[float]] = None,
+        id: Union[int, str],
+        vector: List[float] = None,
         data: str = None,
         metadata: Dict[str, Any] = None
 ) -> Union[Vector, Data]:
