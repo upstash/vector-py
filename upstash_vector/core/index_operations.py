@@ -4,19 +4,22 @@
 from typing import Sequence, Union, List, Dict, Optional
 from upstash_vector.errors import ClientError
 from upstash_vector.types import (
+    Data,
     DeleteResult,
     RangeResult,
     InfoResult,
     SupportsToList,
-    Vector,
     FetchResult,
     QueryResult,
+    Vector,
 )
 
-from upstash_vector.utils import convert_to_list, convert_to_vectors
+from upstash_vector.utils import convert_to_list, convert_to_vectors, convert_to_payload
 
 UPSERT_PATH = "/upsert"
+UPSERT_DATA_PATH = "/upsert-data"
 QUERY_PATH = "/query"
+QUERY_DATA_PATH = "/query-data"
 DELETE_PATH = "/delete"
 RESET_PATH = "/reset"
 RANGE_PATH = "/range"
@@ -30,7 +33,7 @@ class IndexOperations:
 
     def upsert(
         self,
-        vectors: Sequence[Union[Dict, tuple, Vector]],
+        vectors: Sequence[Union[Dict, tuple, Vector, Data]],
     ) -> str:
         """
         Upserts(update or insert) vectors. There are 3 ways to upsert vectors.
@@ -64,31 +67,44 @@ class IndexOperations:
             ]
         )
         ```
-        """
-        vectors = convert_to_vectors(vectors)
-        payload = [
-            {"id": vector.id, "vector": vector.vector, "metadata": vector.metadata}
-            for vector in vectors
-        ]
 
-        return self._execute_request(payload=payload, path=UPSERT_PATH)
+        #OR
+
+        ```python
+        from upstash_vector import Data
+        res = index.upsert(
+            vectors=[
+                Data(id="id5", data="Goodbye-World", metadata={"metadata_f": "metadata_v"}),
+                Data(id="id6", data="Hello-World"),
+            ]
+        )
+        ```
+        """
+
+        vectors = convert_to_vectors(vectors)
+        payload, is_vector = convert_to_payload(vectors)
+        path = UPSERT_PATH if is_vector else UPSERT_DATA_PATH
+
+        return self._execute_request(payload=payload, path=path)
 
     def query(
         self,
-        vector: Union[List[float], SupportsToList],
+        vector: Optional[Union[List[float], SupportsToList]] = None,
         top_k: int = 10,
         include_vectors: bool = False,
         include_metadata: bool = False,
         filter: str = "",
+        data: Optional[str] = None,
     ) -> List[QueryResult]:
         """
-        Query `top_k` many similar vectors.
+        Query `top_k` many similar vectors. Requires either `data` or `vector` fields. Raises exception if `data` and `vector` fields are both used.
 
         :param vector: list of floats for the values of vector.
         :param top_k: number that indicates how many vectors will be returned as the query result.
         :param include_vectors: bool value that indicates whether the resulting top_k vectors will have their vector values shown.
         :param include_metadata: bool value that indicates whether the resulting top_k vectors will have their metadata shown.
         :param filter: filter expression to narrow down the query results.
+        :param data: string (to be embedded) to query for
 
         Example usage:
 
@@ -100,17 +116,40 @@ class IndexOperations:
             include_metadata=True,
         )
         ```
+
+        ```python
+        query_res = index.query(
+            data="hello"
+            top_k=3,
+            include_vectors=True,
+            include_metadata=True,
+        )
+        ```
         """
         payload = {
-            "vector": convert_to_list(vector),
             "topK": top_k,
             "includeVectors": include_vectors,
             "includeMetadata": include_metadata,
             "filter": filter,
         }
+
+        if data is None and vector is None:
+            raise ClientError("either `data` or `vector` values must be given")
+        if data is not None and vector is not None:
+            raise ClientError(
+                "`data` and `vector` values cannot be given at the same time"
+            )
+
+        if data is not None:
+            payload["data"] = data
+            path = QUERY_DATA_PATH
+        else:
+            payload["vector"] = convert_to_list(vector)
+            path = QUERY_PATH
+
         return [
             QueryResult._from_json(obj)
-            for obj in self._execute_request(payload=payload, path=QUERY_PATH)
+            for obj in self._execute_request(payload=payload, path=path)
         ]
 
     def delete(self, ids: Union[str, List[str]]) -> DeleteResult:
@@ -237,7 +276,7 @@ class AsyncIndexOperations:
 
     async def upsert(
         self,
-        vectors: Sequence[Union[Dict, tuple, Vector]],
+        vectors: Sequence[Union[Dict, tuple, Vector, Data]],
     ) -> str:
         """
         Upserts(update or insert) vectors asynchronously. There are 3 ways to upsert vectors.
@@ -272,30 +311,43 @@ class AsyncIndexOperations:
             ]
         )
         ```
+
+        # OR
+
+        ```python
+        from upstash_vector import Data
+        res = await index.upsert(
+            vectors=[
+                Data(id="id5", data="Goodbye-World", metadata={"metadata_f": "metadata_v"}),
+                Data(id="id6", data="Hello-World"),
+            ]
+        )
+        ```
         """
         vectors = convert_to_vectors(vectors)
-        payload = [
-            {"id": vector.id, "vector": vector.vector, "metadata": vector.metadata}
-            for vector in vectors
-        ]
+        payload, is_vector = convert_to_payload(vectors)
+        path = UPSERT_PATH if is_vector else UPSERT_DATA_PATH
 
-        return await self._execute_request_async(payload=payload, path=UPSERT_PATH)
+        return await self._execute_request_async(payload=payload, path=path)
 
     async def query(
         self,
-        vector: Union[List[float], SupportsToList],
+        vector: Optional[Union[List[float], SupportsToList]] = None,
         top_k: int = 10,
         include_vectors: bool = False,
         include_metadata: bool = False,
         filter: str = "",
+        data: Optional[str] = None,
     ) -> List[QueryResult]:
         """
-        Query `top_k` many similar vectors asynchronously.
+        Query `top_k` many similar vectors. Requires either `data` or `vector` fields. Raises exception if `data` and `vector` fields are both used.
 
         :param vector: list of floats for the values of vector.
         :param top_k: number that indicates how many vectors will be returned as the query result.
         :param include_vectors: bool value that indicates whether the resulting top_k vectors will have their vector values shown.
         :param include_metadata: bool value that indicates whether the resulting top_k vectors will have their metadata shown.
+        :param filter: filter expression to narrow down the query results.
+        :param data: string (to be embedded) to query for
 
         Example usage:
 
@@ -307,19 +359,40 @@ class AsyncIndexOperations:
             include_metadata=True,
         )
         ```
+
+        ```python
+        query_res = await index.query(
+            data="hello"
+            top_k=3,
+            include_vectors=True,
+            include_metadata=True,
+        )
+        ```
         """
         payload = {
-            "vector": convert_to_list(vector),
             "topK": top_k,
             "includeVectors": include_vectors,
             "includeMetadata": include_metadata,
             "filter": filter,
         }
+
+        if data is None and vector is None:
+            raise ClientError("either `data` or `vector` values must be given")
+        if data is not None and vector is not None:
+            raise ClientError(
+                "`data` and `vector` values cannot be given at the same time"
+            )
+
+        if data is not None:
+            payload["data"] = data
+            path = QUERY_DATA_PATH
+        else:
+            payload["vector"] = convert_to_list(vector)
+            path = QUERY_PATH
+
         return [
             QueryResult._from_json(obj)
-            for obj in await self._execute_request_async(
-                payload=payload, path=QUERY_PATH
-            )
+            for obj in await self._execute_request_async(payload=payload, path=path)
         ]
 
     async def delete(self, ids: Union[str, List[str]]) -> DeleteResult:

@@ -154,8 +154,20 @@ poetry run ruff format .
 ```
 
 ## Running tests
+
 To run all the tests, make sure the poetry virtual environment activated with all 
-the necessary dependencies. Set the necessary environment variables and run:
+the necessary dependencies.
+
+Create two Vector Stores on upstash. First one should have 2 dimensions. Second one should use an embedding model. Set the necessary environment variables:
+
+```
+URL=****
+TOKEN=****
+EMBEDDING_URL=****
+EMBEDDING_TOKEN=****
+```
+
+Then, run the following command to run tests:
 
 ```bash
 poetry run pytest

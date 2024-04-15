@@ -9,8 +9,15 @@ class SupportsToList(Protocol):
 
 @dataclass
 class Vector:
-    id: str
+    id: Union[int, str]
     vector: Union[List[float], SupportsToList]
+    metadata: Optional[Dict] = None
+
+
+@dataclass
+class Data:
+    id: Union[int, str]
+    data: str
     metadata: Optional[Dict] = None
 
 
