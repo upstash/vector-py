@@ -68,6 +68,19 @@ index.upsert(
 )
 ```
 
+If you are using an Upstash Vector with an embedding model, you can directly insert data as a string:
+
+```python
+from upstash_vector import Data
+
+res = index.upsert(
+    vectors=[
+        Data(id="id5", data="Goodbye-World", metadata={"metadata_f": "metadata_v"}),
+        Data(id="id6", data="Hello-World"),
+    ]
+)
+```
+
 ### Query Index
 ```python
 query_vector = [0.6, 0.9]
@@ -84,6 +97,17 @@ query_res = index.query(
 # query_res[n].score: A measure of similarity indicating how closely the vector matches the query vector.
 # query_res[n].vector: The vector itself (included only if `include_vector` is set to `True`).
 # query_res[n].metadata: Additional information or attributes linked to the matching vector.
+```
+
+If you are using an Upstash Vector with an embedding model, you can query the index with some text:
+
+```python
+query_res = index.query(
+    data="hello"
+    top_k=3,
+    include_vectors=True,
+    include_metadata=True,
+)
 ```
 
 ### Fetch Indexes
