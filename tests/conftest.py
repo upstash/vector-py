@@ -32,4 +32,3 @@ async def async_embedding_index():
     idx = AsyncIndex(environ["EMBEDDING_URL"], environ["EMBEDDING_TOKEN"])
     await idx.reset()
     return idx
-

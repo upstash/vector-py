@@ -2,7 +2,7 @@ import pytest
 from pytest import raises
 
 from upstash_vector import Index, AsyncIndex
-from upstash_vector.errors import UpstashError, ClientError
+from upstash_vector.errors import ClientError
 from upstash_vector.types import Data, Vector
 
 import numpy as np
@@ -371,7 +371,9 @@ def test_upsert_data(embedding_index: Index):
         ]
     )
 
-    res = embedding_index.fetch(ids=[v1_id, v2_id], include_vectors=True, include_metadata=True)
+    res = embedding_index.fetch(
+        ids=[v1_id, v2_id], include_vectors=True, include_metadata=True
+    )
 
     assert res[0] is not None
     assert res[0].id == v1_id

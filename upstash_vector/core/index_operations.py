@@ -82,34 +82,29 @@ class IndexOperations:
         """
 
         vectors = convert_to_vectors(vectors)
-        payload = convert_to_payload(vectors)
-
-        path = UPSERT_PATH
-        for vector in vectors:
-            if isinstance(vector, Data):
-                path = UPSERT_DATA_PATH
-                break
+        payload, is_vector = convert_to_payload(vectors)
+        path = UPSERT_PATH if is_vector else UPSERT_DATA_PATH
 
         return self._execute_request(payload=payload, path=path)
 
     def query(
         self,
         vector: Optional[Union[List[float], SupportsToList]] = None,
-        data: Optional[str] = None,
         top_k: int = 10,
         include_vectors: bool = False,
         include_metadata: bool = False,
         filter: str = "",
+        data: Optional[str] = None,
     ) -> List[QueryResult]:
         """
         Query `top_k` many similar vectors. Requires either `data` or `vector` fields. Raises exception if `data` and `vector` fields are both used.
 
         :param vector: list of floats for the values of vector.
-        :param data: string (to be embedded) to query for
         :param top_k: number that indicates how many vectors will be returned as the query result.
         :param include_vectors: bool value that indicates whether the resulting top_k vectors will have their vector values shown.
         :param include_metadata: bool value that indicates whether the resulting top_k vectors will have their metadata shown.
         :param filter: filter expression to narrow down the query results.
+        :param data: string (to be embedded) to query for
 
         Example usage:
 
@@ -141,14 +136,16 @@ class IndexOperations:
         if data is None and vector is None:
             raise ClientError("either `data` or `vector` values must be given")
         if data is not None and vector is not None:
-            raise ClientError("data and vector values cannot be given at the same time")
+            raise ClientError(
+                "`data` and `vector` values cannot be given at the same time"
+            )
 
-        path = QUERY_PATH
         if data is not None:
             payload["data"] = data
             path = QUERY_DATA_PATH
         else:
             payload["vector"] = convert_to_list(vector)
+            path = QUERY_PATH
 
         return [
             QueryResult._from_json(obj)
@@ -328,34 +325,29 @@ class AsyncIndexOperations:
         ```
         """
         vectors = convert_to_vectors(vectors)
-        payload = convert_to_payload(vectors)
-
-        path = UPSERT_PATH
-        for vector in vectors:
-            if isinstance(vector, Data):
-                path = UPSERT_DATA_PATH
-                break
+        payload, is_vector = convert_to_payload(vectors)
+        path = UPSERT_PATH if is_vector else UPSERT_DATA_PATH
 
         return await self._execute_request_async(payload=payload, path=path)
 
     async def query(
         self,
         vector: Optional[Union[List[float], SupportsToList]] = None,
-        data: Optional[str] = None,
         top_k: int = 10,
         include_vectors: bool = False,
         include_metadata: bool = False,
         filter: str = "",
+        data: Optional[str] = None,
     ) -> List[QueryResult]:
         """
         Query `top_k` many similar vectors. Requires either `data` or `vector` fields. Raises exception if `data` and `vector` fields are both used.
 
         :param vector: list of floats for the values of vector.
-        :param data: string (to be embedded) to query for
         :param top_k: number that indicates how many vectors will be returned as the query result.
         :param include_vectors: bool value that indicates whether the resulting top_k vectors will have their vector values shown.
         :param include_metadata: bool value that indicates whether the resulting top_k vectors will have their metadata shown.
         :param filter: filter expression to narrow down the query results.
+        :param data: string (to be embedded) to query for
 
         Example usage:
 
@@ -387,14 +379,16 @@ class AsyncIndexOperations:
         if data is None and vector is None:
             raise ClientError("either `data` or `vector` values must be given")
         if data is not None and vector is not None:
-            raise ClientError("data and vector values cannot be given at the same time")
+            raise ClientError(
+                "`data` and `vector` values cannot be given at the same time"
+            )
 
-        path = QUERY_PATH
         if data is not None:
             payload["data"] = data
             path = QUERY_DATA_PATH
         else:
             payload["vector"] = convert_to_list(vector)
+            path = QUERY_PATH
 
         return [
             QueryResult._from_json(obj)
