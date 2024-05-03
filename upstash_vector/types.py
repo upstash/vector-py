@@ -76,12 +76,26 @@ class RangeResult:
 
 
 @dataclass
+class NamespaceInfo:
+    vector_count: int
+    pending_vector_count: int
+
+    @classmethod
+    def _from_json(cls, obj: dict) -> "NamespaceInfo":
+        return cls(
+            vector_count=obj["vectorCount"],
+            pending_vector_count=obj["pendingVectorCount"],
+        )
+
+
+@dataclass
 class InfoResult:
     vector_count: int
     pending_vector_count: int
     index_size: int
     dimension: int
     similarity_function: str
+    namespaces: Dict[str, NamespaceInfo]
 
     @classmethod
     def _from_json(cls, obj: dict) -> "InfoResult":
@@ -91,4 +105,8 @@ class InfoResult:
             index_size=obj["indexSize"],
             dimension=obj["dimension"],
             similarity_function=obj["similarityFunction"],
+            namespaces={
+                ns: NamespaceInfo._from_json(ns_info)
+                for ns, ns_info in obj["namespaces"].items()
+            },
         )

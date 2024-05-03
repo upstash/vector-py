@@ -4,7 +4,8 @@ The Upstash Vector Python client
 > [!NOTE]  
 > **This project is in GA Stage.**
 >
-> The Upstash Professional Support fully covers this project. It receives regular updates, and bug fixes. The Upstash team is committed to maintaining and improving its functionality.
+> The Upstash Professional Support fully covers this project. It receives regular updates, and bug fixes. 
+> The Upstash team is committed to maintaining and improving its functionality.
 
 ## Installation
 
@@ -14,16 +15,17 @@ pip3 install upstash-vector
 ```
 
 ## Usage
-In order to use this client, head out to [Upstash Console](https://console.upstash.com) and create a vector database. There, get the URL and the TOKEN from the dashboard.
+In order to use this client, head out to [Upstash Console](https://console.upstash.com) and create a vector database. 
+There, get the `UPSTASH_VECTOR_REST_URL` and the `UPSTASH_VECTOR_REST_TOKEN` from the dashboard.
 
-### Initialize the client
+### Initializing the Index
 ```python
 from upstash_vector import Index
 
 index = Index(url=UPSTASH_VECTOR_REST_URL, token=UPSTASH_VECTOR_REST_TOKEN)
 ```
 
-or alternatively, initialize from the environment
+or alternatively, initialize from the environment variables
 
 ```bash
 export UPSTASH_VECTOR_REST_URL [URL]
@@ -37,9 +39,17 @@ index = Index.from_env()
 ```
 
 ### Upsert Vectors
-There are couple ways to upsert vectors. Feel free to use whichever one feels the most comfortable.
+
+Vectors can be upserted(inserted or updated) into a namespace of an index
+to be later queried or fetched.
+
+There are a couple of ways of doing upserts:
 
 ```python
+# as tuples, either of the form: 
+# - (id, vector, metadata)
+# - (id, vector) 
+
 index.upsert(
     vectors=[
         ("id1", [0.1, 0.2], {"metadata_field": "metadata_value"}),
@@ -49,9 +59,13 @@ index.upsert(
 ```
 
 ```python
+# as dicts, either of the form:
+# - {"id": id, "vector": vector, "metadata": metadata)
+# - {"id": id, "vector": vector} 
+
 index.upsert(
     vectors=[
-        {"id": "id3", "vector": [0.1, 0.2], "metadata": {"metadata_f": "metadata_v"}},
+        {"id": "id3", "vector": [0.1, 0.2], "metadata": {"field": "value"}},
         {"id": "id4", "vector": [0.5, 0.6]},
     ]
 )
@@ -60,105 +74,259 @@ index.upsert(
 ```python
 from upstash_vector import Vector
 
+# as Vector objects
+
 index.upsert(
     vectors=[
-        Vector(id="id5", vector=[1, 2], metadata={"metadata_f": "metadata_v"}),
+        Vector(id="id5", vector=[1, 2], metadata={"field": "value"}),
         Vector(id="id6", vector=[6, 7]),
     ]
 )
 ```
 
-If you are using an Upstash Vector with an embedding model, you can directly insert data as a string:
+If the index is created with an embedding model, raw string data can be upserted.
 
 ```python
 from upstash_vector import Data
 
 res = index.upsert(
     vectors=[
-        Data(id="id5", data="Goodbye-World", metadata={"metadata_f": "metadata_v"}),
-        Data(id="id6", data="Hello-World"),
+        Data(id="id5", data="Goodbye World", metadata={"field": "value"}),
+        Data(id="id6", data="Hello World"),
     ]
 )
 ```
 
-### Query Index
+Also, a namespace can be specified to upsert vectors into it.
+When no namespace is provided, the default namespace is used.
+
 ```python
-query_vector = [0.6, 0.9]
-top_k = 6
-query_res = index.query(
-    vector=query_vector,
-    top_k=top_k,
-    include_vectors=True,
+index.upsert(
+    vectors=[
+        ("id1", [0.1, 0.2]),
+        ("id2", [0.3,0.4]),
+    ],
+    namespace="ns",
+)
+```
+
+### Query Vectors
+
+Some number of vectors that are approximately most similar to a given
+query vector can be requested from a namespace of an index.
+
+```python
+res = index.query(
+    vector=[0.6, 0.9], 
+    top_k=5,
+    include_vectors=False,
     include_metadata=True,
     filter="metadata_f = 'metadata_v'"
 )
-# query_res is a list of vectors with scores:
-# query_res[n].id: The identifier associated with the matching vector.
-# query_res[n].score: A measure of similarity indicating how closely the vector matches the query vector.
-# query_res[n].vector: The vector itself (included only if `include_vector` is set to `True`).
-# query_res[n].metadata: Additional information or attributes linked to the matching vector.
+
+# List of query results, sorted in the descending order of similarity
+for r in res:
+    print(
+        r.id, # The id used while upserting the vector
+        r.score, # The similarity score of this vector to the query vector. Higher is more similar.
+        r.vector, # The value of the vector, if requested.
+        r.metadata, # The metadata of the vector, if requested and present.
+    )
 ```
 
-If you are using an Upstash Vector with an embedding model, you can query the index with some text:
+If the index is created with an embedding model, raw string data can be queried.
 
 ```python
-query_res = index.query(
-    data="hello"
-    top_k=3,
-    include_vectors=True,
+res = index.query(
+    data="hello",
+    top_k=5,
+    include_vectors=False,
     include_metadata=True,
 )
 ```
 
-### Fetch Indexes
+When a filter is provided, query results are further narrowed down based
+on the vectors whose metadata matches with it.
+
+See [Metadata Filtering](https://upstash.com/docs/vector/features/filtering) documentation 
+for more information regarding the filter syntax. 
+
+Also, a namespace can be specified to query from. 
+When no namespace is provided,  the default namespace is used.
+
 ```python
-res = index.fetch(["id3", "id4"], include_vectors=True, include_metadata=True)
-# res.vectors: A list containing information for each fetched vector, including `id`, `vector`, and `metadata`.
+res = index.query(
+    vector=[0.6, 0.9], 
+    top_k=5,
+    namespace="ns",
+)
+```
+
+### Fetch Vectors
+
+A set of vectors can be fetched from a namespace of an index.
+
+```python
+res = index.fetch(
+    ids=["id3", "id4"], 
+    include_vectors=False, 
+    include_metadata=True,
+)
+
+# List of fetch results, one for each id passed
+for r in res:
+    if not r: # Can be None, if there is no such vector with the given id
+        continue
+    
+    print(
+        r.id, # The id used while upserting the vector
+        r.vector, # The value of the vector, if requested.
+        r.medata, # The metadata of the vector, if requested and present.
+    )
 ```
 
 or, for singular fetch:
 
 ```python
-res = index.fetch("id1", include_vectors=True, include_metadata=True)
+res = index.fetch(
+    "id1", 
+    include_vectors=True, 
+    include_metadata=True,
+)
+
+r = res[0]
+if r: # Can be None, if there is no such vector with the given id
+    print(
+        r.id, # The id used while upserting the vector
+        r.vector, # The value of the vector, if requested.
+        r.medata, # The metadata of the vector, if requested and present.
+    )
 ```
 
-### Range over Vectors - Scan the Index
-```python
-# Scans the index 3 by 3, until all the indexes are traversed.
-res = index.range(cursor="", limit=3, include_vectors=True, include_metadata=True)
-while res.next_cursor != "":
-    res = index.range(cursor=res.next_cursor, limit=3, include_vectors=True, include_metadata=True)
+Also, a namespace can be specified to fetch from. 
+When no namespace is provided, the default namespace is used.
 
-# res.nex_cursor: A cursor indicating the position to start the next range query. If "", there are no more results.
-# res.vectors: A list containing information for each vector, including `id`, `vector`, and `metadata`.
+```python
+res = index.fetch(
+    ids=["id3", "id4"], 
+    namespace="ns",
+)
+```
+
+### Range Over Vectors
+
+The vectors upserted into a namespace of an index can be scanned
+in a page by page fashion.
+
+```python
+# Scans the vectors 100 vector at a time,
+res = index.range(
+    cursor="", # Start the scan from the beginning 
+    limit=100, 
+    include_vectors=False, 
+    include_metadata=True,
+)
+
+while res.next_cursor != "":
+    res = index.range(
+        cursor=res.next_cursor, 
+        limit=100, 
+        include_vectors=False, 
+        include_metadata=True,
+    )
+    
+    for v in res.vectors:
+        print(
+            v.id, # The id used while upserting the vector
+            v.vector, # The value of the vector, if requested.
+            v.metadata, # The metadata of the vector, if requested and present.
+        )
+```
+
+Also, a namespace can be specified to range from. 
+When no namespace is provided, the default namespace is used.
+
+```python
+res = index.range(
+    cursor="", 
+    limit=100,
+    namespace="ns",
+)
 ```
 
 ### Delete Vectors
+
+A list of vectors can be deleted from a namespace of index.
+If no such vectors with the given ids exist, this is no-op.
+
 ```python
-res = index.delete(["id1", "id2"])
-# res.deleted: An integer indicating how many vectors were deleted with the command.
+res = index.delete(
+    ids=["id1", "id2"],
+)
+
+print(
+    res.deleted, # How many vectors are deleted out of the given ids.
+)
 ```
 
 or, for singular deletion:
 
 ```python
-res = index.delete("id1")
+res = index.delete(
+    "id1",
+)
+
+print(res) # A boolean indicating whether the vector is deleted or not.
 ```
 
-### Reset the Index
+Also, a namespace can be specified to delete from. 
+When no namespace is provided, the default namespace is used.
+
 ```python
-# This will remove all the vectors that were upserted and index will be reset.
+res = index.delete(
+    ids=["id1", "id2"],
+    namespace="ns",
+)
+```
+
+### Reset the Namespace
+
+All vectors can be removed from a namespace of an index.
+
+```python
 index.reset() 
 ```
 
+Also, a namespace can be specified to reset. 
+When no namespace is provided, the default namespace is used.
+
+```python
+index.reset(
+    namespace="ns",
+) 
+```
+
 ### Index Info
+
+Some information regarding the status and type of the index can be requested.
+This information also contains per-namespace status.
+
 ```python
 info = index.info()
-# info.vector_count: total number of vectors in the index
-# info.pending_vector_count: total number of vectors waiting to be indexed
-# info.index_size: total size of the index on disk in bytes 
-# info.dimension: how many dimensions the index has 
-# info.similarity_function: similarity function chosen for the index
+print(
+    info.vector_count, # Total number of vectors across all namespaces
+    info.pending_vector_count, # Total number of vectors waiting to be indexed across all namespaces
+    info.index_size, # Total size of the index on disk in bytes
+    info.dimension, # Vector dimension
+    info.similarity_function, # Similarity function used
+)
+
+for ns, ns_info in info.namespaces.items():
+    print(
+        ns, # Name of the namespace
+        ns_info.vector_count, # Total number of vectors in this namespaces
+        ns_info.pending_vector_count, # Total number of vectors waiting to be indexed in this namespaces
+    )
 ```
 
 # Contributing
