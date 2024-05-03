@@ -1,6 +1,8 @@
 import time
 import asyncio
 
+NAMESPACES = ["", "ns"]
+
 
 def assert_eventually(assertion, retry_delay=0.5, timeout=5.0):
     deadline = time.time() + timeout

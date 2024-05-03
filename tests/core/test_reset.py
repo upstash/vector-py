@@ -1,8 +1,10 @@
 import pytest
+from tests import NAMESPACES
 from upstash_vector import Index, AsyncIndex
 
 
-def test_reset(index: Index):
+@pytest.mark.parametrize("ns", NAMESPACES)
+def test_reset(index: Index, ns: str):
     v1_id = "id1"
     v1_metadata = {"metadata_field": "metadata_value"}
     v1_values = [0.1, 0.2]
@@ -14,23 +16,35 @@ def test_reset(index: Index):
         vectors=[
             (v1_id, v1_values, v1_metadata),
             (v2_id, v2_values),
-        ]
+        ],
+        namespace=ns,
     )
 
-    res = index.fetch(ids=[v1_id, v2_id], include_vectors=True, include_metadata=True)
+    res = index.fetch(
+        ids=[v1_id, v2_id],
+        include_vectors=True,
+        include_metadata=True,
+        namespace=ns,
+    )
     assert len(res) == 2
     assert res[0] is not None
     assert res[1] is not None
 
-    index.reset()
+    index.reset(namespace=ns)
 
-    res = index.fetch(ids=[v1_id, v2_id], include_vectors=True, include_metadata=True)
+    res = index.fetch(
+        ids=[v1_id, v2_id],
+        include_vectors=True,
+        include_metadata=True,
+        namespace=ns,
+    )
     assert res[0] is None
     assert res[1] is None
 
 
 @pytest.mark.asyncio
-async def test_reset_async(async_index: AsyncIndex):
+@pytest.mark.parametrize("ns", NAMESPACES)
+async def test_reset_async(async_index: AsyncIndex, ns: str):
     v1_id = "id1"
     v1_metadata = {"metadata_field": "metadata_value"}
     v1_values = [0.1, 0.2]
@@ -42,20 +56,27 @@ async def test_reset_async(async_index: AsyncIndex):
         vectors=[
             (v1_id, v1_values, v1_metadata),
             (v2_id, v2_values),
-        ]
+        ],
+        namespace=ns,
     )
 
     res = await async_index.fetch(
-        ids=[v1_id, v2_id], include_vectors=True, include_metadata=True
+        ids=[v1_id, v2_id],
+        include_vectors=True,
+        include_metadata=True,
+        namespace=ns,
     )
     assert len(res) == 2
     assert res[0] is not None
     assert res[1] is not None
 
-    await async_index.reset()
+    await async_index.reset(namespace=ns)
 
     res = await async_index.fetch(
-        ids=[v1_id, v2_id], include_vectors=True, include_metadata=True
+        ids=[v1_id, v2_id],
+        include_vectors=True,
+        include_metadata=True,
+        namespace=ns,
     )
     assert res[0] is None
     assert res[1] is None

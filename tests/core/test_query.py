@@ -1,5 +1,5 @@
 import pytest
-from tests import assert_eventually, assert_eventually_async
+from tests import assert_eventually, assert_eventually_async, NAMESPACES
 
 from upstash_vector import Index, AsyncIndex
 
@@ -7,7 +7,8 @@ import numpy as np
 import pandas as pd
 
 
-def test_query_with_vectors_with_metadata(index: Index):
+@pytest.mark.parametrize("ns", NAMESPACES)
+def test_query_with_vectors_with_metadata(index: Index, ns: str):
     v1_id = "id1"
     v1_metadata = {"metadata_field": "metadata_value"}
     v1_values = [0.1, 0.2]
@@ -33,12 +34,17 @@ def test_query_with_vectors_with_metadata(index: Index):
             (v3_id, v3_values),
             (v4_id, v4_values, v4_metadata),
             (v5_id, v5_values, v5_metadata),
-        ]
+        ],
+        namespace=ns,
     )
 
     def assertion():
         query_res = index.query(
-            v1_values, top_k=1, include_metadata=True, include_vectors=True
+            v1_values,
+            top_k=1,
+            include_metadata=True,
+            include_vectors=True,
+            namespace=ns,
         )
         assert len(query_res) == 1
 
@@ -48,7 +54,11 @@ def test_query_with_vectors_with_metadata(index: Index):
         assert query_res[0].vector == v1_values
 
         query_res = index.query(
-            v1_values, top_k=2, include_metadata=True, include_vectors=True
+            v1_values,
+            top_k=2,
+            include_metadata=True,
+            include_vectors=True,
+            namespace=ns,
         )
         assert len(query_res) == 2
 
@@ -58,14 +68,19 @@ def test_query_with_vectors_with_metadata(index: Index):
         assert query_res[1].vector == v2_values
 
         query_res = index.query(
-            v1_values, top_k=5, include_metadata=True, include_vectors=True
+            v1_values,
+            top_k=5,
+            include_metadata=True,
+            include_vectors=True,
+            namespace=ns,
         )
         assert len(query_res) == 5
 
     assert_eventually(assertion)
 
 
-def test_query_with_vectors_without_metadata(index: Index):
+@pytest.mark.parametrize("ns", NAMESPACES)
+def test_query_with_vectors_without_metadata(index: Index, ns: str):
     v1_id = "id1"
     v1_metadata = {"metadata_field": "metadata_value"}
     v1_values = [0.1, 0.2]
@@ -91,12 +106,17 @@ def test_query_with_vectors_without_metadata(index: Index):
             (v3_id, v3_values),
             (v4_id, v4_values, v4_metadata),
             (v5_id, v5_values, v5_metadata),
-        ]
+        ],
+        namespace=ns,
     )
 
     def assertion():
         query_res = index.query(
-            v1_values, top_k=1, include_metadata=False, include_vectors=True
+            v1_values,
+            top_k=1,
+            include_metadata=False,
+            include_vectors=True,
+            namespace=ns,
         )
         assert len(query_res) == 1
 
@@ -106,7 +126,11 @@ def test_query_with_vectors_without_metadata(index: Index):
         assert query_res[0].vector == v1_values
 
         query_res = index.query(
-            v1_values, top_k=2, include_metadata=False, include_vectors=True
+            v1_values,
+            top_k=2,
+            include_metadata=False,
+            include_vectors=True,
+            namespace=ns,
         )
         assert len(query_res) == 2
 
@@ -116,14 +140,19 @@ def test_query_with_vectors_without_metadata(index: Index):
         assert query_res[1].vector == v2_values
 
         query_res = index.query(
-            v1_values, top_k=5, include_metadata=False, include_vectors=True
+            v1_values,
+            top_k=5,
+            include_metadata=False,
+            include_vectors=True,
+            namespace=ns,
         )
         assert len(query_res) == 5
 
     assert_eventually(assertion)
 
 
-def test_query_without_vectors_without_metadata(index: Index):
+@pytest.mark.parametrize("ns", NAMESPACES)
+def test_query_without_vectors_without_metadata(index: Index, ns: str):
     v1_id = "id1"
     v1_metadata = {"metadata_field": "metadata_value"}
     v1_values = [0.1, 0.2]
@@ -149,12 +178,17 @@ def test_query_without_vectors_without_metadata(index: Index):
             (v3_id, v3_values),
             (v4_id, v4_values, v4_metadata),
             (v5_id, v5_values, v5_metadata),
-        ]
+        ],
+        namespace=ns,
     )
 
     def assertion():
         query_res = index.query(
-            v1_values, top_k=1, include_metadata=False, include_vectors=False
+            v1_values,
+            top_k=1,
+            include_metadata=False,
+            include_vectors=False,
+            namespace=ns,
         )
         assert len(query_res) == 1
 
@@ -164,7 +198,11 @@ def test_query_without_vectors_without_metadata(index: Index):
         assert query_res[0].vector is None
 
         query_res = index.query(
-            v1_values, top_k=2, include_metadata=False, include_vectors=False
+            v1_values,
+            top_k=2,
+            include_metadata=False,
+            include_vectors=False,
+            namespace=ns,
         )
         assert len(query_res) == 2
 
@@ -174,29 +212,35 @@ def test_query_without_vectors_without_metadata(index: Index):
         assert query_res[1].vector is None
 
         query_res = index.query(
-            v1_values, top_k=5, include_metadata=False, include_vectors=False
+            v1_values,
+            top_k=5,
+            include_metadata=False,
+            include_vectors=False,
+            namespace=ns,
         )
         assert len(query_res) == 5
 
     assert_eventually(assertion)
 
 
-def test_query_with_numpy_and_pandas_vectors(index: Index):
+@pytest.mark.parametrize("ns", NAMESPACES)
+def test_query_with_numpy_and_pandas_vectors(index: Index, ns: str):
     index.upsert(
         vectors=[
             ("id-0", [0.1, 0.2]),
             ("id-1", [0.7, 0.8]),
-        ]
+        ],
+        namespace=ns,
     )
 
     def assertion():
-        query_res = index.query(np.array([0.1, 0.2]), top_k=1)
+        query_res = index.query(np.array([0.1, 0.2]), top_k=1, namespace=ns)
         assert len(query_res) == 1
 
         assert query_res[0].id == "id-0"
         assert query_res[0].score == 1
 
-        query_res = index.query(pd.array([0.7, 0.8]), top_k=1)
+        query_res = index.query(pd.array([0.7, 0.8]), top_k=1, namespace=ns)
         assert len(query_res) == 1
 
         assert query_res[0].id == "id-1"
@@ -205,7 +249,8 @@ def test_query_with_numpy_and_pandas_vectors(index: Index):
     assert_eventually(assertion)
 
 
-def test_query_with_filtering(index: Index):
+@pytest.mark.parametrize("ns", NAMESPACES)
+def test_query_with_filtering(index: Index, ns: str):
     v1_id = "id1"
     v1_metadata = {"metadata_field": "metadata_value", "foo": "bar"}
     v1_values = [0.1, 0.2]
@@ -223,12 +268,17 @@ def test_query_with_filtering(index: Index):
             (v1_id, v1_values, v1_metadata),
             (v2_id, v2_values, v2_metadata),
             (v3_id, v3_values, v3_metadata),
-        ]
+        ],
+        namespace=ns,
     )
 
     def assertion():
         query_res = index.query(
-            v1_values, top_k=2, include_metadata=True, include_vectors=True
+            v1_values,
+            top_k=2,
+            include_metadata=True,
+            include_vectors=True,
+            namespace=ns,
         )
         assert len(query_res) == 2
 
@@ -248,6 +298,7 @@ def test_query_with_filtering(index: Index):
             include_metadata=True,
             include_vectors=True,
             filter="foo = 'bar'",
+            namespace=ns,
         )
         assert len(query_res) == 2
 
@@ -265,7 +316,8 @@ def test_query_with_filtering(index: Index):
 
 
 @pytest.mark.asyncio
-async def test_query_with_vectors_with_metadata_async(async_index: AsyncIndex):
+@pytest.mark.parametrize("ns", NAMESPACES)
+async def test_query_with_vectors_with_metadata_async(async_index: AsyncIndex, ns: str):
     v1_id = "id1"
     v1_metadata = {"metadata_field": "metadata_value"}
     v1_values = [0.1, 0.2]
@@ -291,12 +343,17 @@ async def test_query_with_vectors_with_metadata_async(async_index: AsyncIndex):
             (v3_id, v3_values),
             (v4_id, v4_values, v4_metadata),
             (v5_id, v5_values, v5_metadata),
-        ]
+        ],
+        namespace=ns,
     )
 
     async def assertion():
         query_res = await async_index.query(
-            v1_values, top_k=1, include_metadata=True, include_vectors=True
+            v1_values,
+            top_k=1,
+            include_metadata=True,
+            include_vectors=True,
+            namespace=ns,
         )
         assert len(query_res) == 1
 
@@ -306,7 +363,11 @@ async def test_query_with_vectors_with_metadata_async(async_index: AsyncIndex):
         assert query_res[0].vector == v1_values
 
         query_res = await async_index.query(
-            v1_values, top_k=2, include_metadata=True, include_vectors=True
+            v1_values,
+            top_k=2,
+            include_metadata=True,
+            include_vectors=True,
+            namespace=ns,
         )
         assert len(query_res) == 2
 
@@ -316,7 +377,11 @@ async def test_query_with_vectors_with_metadata_async(async_index: AsyncIndex):
         assert query_res[1].vector == v2_values
 
         query_res = await async_index.query(
-            v1_values, top_k=5, include_metadata=True, include_vectors=True
+            v1_values,
+            top_k=5,
+            include_metadata=True,
+            include_vectors=True,
+            namespace=ns,
         )
         assert len(query_res) == 5
 
@@ -324,7 +389,10 @@ async def test_query_with_vectors_with_metadata_async(async_index: AsyncIndex):
 
 
 @pytest.mark.asyncio
-async def test_query_with_vectors_without_metadata_async(async_index: AsyncIndex):
+@pytest.mark.parametrize("ns", NAMESPACES)
+async def test_query_with_vectors_without_metadata_async(
+    async_index: AsyncIndex, ns: str
+):
     v1_id = "id1"
     v1_metadata = {"metadata_field": "metadata_value"}
     v1_values = [0.1, 0.2]
@@ -350,12 +418,17 @@ async def test_query_with_vectors_without_metadata_async(async_index: AsyncIndex
             (v3_id, v3_values),
             (v4_id, v4_values, v4_metadata),
             (v5_id, v5_values, v5_metadata),
-        ]
+        ],
+        namespace=ns,
     )
 
     async def assertion():
         query_res = await async_index.query(
-            v1_values, top_k=1, include_metadata=False, include_vectors=True
+            v1_values,
+            top_k=1,
+            include_metadata=False,
+            include_vectors=True,
+            namespace=ns,
         )
         assert len(query_res) == 1
 
@@ -365,7 +438,11 @@ async def test_query_with_vectors_without_metadata_async(async_index: AsyncIndex
         assert query_res[0].vector == v1_values
 
         query_res = await async_index.query(
-            v1_values, top_k=2, include_metadata=False, include_vectors=True
+            v1_values,
+            top_k=2,
+            include_metadata=False,
+            include_vectors=True,
+            namespace=ns,
         )
         assert len(query_res) == 2
 
@@ -375,7 +452,11 @@ async def test_query_with_vectors_without_metadata_async(async_index: AsyncIndex
         assert query_res[1].vector == v2_values
 
         query_res = await async_index.query(
-            v1_values, top_k=5, include_metadata=False, include_vectors=True
+            v1_values,
+            top_k=5,
+            include_metadata=False,
+            include_vectors=True,
+            namespace=ns,
         )
         assert len(query_res) == 5
 
@@ -383,7 +464,10 @@ async def test_query_with_vectors_without_metadata_async(async_index: AsyncIndex
 
 
 @pytest.mark.asyncio
-async def test_query_without_vectors_without_metadata_async(async_index: AsyncIndex):
+@pytest.mark.parametrize("ns", NAMESPACES)
+async def test_query_without_vectors_without_metadata_async(
+    async_index: AsyncIndex, ns: str
+):
     v1_id = "id1"
     v1_metadata = {"metadata_field": "metadata_value"}
     v1_values = [0.1, 0.2]
@@ -409,12 +493,17 @@ async def test_query_without_vectors_without_metadata_async(async_index: AsyncIn
             (v3_id, v3_values),
             (v4_id, v4_values, v4_metadata),
             (v5_id, v5_values, v5_metadata),
-        ]
+        ],
+        namespace=ns,
     )
 
     async def assertion():
         query_res = await async_index.query(
-            v1_values, top_k=1, include_metadata=False, include_vectors=False
+            v1_values,
+            top_k=1,
+            include_metadata=False,
+            include_vectors=False,
+            namespace=ns,
         )
         assert len(query_res) == 1
 
@@ -424,7 +513,11 @@ async def test_query_without_vectors_without_metadata_async(async_index: AsyncIn
         assert query_res[0].vector is None
 
         query_res = await async_index.query(
-            v1_values, top_k=2, include_metadata=False, include_vectors=False
+            v1_values,
+            top_k=2,
+            include_metadata=False,
+            include_vectors=False,
+            namespace=ns,
         )
         assert len(query_res) == 2
 
@@ -434,7 +527,11 @@ async def test_query_without_vectors_without_metadata_async(async_index: AsyncIn
         assert query_res[1].vector is None
 
         query_res = await async_index.query(
-            v1_values, top_k=5, include_metadata=False, include_vectors=False
+            v1_values,
+            top_k=5,
+            include_metadata=False,
+            include_vectors=False,
+            namespace=ns,
         )
         assert len(query_res) == 5
 
@@ -442,22 +539,26 @@ async def test_query_without_vectors_without_metadata_async(async_index: AsyncIn
 
 
 @pytest.mark.asyncio
-async def test_query_with_numpy_and_pandas_vectors_async(async_index: AsyncIndex):
+@pytest.mark.parametrize("ns", NAMESPACES)
+async def test_query_with_numpy_and_pandas_vectors_async(
+    async_index: AsyncIndex, ns: str
+):
     await async_index.upsert(
         vectors=[
             ("id-0", [0.1, 0.2]),
             ("id-1", [0.7, 0.8]),
-        ]
+        ],
+        namespace=ns,
     )
 
     async def assertion():
-        query_res = await async_index.query(np.array([0.1, 0.2]), top_k=1)
+        query_res = await async_index.query(np.array([0.1, 0.2]), top_k=1, namespace=ns)
         assert len(query_res) == 1
 
         assert query_res[0].id == "id-0"
         assert query_res[0].score == 1
 
-        query_res = await async_index.query(pd.array([0.7, 0.8]), top_k=1)
+        query_res = await async_index.query(pd.array([0.7, 0.8]), top_k=1, namespace=ns)
         assert len(query_res) == 1
 
         assert query_res[0].id == "id-1"
@@ -467,7 +568,8 @@ async def test_query_with_numpy_and_pandas_vectors_async(async_index: AsyncIndex
 
 
 @pytest.mark.asyncio
-async def test_query_with_filtering_async(async_index: AsyncIndex):
+@pytest.mark.parametrize("ns", NAMESPACES)
+async def test_query_with_filtering_async(async_index: AsyncIndex, ns: str):
     v1_id = "id1"
     v1_metadata = {"metadata_field": "metadata_value", "foo": "bar"}
     v1_values = [0.1, 0.2]
@@ -485,12 +587,17 @@ async def test_query_with_filtering_async(async_index: AsyncIndex):
             (v1_id, v1_values, v1_metadata),
             (v2_id, v2_values, v2_metadata),
             (v3_id, v3_values, v3_metadata),
-        ]
+        ],
+        namespace=ns,
     )
 
     async def assertion():
         query_res = await async_index.query(
-            v1_values, top_k=2, include_metadata=True, include_vectors=True
+            v1_values,
+            top_k=2,
+            include_metadata=True,
+            include_vectors=True,
+            namespace=ns,
         )
         assert len(query_res) == 2
 
@@ -510,6 +617,7 @@ async def test_query_with_filtering_async(async_index: AsyncIndex):
             include_metadata=True,
             include_vectors=True,
             filter="foo = 'bar'",
+            namespace=ns,
         )
         assert len(query_res) == 2
 
@@ -526,7 +634,8 @@ async def test_query_with_filtering_async(async_index: AsyncIndex):
     await assert_eventually_async(assertion)
 
 
-def test_query_with_data(embedding_index: Index):
+@pytest.mark.parametrize("ns", NAMESPACES)
+def test_query_with_data(embedding_index: Index, ns: str):
     v1_id = "id1"
     v1_metadata = {"metadata_field": "metadata_value"}
     v1_data = "Hello-world"
@@ -534,12 +643,17 @@ def test_query_with_data(embedding_index: Index):
     embedding_index.upsert(
         vectors=[
             (v1_id, v1_data, v1_metadata),
-        ]
+        ],
+        namespace=ns,
     )
 
     def assertion():
         query_res = embedding_index.query(
-            data=v1_data, top_k=1, include_metadata=True, include_vectors=True
+            data=v1_data,
+            top_k=1,
+            include_metadata=True,
+            include_vectors=True,
+            namespace=ns,
         )
         assert len(query_res) == 1
 
@@ -551,7 +665,8 @@ def test_query_with_data(embedding_index: Index):
 
 
 @pytest.mark.asyncio
-async def test_query_with_data_async(async_embedding_index: AsyncIndex):
+@pytest.mark.parametrize("ns", NAMESPACES)
+async def test_query_with_data_async(async_embedding_index: AsyncIndex, ns: str):
     v1_id = "id1"
     v1_metadata = {"metadata_field": "metadata_value"}
     v1_data = "Hello-world"
@@ -559,12 +674,17 @@ async def test_query_with_data_async(async_embedding_index: AsyncIndex):
     await async_embedding_index.upsert(
         vectors=[
             (v1_id, v1_data, v1_metadata),
-        ]
+        ],
+        namespace=ns,
     )
 
     async def assertion():
         query_res = await async_embedding_index.query(
-            data=v1_data, top_k=1, include_metadata=True, include_vectors=True
+            data=v1_data,
+            top_k=1,
+            include_metadata=True,
+            include_vectors=True,
+            namespace=ns,
         )
         assert len(query_res) == 1
 
@@ -575,7 +695,8 @@ async def test_query_with_data_async(async_embedding_index: AsyncIndex):
     await assert_eventually_async(assertion)
 
 
-def test_query_with_multiple_data(embedding_index: Index):
+@pytest.mark.parametrize("ns", NAMESPACES)
+def test_query_with_multiple_data(embedding_index: Index, ns: str):
     v1_id = "id1"
     v1_metadata = {"metadata_field": "cookie"}
     v1_data = "cookie"
@@ -588,12 +709,17 @@ def test_query_with_multiple_data(embedding_index: Index):
         vectors=[
             (v1_id, v1_data, v1_metadata),
             (v2_id, v2_data, v2_metadata),
-        ]
+        ],
+        namespace=ns,
     )
 
     def assertion():
         query_res = embedding_index.query(
-            data=v1_data, top_k=1, include_metadata=True, include_vectors=True
+            data=v1_data,
+            top_k=1,
+            include_metadata=True,
+            include_vectors=True,
+            namespace=ns,
         )
         assert len(query_res) == 1
 
@@ -602,7 +728,11 @@ def test_query_with_multiple_data(embedding_index: Index):
         assert query_res[0].score == 1
 
         query_res = embedding_index.query(
-            data=v2_data, top_k=1, include_metadata=True, include_vectors=True
+            data=v2_data,
+            top_k=1,
+            include_metadata=True,
+            include_vectors=True,
+            namespace=ns,
         )
         assert len(query_res) == 1
 
@@ -611,7 +741,11 @@ def test_query_with_multiple_data(embedding_index: Index):
         assert query_res[0].score == 1
 
         query_res = embedding_index.query(
-            data=v1_data, top_k=2, include_metadata=False, include_vectors=True
+            data=v1_data,
+            top_k=2,
+            include_metadata=False,
+            include_vectors=True,
+            namespace=ns,
         )
         assert len(query_res) == 2
 
@@ -619,7 +753,10 @@ def test_query_with_multiple_data(embedding_index: Index):
 
 
 @pytest.mark.asyncio
-async def test_query_with_multiple_data_async(async_embedding_index: AsyncIndex):
+@pytest.mark.parametrize("ns", NAMESPACES)
+async def test_query_with_multiple_data_async(
+    async_embedding_index: AsyncIndex, ns: str
+):
     v1_id = "id1"
     v1_metadata = {"metadata_field": "cookie"}
     v1_data = "cookie"
@@ -632,12 +769,17 @@ async def test_query_with_multiple_data_async(async_embedding_index: AsyncIndex)
         vectors=[
             (v1_id, v1_data, v1_metadata),
             (v2_id, v2_data, v2_metadata),
-        ]
+        ],
+        namespace=ns,
     )
 
     async def assertion():
         query_res = await async_embedding_index.query(
-            data=v1_data, top_k=1, include_metadata=True, include_vectors=True
+            data=v1_data,
+            top_k=1,
+            include_metadata=True,
+            include_vectors=True,
+            namespace=ns,
         )
         assert len(query_res) == 1
 
@@ -646,7 +788,11 @@ async def test_query_with_multiple_data_async(async_embedding_index: AsyncIndex)
         assert query_res[0].score == 1
 
         query_res = await async_embedding_index.query(
-            data=v2_data, top_k=1, include_metadata=True, include_vectors=True
+            data=v2_data,
+            top_k=1,
+            include_metadata=True,
+            include_vectors=True,
+            namespace=ns,
         )
         assert len(query_res) == 1
 
@@ -655,7 +801,11 @@ async def test_query_with_multiple_data_async(async_embedding_index: AsyncIndex)
         assert query_res[0].score == 1
 
         query_res = await async_embedding_index.query(
-            data=v1_data, top_k=2, include_metadata=False, include_vectors=True
+            data=v1_data,
+            top_k=2,
+            include_metadata=False,
+            include_vectors=True,
+            namespace=ns,
         )
         assert len(query_res) == 2
 

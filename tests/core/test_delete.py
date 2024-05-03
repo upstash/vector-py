@@ -1,9 +1,11 @@
 import pytest
 
+from tests import NAMESPACES
 from upstash_vector import Index, AsyncIndex
 
 
-def test_delete(index: Index):
+@pytest.mark.parametrize("ns", NAMESPACES)
+def test_delete(index: Index, ns: str):
     v1_id = "delete-id1"
     v1_metadata = {"metadata_field": "metadata_value"}
     v1_values = [0.1, 0.2]
@@ -19,21 +21,30 @@ def test_delete(index: Index):
             (v1_id, v1_values, v1_metadata),
             (v2_id, v2_values),
             (v3_id, v3_values),
-        ]
+        ],
+        namespace=ns,
     )
 
     res = index.fetch(
-        ids=[v1_id, v2_id, v3_id], include_vectors=True, include_metadata=True
+        ids=[v1_id, v2_id, v3_id],
+        include_vectors=True,
+        include_metadata=True,
+        namespace=ns,
     )
     assert len(res) == 3
     assert res[0] is not None
     assert res[1] is not None
     assert res[2] is not None
 
-    del_res = index.delete(ids=v1_id)
+    del_res = index.delete(ids=v1_id, namespace=ns)
     assert del_res.deleted == 1
 
-    res = index.fetch(ids=[v1_id, v2_id], include_vectors=True, include_metadata=True)
+    res = index.fetch(
+        ids=[v1_id, v2_id],
+        include_vectors=True,
+        include_metadata=True,
+        namespace=ns,
+    )
     assert res[0] is None
     assert res[1] is not None
 
@@ -42,14 +53,18 @@ def test_delete(index: Index):
             (v1_id, v1_values, v1_metadata),
             (v2_id, v2_values),
             (v3_id, v3_values),
-        ]
+        ],
+        namespace=ns,
     )
 
-    del_res = index.delete(ids=[v1_id, v2_id])
+    del_res = index.delete(ids=[v1_id, v2_id], namespace=ns)
     assert del_res.deleted == 2
 
     res = index.fetch(
-        ids=[v1_id, v2_id, v3_id], include_vectors=True, include_metadata=True
+        ids=[v1_id, v2_id, v3_id],
+        include_vectors=True,
+        include_metadata=True,
+        namespace=ns,
     )
     assert res[0] is None
     assert res[1] is None
@@ -57,7 +72,8 @@ def test_delete(index: Index):
 
 
 @pytest.mark.asyncio
-async def test_delete_async(async_index: AsyncIndex):
+@pytest.mark.parametrize("ns", NAMESPACES)
+async def test_delete_async(async_index: AsyncIndex, ns: str):
     v1_id = "delete-id1"
     v1_metadata = {"metadata_field": "metadata_value"}
     v1_values = [0.1, 0.2]
@@ -73,22 +89,29 @@ async def test_delete_async(async_index: AsyncIndex):
             (v1_id, v1_values, v1_metadata),
             (v2_id, v2_values),
             (v3_id, v3_values),
-        ]
+        ],
+        namespace=ns,
     )
 
     res = await async_index.fetch(
-        ids=[v1_id, v2_id, v3_id], include_vectors=True, include_metadata=True
+        ids=[v1_id, v2_id, v3_id],
+        include_vectors=True,
+        include_metadata=True,
+        namespace=ns,
     )
     assert len(res) == 3
     assert res[0] is not None
     assert res[1] is not None
     assert res[2] is not None
 
-    del_res = await async_index.delete(ids=v1_id)
+    del_res = await async_index.delete(ids=v1_id, namespace=ns)
     assert del_res.deleted == 1
 
     res = await async_index.fetch(
-        ids=[v1_id, v2_id], include_vectors=True, include_metadata=True
+        ids=[v1_id, v2_id],
+        include_vectors=True,
+        include_metadata=True,
+        namespace=ns,
     )
     assert res[0] is None
     assert res[1] is not None
@@ -98,14 +121,18 @@ async def test_delete_async(async_index: AsyncIndex):
             (v1_id, v1_values, v1_metadata),
             (v2_id, v2_values),
             (v3_id, v3_values),
-        ]
+        ],
+        namespace=ns,
     )
 
-    del_res = await async_index.delete(ids=[v1_id, v2_id])
+    del_res = await async_index.delete(ids=[v1_id, v2_id], namespace=ns)
     assert del_res.deleted == 2
 
     res = await async_index.fetch(
-        ids=[v1_id, v2_id, v3_id], include_vectors=True, include_metadata=True
+        ids=[v1_id, v2_id, v3_id],
+        include_vectors=True,
+        include_metadata=True,
+        namespace=ns,
     )
     assert res[0] is None
     assert res[1] is None

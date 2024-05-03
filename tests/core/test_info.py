@@ -1,6 +1,6 @@
 import pytest
 
-from tests import assert_eventually, assert_eventually_async
+from tests import assert_eventually, assert_eventually_async, NAMESPACES
 from upstash_vector import Index, AsyncIndex
 
 
@@ -11,11 +11,21 @@ def test_info(index: Index):
     assert info.pending_vector_count == 0
     assert info.dimension == 2
     assert info.similarity_function == "COSINE"
+    assert len(info.namespaces) == len(NAMESPACES)
+    for ns in NAMESPACES:
+        assert ns in info.namespaces
+        assert info.namespaces[ns].vector_count == 0
+        assert info.namespaces[ns].pending_vector_count == 0
 
-    index.upsert([{"id": "foo", "vector": [0, 1]}])
+    for ns in NAMESPACES:
+        index.upsert([{"id": "foo", "vector": [0, 1]}], namespace=ns)
 
     def assertion():
-        assert index.info().vector_count == 1
+        i = index.info()
+        assert i.vector_count == len(NAMESPACES)
+
+        for ns in NAMESPACES:
+            assert i.namespaces[ns].vector_count == 1
 
     assert_eventually(assertion)
 
@@ -28,10 +38,20 @@ async def test_info_async(async_index: AsyncIndex):
     assert info.pending_vector_count == 0
     assert info.dimension == 2
     assert info.similarity_function == "COSINE"
+    assert len(info.namespaces) == len(NAMESPACES)
+    for ns in NAMESPACES:
+        assert ns in info.namespaces
+        assert info.namespaces[ns].vector_count == 0
+        assert info.namespaces[ns].pending_vector_count == 0
 
-    await async_index.upsert([{"id": "foo", "vector": [0, 1]}])
+    for ns in NAMESPACES:
+        await async_index.upsert([{"id": "foo", "vector": [0, 1]}], namespace=ns)
 
     async def assertion():
-        assert (await async_index.info()).vector_count == 1
+        i = await async_index.info()
+        assert i.vector_count == len(NAMESPACES)
+
+        for ns in NAMESPACES:
+            assert i.namespaces[ns].vector_count == 1
 
     await assert_eventually_async(assertion)
