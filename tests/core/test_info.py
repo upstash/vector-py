@@ -1,10 +1,19 @@
 import pytest
 
-from tests import assert_eventually, assert_eventually_async, NAMESPACES
+from tests import (
+    assert_eventually,
+    assert_eventually_async,
+    NAMESPACES,
+    ensure_ns_exists,
+    ensure_ns_exists_async,
+)
 from upstash_vector import Index, AsyncIndex
 
 
 def test_info(index: Index):
+    for ns in NAMESPACES:
+        ensure_ns_exists(index, ns)
+
     info = index.info()
 
     assert info.vector_count == 0
@@ -32,6 +41,9 @@ def test_info(index: Index):
 
 @pytest.mark.asyncio
 async def test_info_async(async_index: AsyncIndex):
+    for ns in NAMESPACES:
+        await ensure_ns_exists_async(async_index, ns)
+
     info = await async_index.info()
 
     assert info.vector_count == 0

@@ -329,6 +329,26 @@ for ns, ns_info in info.namespaces.items():
     )
 ```
 
+### List Namespaces
+
+All the names of active namespaces can be listed.
+
+```python
+namespaces = index.list_namespaces()
+for ns in namespaces:
+    print(ns) # name of the namespace
+```
+
+### Delete a Namespace
+
+A namespace can be deleted entirely. 
+If no such namespace exists, and exception is raised.
+The default namespaces cannot be deleted.
+
+```python
+index.delete_namespace(namespace="ns")
+```
+
 # Contributing
 
 ## Preparing the environment

@@ -27,6 +27,8 @@ RESET_PATH = "/reset"
 RANGE_PATH = "/range"
 FETCH_PATH = "/fetch"
 INFO_PATH = "/info"
+LIST_NAMESPACES = "/list-namespaces"
+DELETE_NAMESPACE = "/delete-namespace"
 
 
 def _path_for(namespace: str, path: str) -> str:
@@ -320,6 +322,19 @@ class IndexOperations:
             self._execute_request(payload=None, path=INFO_PATH)
         )
 
+    def list_namespaces(self) -> List[str]:
+        """
+        Returns the list of names of namespaces.
+        """
+        return self._execute_request(payload=None, path=LIST_NAMESPACES)
+
+    def delete_namespace(self, namespace: str) -> None:
+        """
+        Deletes the given namespace if it exists, or raises
+        exception if no such namespace exists.
+        """
+        self._execute_request(payload=None, path=_path_for(namespace, DELETE_NAMESPACE))
+
 
 class AsyncIndexOperations:
     async def _execute_request_async(self, payload, path):
@@ -605,4 +620,23 @@ class AsyncIndexOperations:
         """
         return InfoResult._from_json(
             await self._execute_request_async(payload=None, path=INFO_PATH)
+        )
+
+    async def list_namespaces(self) -> List[str]:
+        """
+        Returns the list of names of namespaces.
+        """
+        result = await self._execute_request_async(payload=None, path=LIST_NAMESPACES)
+        return result
+
+    async def delete_namespace(self, namespace: str) -> None:
+        """
+        Deletes the given namespace if it exists, or raises
+        exception if no such namespace exists.
+        """
+        if namespace == DEFAULT_NAMESPACE:
+            raise ClientError("Cannot delete the default namespace")
+
+        await self._execute_request_async(
+            payload=None, path=_path_for(namespace, DELETE_NAMESPACE)
         )
