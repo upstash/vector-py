@@ -80,3 +80,38 @@ async def test_reset_async(async_index: AsyncIndex, ns: str):
     )
     assert res[0] is None
     assert res[1] is None
+
+
+def test_reset_all(index: Index):
+    for ns in NAMESPACES:
+        index.upsert([("id-0", [0.1, 0.2])], namespace=ns)
+
+    for ns in NAMESPACES:
+        res = index.fetch("id-0", namespace=ns)
+        assert len(res) == 1
+        assert res[0] is not None
+
+    index.reset(all=True)
+
+    for ns in NAMESPACES:
+        res = index.fetch("id-0", namespace=ns)
+        assert len(res) == 1
+        assert res[0] is None
+
+
+@pytest.mark.asyncio
+async def test_reset_all_async(async_index: AsyncIndex):
+    for ns in NAMESPACES:
+        await async_index.upsert([("id-0", [0.1, 0.2])], namespace=ns)
+
+    for ns in NAMESPACES:
+        res = await async_index.fetch("id-0", namespace=ns)
+        assert len(res) == 1
+        assert res[0] is not None
+
+    await async_index.reset(all=True)
+
+    for ns in NAMESPACES:
+        res = await async_index.fetch("id-0", namespace=ns)
+        assert len(res) == 1
+        assert res[0] is None
