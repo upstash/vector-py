@@ -17,7 +17,7 @@ def test_update_vector(index: Index, ns: str):
     assert res[0] is not None
     assert res[0].vector == [0.1, 0.2]
 
-    updated = index.update("id-0", vector=[0.2, 0.3])
+    updated = index.update("id-0", vector=[0.2, 0.3], namespace=ns)
     assert updated is True
 
     res = index.fetch("id-0", include_vectors=True, namespace=ns)
@@ -39,7 +39,7 @@ def test_update_data(embedding_index: Index, ns: str):
 
     old_vector = res[0].vector
 
-    updated = embedding_index.update("id-0", data="bye")
+    updated = embedding_index.update("id-0", data="bye", namespace=ns)
     assert updated is True
 
     res = embedding_index.fetch("id-0", include_vectors=True, namespace=ns)
@@ -60,7 +60,7 @@ def test_update_metadata(index: Index, ns: str):
     assert res[0] is not None
     assert res[0].metadata == {"field": "value"}
 
-    updated = index.update("id-0", metadata={"new_field": "new_value"})
+    updated = index.update("id-0", metadata={"new_field": "new_value"}, namespace=ns)
     assert updated is True
 
     res = index.fetch("id-0", include_metadata=True, namespace=ns)
@@ -71,7 +71,7 @@ def test_update_metadata(index: Index, ns: str):
 
 @pytest.mark.parametrize("ns", NAMESPACES)
 def test_update_non_existing_id(index: Index, ns: str):
-    updated = index.update("id-999", vector=[0.4, 0.5])
+    updated = index.update("id-999", vector=[0.4, 0.5], namespace=ns)
     assert updated is False
 
 
@@ -93,7 +93,7 @@ async def test_update_vector_async(async_index: AsyncIndex, ns: str):
     assert res[0] is not None
     assert res[0].vector == [0.1, 0.2]
 
-    updated = await async_index.update("id-0", vector=[0.2, 0.3])
+    updated = await async_index.update("id-0", vector=[0.2, 0.3], namespace=ns)
     assert updated is True
 
     res = await async_index.fetch("id-0", include_vectors=True, namespace=ns)
@@ -116,7 +116,7 @@ async def test_update_data_async(async_embedding_index: AsyncIndex, ns: str):
 
     old_vector = res[0].vector
 
-    updated = await async_embedding_index.update("id-0", data="bye")
+    updated = await async_embedding_index.update("id-0", data="bye", namespace=ns)
     assert updated is True
 
     res = await async_embedding_index.fetch("id-0", include_vectors=True, namespace=ns)
@@ -138,7 +138,9 @@ async def test_update_metadata_async(async_index: AsyncIndex, ns: str):
     assert res[0] is not None
     assert res[0].metadata == {"field": "value"}
 
-    updated = await async_index.update("id-0", metadata={"new_field": "new_value"})
+    updated = await async_index.update(
+        "id-0", metadata={"new_field": "new_value"}, namespace=ns
+    )
     assert updated is True
 
     res = await async_index.fetch("id-0", include_metadata=True, namespace=ns)
@@ -150,7 +152,7 @@ async def test_update_metadata_async(async_index: AsyncIndex, ns: str):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("ns", NAMESPACES)
 async def test_update_non_existing_id_async(async_index: AsyncIndex, ns: str):
-    updated = await async_index.update("id-999", vector=[0.4, 0.5])
+    updated = await async_index.update("id-999", vector=[0.4, 0.5], namespace=ns)
     assert updated is False
 
 
