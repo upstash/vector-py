@@ -306,6 +306,15 @@ index.reset(
 ) 
 ```
 
+All namespaces under the index can be reset with a single call
+as well.
+
+```python
+index.reset(
+    all=True,
+)
+```
+
 ### Index Info
 
 Some information regarding the status and type of the index can be requested.

@@ -24,6 +24,7 @@ QUERY_PATH = "/query"
 QUERY_DATA_PATH = "/query-data"
 DELETE_PATH = "/delete"
 RESET_PATH = "/reset"
+RESET_ALL_PATH = "/reset?all"
 RANGE_PATH = "/range"
 FETCH_PATH = "/fetch"
 INFO_PATH = "/info"
@@ -217,11 +218,12 @@ class IndexOperations:
             self._execute_request(payload=ids, path=_path_for(namespace, DELETE_PATH))
         )
 
-    def reset(self, namespace: str = DEFAULT_NAMESPACE) -> str:
+    def reset(self, namespace: str = DEFAULT_NAMESPACE, all: bool = False) -> str:
         """
         Resets a namespace of an index. All vectors are removed for that namespace.
 
         :param namespace: The namespace to use. When not specified, the default namespace is used.
+        :param all: When set to `True`, resets all namespaces of an index.
 
         Example usage:
 
@@ -229,9 +231,12 @@ class IndexOperations:
         index.reset()
         ```
         """
-        return self._execute_request(
-            path=_path_for(namespace, RESET_PATH), payload=None
-        )
+        if all:
+            path = RESET_ALL_PATH
+        else:
+            path = _path_for(namespace, RESET_PATH)
+
+        return self._execute_request(path=path, payload=None)
 
     def range(
         self,
@@ -517,11 +522,12 @@ class AsyncIndexOperations:
             )
         )
 
-    async def reset(self, namespace: str = DEFAULT_NAMESPACE) -> str:
+    async def reset(self, namespace: str = DEFAULT_NAMESPACE, all: bool = False) -> str:
         """
         Resets a namespace of an index. All vectors are removed for that namespace.
 
         :param namespace: The namespace to use. When not specified, the default namespace is used.
+        :param all: When set to `True`, resets all namespaces of an index.
 
         Example usage:
 
@@ -529,9 +535,12 @@ class AsyncIndexOperations:
         await index.reset()
         ```
         """
-        return await self._execute_request_async(
-            path=_path_for(namespace, RESET_PATH), payload=None
-        )
+        if all:
+            path = RESET_ALL_PATH
+        else:
+            path = _path_for(namespace, RESET_PATH)
+
+        return await self._execute_request_async(path=path, payload=None)
 
     async def range(
         self,
