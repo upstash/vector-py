@@ -289,6 +289,31 @@ res = index.delete(
 )
 ```
 
+### Update a Vector
+
+Either the vector value(or data for indexes created with an embedding model) or the metadata
+can be updated without needing to set the other one.
+
+```python
+res = index.update(
+    "id1", 
+    metadata={"new_field": "new_value"},
+)
+
+print(res) # A boolean indicating whether the vector is updated or not.
+```
+
+Also, a namespace can be specified to update from. 
+When no namespace is provided, the default namespace is used.
+
+```python
+res = index.update(
+    "id1", 
+    metadata={"new_field": "new_value"},
+    namespace="ns",
+)
+```
+
 ### Reset the Namespace
 
 All vectors can be removed from a namespace of an index.

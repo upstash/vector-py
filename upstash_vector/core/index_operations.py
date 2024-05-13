@@ -1,7 +1,7 @@
 # Define vector operations here:
 # Upsert and query functions and signatures
 
-from typing import Sequence, Union, List, Dict, Optional
+from typing import Sequence, Union, List, Dict, Optional, Any
 from upstash_vector.errors import ClientError
 from upstash_vector.types import (
     Data,
@@ -27,8 +27,9 @@ RESET_PATH = "/reset"
 RANGE_PATH = "/range"
 FETCH_PATH = "/fetch"
 INFO_PATH = "/info"
-LIST_NAMESPACES = "/list-namespaces"
-DELETE_NAMESPACE = "/delete-namespace"
+LIST_NAMESPACES_PATH = "/list-namespaces"
+DELETE_NAMESPACE_PATH = "/delete-namespace"
+UPDATE_PATH = "/update"
 
 
 def _path_for(namespace: str, path: str) -> str:
@@ -307,6 +308,58 @@ class IndexOperations:
             )
         ]
 
+    def update(
+        self,
+        id: str,
+        vector: Optional[List[float]] = None,
+        data: Optional[str] = None,
+        metadata: Optional[Dict] = None,
+        namespace: str = DEFAULT_NAMESPACE,
+    ) -> bool:
+        """
+        Updates a vector value, data, or metadata for the given id.
+
+        Only and only one of the vector, data, or metadata parameters can be set.
+
+        To update both vector and metadata, or data and metadata, use the
+        upsert method.
+
+        :param id: The vector id to update.
+        :param vector: The vector value to update to.
+        :param data: The raw text data to embed into a vector and update to.
+        :param metadata: The metadata to update to.
+        :param namespace: The namespace to use. When not specified, the default namespace is used.
+
+        Example usage:
+
+        ```python
+        updated = index.update("id1", metadata={"new_field": "new_value"})
+        ```
+        """
+        payload: Dict[str, Any] = {
+            "id": id,
+        }
+
+        if vector is not None:
+            payload["vector"] = vector
+
+        if data is not None:
+            payload["data"] = data
+
+        if metadata is not None:
+            payload["metadata"] = metadata
+
+        if len(payload) != 2:
+            raise ClientError(
+                "Only and only one of the vector, data, or metadata parameters set"
+            )
+
+        result = self._execute_request(
+            payload=payload, path=_path_for(namespace, UPDATE_PATH)
+        )
+        updated = result["updated"]
+        return updated == 1
+
     def info(self) -> InfoResult:
         """
         Returns the index info, including:
@@ -326,14 +379,16 @@ class IndexOperations:
         """
         Returns the list of names of namespaces.
         """
-        return self._execute_request(payload=None, path=LIST_NAMESPACES)
+        return self._execute_request(payload=None, path=LIST_NAMESPACES_PATH)
 
     def delete_namespace(self, namespace: str) -> None:
         """
         Deletes the given namespace if it exists, or raises
         exception if no such namespace exists.
         """
-        self._execute_request(payload=None, path=_path_for(namespace, DELETE_NAMESPACE))
+        self._execute_request(
+            payload=None, path=_path_for(namespace, DELETE_NAMESPACE_PATH)
+        )
 
 
 class AsyncIndexOperations:
@@ -607,6 +662,58 @@ class AsyncIndexOperations:
             )
         ]
 
+    async def update(
+        self,
+        id: str,
+        vector: Optional[List[float]] = None,
+        data: Optional[str] = None,
+        metadata: Optional[Dict] = None,
+        namespace: str = DEFAULT_NAMESPACE,
+    ) -> bool:
+        """
+        Updates a vector value, data, or metadata for the given id.
+
+        Only and only one of the vector, data, or metadata parameters can be set.
+
+        To update both vector and metadata, or data and metadata, use the
+        upsert method.
+
+        :param id: The vector id to update.
+        :param vector: The vector value to update to.
+        :param data: The raw text data to embed into a vector and update to.
+        :param metadata: The metadata to update to.
+        :param namespace: The namespace to use. When not specified, the default namespace is used.
+
+        Example usage:
+
+        ```python
+        updated = await index.update("id1", metadata={"new_field": "new_value"})
+        ```
+        """
+        payload: Dict[str, Any] = {
+            "id": id,
+        }
+
+        if vector is not None:
+            payload["vector"] = vector
+
+        if data is not None:
+            payload["data"] = data
+
+        if metadata is not None:
+            payload["metadata"] = metadata
+
+        if len(payload) != 2:
+            raise ClientError(
+                "Only and only one of the vector, data, or metadata parameters set"
+            )
+
+        result = await self._execute_request_async(
+            payload=payload, path=_path_for(namespace, UPDATE_PATH)
+        )
+        updated = result["updated"]
+        return updated == 1
+
     async def info(self) -> InfoResult:
         """
         Returns the index info asynchronously, including:
@@ -626,7 +733,9 @@ class AsyncIndexOperations:
         """
         Returns the list of names of namespaces.
         """
-        result = await self._execute_request_async(payload=None, path=LIST_NAMESPACES)
+        result = await self._execute_request_async(
+            payload=None, path=LIST_NAMESPACES_PATH
+        )
         return result
 
     async def delete_namespace(self, namespace: str) -> None:
@@ -638,5 +747,5 @@ class AsyncIndexOperations:
             raise ClientError("Cannot delete the default namespace")
 
         await self._execute_request_async(
-            payload=None, path=_path_for(namespace, DELETE_NAMESPACE)
+            payload=None, path=_path_for(namespace, DELETE_NAMESPACE_PATH)
         )
