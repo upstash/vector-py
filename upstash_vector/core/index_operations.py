@@ -2,10 +2,13 @@
 # Upsert and query functions and signatures
 
 from typing import Sequence, Union, List, Dict, Optional, Any
+
 from upstash_vector.errors import ClientError
 from upstash_vector.types import (
     Data,
     DeleteResult,
+    MetadataUpdateMode,
+    QueryRequest,
     RangeResult,
     InfoResult,
     SupportsToList,
@@ -13,8 +16,12 @@ from upstash_vector.types import (
     QueryResult,
     Vector,
 )
-
-from upstash_vector.utils import convert_to_list, convert_to_vectors, convert_to_payload
+from upstash_vector.utils import (
+    convert_query_requests_to_payload,
+    convert_to_list,
+    convert_to_vectors,
+    convert_to_payload,
+)
 
 DEFAULT_NAMESPACE = ""
 
@@ -62,8 +69,9 @@ class IndexOperations:
         ```python
         res = index.upsert(
             vectors=[
-                ("id1", [0.1, 0.2], {"metadata_field": "metadata_value"}),
-                ("id2", [0.3,0.4])
+                ("id1", [0.1, 0.2], {"metadata_field": "metadata_value"}, "data-value"),
+                ("id2", [0.2, 0.2], {"metadata_field": "metadata_value"}),
+                ("id3", [0.3,0.4]),
             ]
         )
         ```
@@ -71,8 +79,9 @@ class IndexOperations:
         ```python
         res = index.upsert(
             vectors=[
-                {"id": "id3", "vector": [0.1, 0.2], "metadata": {"field": "value"}},
-                {"id": "id4", "vector": [0.5, 0.6]},
+                {"id": "id4", "vector": [0.1, 0.2], "metadata": {"field": "value"}, "data": "data-value"},
+                {"id": "id5", "vector": [0.2, 0.2], "metadata": {"field": "value"}},
+                {"id": "id6", "vector": [0.5, 0.6]},
             ]
         )
         ```
@@ -81,8 +90,9 @@ class IndexOperations:
         from upstash_vector import Vector
         res = index.upsert(
             vectors=[
-                Vector(id="id5", vector=[1, 2], metadata={"field": "value"}),
-                Vector(id="id6", vector=[6, 7]),
+                Vector(id="id7", vector=[0.1, 0.2], metadata={"field": "value"}, data="data-value"),
+                Vector(id="id8", vector=[0.1, 0.2], metadata={"field": "value"}),
+                Vector(id="id9", vector=[0.6, 0.7]),
             ]
         )
         ```
@@ -105,7 +115,7 @@ class IndexOperations:
         res = index.upsert(
             vectors=[
                 ("id1", [0.1, 0.2]),
-                ("id2", [0.3,0.4]),
+                ("id2", [0.3, 0.4]),
             ],
             namespace="ns",
         )
@@ -127,6 +137,7 @@ class IndexOperations:
         filter: str = "",
         data: Optional[str] = None,
         namespace: str = DEFAULT_NAMESPACE,
+        include_data: bool = False,
     ) -> List[QueryResult]:
         """
         Query `top_k` many similar vectors.
@@ -140,6 +151,7 @@ class IndexOperations:
         :param filter: Filter expression to narrow down the query results.
         :param data: Data to query for (after embedding it to a vector)
         :param namespace: The namespace to use. When not specified, the default namespace is used.
+        :param include_data: Whether the resulting `top_k` vectors will have their unstructured data or not.
 
         Example usage:
 
@@ -165,6 +177,7 @@ class IndexOperations:
             "topK": top_k,
             "includeVectors": include_vectors,
             "includeMetadata": include_metadata,
+            "includeData": include_data,
             "filter": filter,
         }
 
@@ -187,6 +200,64 @@ class IndexOperations:
             for obj in self._execute_request(
                 payload=payload, path=_path_for(namespace, path)
             )
+        ]
+
+    def query_many(
+        self,
+        *,
+        queries: List[QueryRequest],
+        namespace: str = DEFAULT_NAMESPACE,
+    ) -> List[List[QueryResult]]:
+        """
+        Makes a batch query request.
+
+        The batch should only contain elements whose `data`
+        or `vector` fields set.
+
+        Example usage:
+
+        ```python
+        res = index.query_many(
+            queries=[
+                {
+                    "vector": [0.5, 0.4],
+                    "top_k": 2,
+                },
+                {
+                    "vector": [0.3, 0.2],
+                },
+            ]
+        )
+        ```
+
+        ```python
+        res = index.query_many(
+            queries=[
+                {
+                    "data": "hello",
+                    "top_k": 2,
+                },
+                {
+                    "data": "world",
+                },
+            ]
+        )
+        ```
+        """
+        if len(queries) == 1:
+            # handle this case separately, as the server returns a single
+            # response when the length of the array is 1.
+            query = queries[0]
+            single_result = self.query(**query, namespace=namespace)
+            return [single_result]
+
+        has_vector_query, payload = convert_query_requests_to_payload(queries)
+        path = QUERY_PATH if has_vector_query else QUERY_DATA_PATH
+        result = self._execute_request(payload=payload, path=_path_for(namespace, path))
+
+        return [
+            [QueryResult._from_json(obj) for obj in query_result]
+            for query_result in result
         ]
 
     def delete(
@@ -246,6 +317,7 @@ class IndexOperations:
         include_vectors: bool = False,
         include_metadata: bool = False,
         namespace: str = DEFAULT_NAMESPACE,
+        include_data: bool = False,
     ) -> RangeResult:
         """
         Scans the vectors starting from `cursor`, returns at most `limit` many vectors.
@@ -255,6 +327,7 @@ class IndexOperations:
         :param include_vectors: Whether the resulting `top_k` vectors will have their vector values or not.
         :param include_metadata: Whether the resulting `top_k` vectors will have their metadata or not.
         :param namespace: The namespace to use. When not specified, the default namespace is used.
+        :param include_data: Whether the resulting `top_k` vectors will have their unstructured data or not.
 
         Example usage:
 
@@ -270,6 +343,7 @@ class IndexOperations:
             "limit": limit,
             "includeVectors": include_vectors,
             "includeMetadata": include_metadata,
+            "includeData": include_data,
         }
         return RangeResult._from_json(
             self._execute_request(
@@ -283,6 +357,7 @@ class IndexOperations:
         include_vectors: bool = False,
         include_metadata: bool = False,
         namespace: str = DEFAULT_NAMESPACE,
+        include_data: bool = False,
     ) -> List[Optional[FetchResult]]:
         """
         Fetches details of a set of vectors.
@@ -291,6 +366,7 @@ class IndexOperations:
         :param include_vectors: Whether the resulting vectors will have their vector values or not.
         :param include_metadata: Whether the resulting vectors will have their metadata or not.
         :param namespace: The namespace to use. When not specified, the default namespace is used.
+        :param include_data: Whether the resulting `top_k` vectors will have their unstructured data or not.
 
         Example usage:
 
@@ -305,6 +381,7 @@ class IndexOperations:
             "ids": ids,
             "includeVectors": include_vectors,
             "includeMetadata": include_metadata,
+            "includeData": include_data,
         }
         return [
             FetchResult._from_json(vector) if vector else None
@@ -320,20 +397,19 @@ class IndexOperations:
         data: Optional[str] = None,
         metadata: Optional[Dict] = None,
         namespace: str = DEFAULT_NAMESPACE,
+        metadata_update_mode: MetadataUpdateMode = MetadataUpdateMode.OVERWRITE,
     ) -> bool:
         """
         Updates a vector value, data, or metadata for the given id.
-
-        Only and only one of the vector, data, or metadata parameters can be set.
-
-        To update both vector and metadata, or data and metadata, use the
-        upsert method.
 
         :param id: The vector id to update.
         :param vector: The vector value to update to.
         :param data: The raw text data to embed into a vector and update to.
         :param metadata: The metadata to update to.
         :param namespace: The namespace to use. When not specified, the default namespace is used.
+        :param metadata_update_mode: Whether to overwrite the whole
+            it, or patch the metadata (insert new fields or update
+            according to the `RFC 7396 JSON Merge Patch` algorithm.
 
         Example usage:
 
@@ -343,6 +419,7 @@ class IndexOperations:
         """
         payload: Dict[str, Any] = {
             "id": id,
+            "metadataUpdateMode": metadata_update_mode.value,
         }
 
         if vector is not None:
@@ -353,11 +430,6 @@ class IndexOperations:
 
         if metadata is not None:
             payload["metadata"] = metadata
-
-        if len(payload) != 2:
-            raise ClientError(
-                "Only and only one of the vector, data, or metadata parameters set"
-            )
 
         result = self._execute_request(
             payload=payload, path=_path_for(namespace, UPDATE_PATH)
@@ -418,8 +490,9 @@ class AsyncIndexOperations:
         ```python
         res = await index.upsert(
             vectors=[
-                ("id1", [0.1, 0.2], {"metadata_field": "metadata_value"}),
-                ("id2", [0.3,0.4])
+                ("id1", [0.1, 0.2], {"metadata_field": "metadata_value"}, "data-value"),
+                ("id2", [0.2, 0.2], {"metadata_field": "metadata_value"}),
+                ("id3", [0.3,0.4]),
             ]
         )
         ```
@@ -427,8 +500,9 @@ class AsyncIndexOperations:
         ```python
         res = await index.upsert(
             vectors=[
-                {"id": "id3", "vector": [0.1, 0.2], "metadata": {"field": "value"}},
-                {"id": "id4", "vector": [0.5, 0.6]},
+                {"id": "id4", "vector": [0.1, 0.2], "metadata": {"field": "value"}, "data": "data-value"},
+                {"id": "id5", "vector": [0.2, 0.2], "metadata": {"field": "value"}},
+                {"id": "id6", "vector": [0.5, 0.6]},
             ]
         )
         ```
@@ -437,8 +511,9 @@ class AsyncIndexOperations:
         from upstash_vector import Vector
         res = await index.upsert(
             vectors=[
-                Vector(id="id5", vector=[1, 2], metadata={"field": "value"}),
-                Vector(id="id6", vector=[6, 7]),
+                Vector(id="id7", vector=[0.1, 0.2], metadata={"field": "value"}, data="data-value"),
+                Vector(id="id8", vector=[0.1, 0.2], metadata={"field": "value"}),
+                Vector(id="id9", vector=[0.6, 0.7]),
             ]
         )
         ```
@@ -460,7 +535,7 @@ class AsyncIndexOperations:
         res = index.upsert(
             vectors=[
                 ("id1", [0.1, 0.2]),
-                ("id2", [0.3,0.4]),
+                ("id2", [0.3, 0.4]),
             ],
             namespace="ns",
         )
@@ -483,6 +558,7 @@ class AsyncIndexOperations:
         filter: str = "",
         data: Optional[str] = None,
         namespace: str = DEFAULT_NAMESPACE,
+        include_data: bool = False,
     ) -> List[QueryResult]:
         """
         Query `top_k` many similar vectors.
@@ -496,6 +572,7 @@ class AsyncIndexOperations:
         :param filter: Filter expression to narrow down the query results.
         :param data: Data to query for (after embedding it to a vector)
         :param namespace: The namespace to use. When not specified, the default namespace is used.
+        :param include_data: Whether the resulting `top_k` vectors will have their unstructured data or not.
 
         Example usage:
 
@@ -521,6 +598,7 @@ class AsyncIndexOperations:
             "topK": top_k,
             "includeVectors": include_vectors,
             "includeMetadata": include_metadata,
+            "includeData": include_data,
             "filter": filter,
         }
 
@@ -543,6 +621,66 @@ class AsyncIndexOperations:
             for obj in await self._execute_request_async(
                 payload=payload, path=_path_for(namespace, path)
             )
+        ]
+
+    async def query_many(
+        self,
+        *,
+        queries: List[QueryRequest],
+        namespace: str = DEFAULT_NAMESPACE,
+    ) -> List[List[QueryResult]]:
+        """
+        Makes a batch query request.
+
+        The batch should only contain elements whose `data`
+        or `vector` fields set.
+
+        Example usage:
+
+        ```python
+        res = await index.query_many(
+            queries=[
+                {
+                    "vector": [0.5, 0.4],
+                    "top_k": 2,
+                },
+                {
+                    "vector": [0.3, 0.2],
+                },
+            ]
+        )
+        ```
+
+        ```python
+        res = await index.query_many(
+            queries=[
+                {
+                    "data": "hello",
+                    "top_k": 2,
+                },
+                {
+                    "data": "world",
+                },
+            ]
+        )
+        ```
+        """
+        if len(queries) == 1:
+            # handle this case separately, as the server returns a single
+            # response when the length of the array is 1.
+            query = queries[0]
+            single_result = await self.query(**query, namespace=namespace)
+            return [single_result]
+
+        has_vector_query, payload = convert_query_requests_to_payload(queries)
+        path = QUERY_PATH if has_vector_query else QUERY_DATA_PATH
+        result = await self._execute_request_async(
+            payload=payload, path=_path_for(namespace, path)
+        )
+
+        return [
+            [QueryResult._from_json(obj) for obj in query_result]
+            for query_result in result
         ]
 
     async def delete(
@@ -604,6 +742,7 @@ class AsyncIndexOperations:
         include_vectors: bool = False,
         include_metadata: bool = False,
         namespace: str = DEFAULT_NAMESPACE,
+        include_data: bool = False,
     ) -> RangeResult:
         """
         Scans the vectors asynchronously starting from `cursor`, returns at most `limit` many vectors.
@@ -613,6 +752,7 @@ class AsyncIndexOperations:
         :param include_vectors: Whether the resulting `top_k` vectors will have their vector values or not.
         :param include_metadata: Whether the resulting `top_k` vectors will have their metadata or not.
         :param namespace: The namespace to use. When not specified, the default namespace is used.
+        :param include_data: Whether the resulting `top_k` vectors will have their unstructured data or not.
 
         Example usage:
 
@@ -628,6 +768,7 @@ class AsyncIndexOperations:
             "limit": limit,
             "includeVectors": include_vectors,
             "includeMetadata": include_metadata,
+            "includeData": include_data,
         }
         return RangeResult._from_json(
             await self._execute_request_async(
@@ -641,6 +782,7 @@ class AsyncIndexOperations:
         include_vectors: bool = False,
         include_metadata: bool = False,
         namespace: str = DEFAULT_NAMESPACE,
+        include_data: bool = False,
     ) -> List[Optional[FetchResult]]:
         """
         Fetches details of a set of vectors asynchronously.
@@ -649,6 +791,7 @@ class AsyncIndexOperations:
         :param include_vectors: Whether the resulting vectors will have their vector values or not.
         :param include_metadata: Whether the resulting vectors will have their metadata or not.
         :param namespace: The namespace to use. When not specified, the default namespace is used.
+        :param include_data: Whether the resulting `top_k` vectors will have their unstructured data or not.
 
         Example usage:
 
@@ -663,6 +806,7 @@ class AsyncIndexOperations:
             "ids": ids,
             "includeVectors": include_vectors,
             "includeMetadata": include_metadata,
+            "includeData": include_data,
         }
         return [
             FetchResult._from_json(vector) if vector else None
@@ -678,20 +822,19 @@ class AsyncIndexOperations:
         data: Optional[str] = None,
         metadata: Optional[Dict] = None,
         namespace: str = DEFAULT_NAMESPACE,
+        metadata_update_mode: MetadataUpdateMode = MetadataUpdateMode.OVERWRITE,
     ) -> bool:
         """
         Updates a vector value, data, or metadata for the given id.
-
-        Only and only one of the vector, data, or metadata parameters can be set.
-
-        To update both vector and metadata, or data and metadata, use the
-        upsert method.
 
         :param id: The vector id to update.
         :param vector: The vector value to update to.
         :param data: The raw text data to embed into a vector and update to.
         :param metadata: The metadata to update to.
         :param namespace: The namespace to use. When not specified, the default namespace is used.
+        :param metadata_update_mode: Whether to overwrite the whole
+            it, or patch the metadata (insert new fields or update
+            according to the `RFC 7396 JSON Merge Patch` algorithm.
 
         Example usage:
 
@@ -701,6 +844,7 @@ class AsyncIndexOperations:
         """
         payload: Dict[str, Any] = {
             "id": id,
+            "metadataUpdateMode": metadata_update_mode.value,
         }
 
         if vector is not None:
@@ -711,11 +855,6 @@ class AsyncIndexOperations:
 
         if metadata is not None:
             payload["metadata"] = metadata
-
-        if len(payload) != 2:
-            raise ClientError(
-                "Only and only one of the vector, data, or metadata parameters set"
-            )
 
         result = await self._execute_request_async(
             payload=payload, path=_path_for(namespace, UPDATE_PATH)

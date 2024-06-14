@@ -1,6 +1,7 @@
+import random
+
 import pytest
 from pytest import raises
-import random
 
 from tests import NAMESPACES
 from upstash_vector import Index, AsyncIndex
@@ -10,7 +11,12 @@ from upstash_vector.errors import ClientError
 @pytest.mark.parametrize("ns", NAMESPACES)
 def test_range(index: Index, ns: str):
     vectors = [
-        {"id": f"id-{i}", "vector": [random.random() for _ in range(2)]}
+        {
+            "id": f"id-{i}",
+            "vector": [random.random() for _ in range(2)],
+            "metadata": {"meta": i},
+            "data": f"data-{i}",
+        }
         for i in range(20)
     ]
 
@@ -20,10 +26,17 @@ def test_range(index: Index, ns: str):
         cursor="",
         limit=4,
         include_vectors=True,
+        include_metadata=True,
+        include_data=True,
         namespace=ns,
     )
     assert len(res.vectors) == 4
     assert res.next_cursor != ""
+
+    for i in range(4):
+        assert res.vectors[i].id == f"id-{i}"
+        assert res.vectors[i].metadata == {"meta": i}
+        assert res.vectors[i].data == f"data-{i}"
 
     while res.next_cursor != "":
         res = index.range(
@@ -47,7 +60,12 @@ def test_range(index: Index, ns: str):
 @pytest.mark.parametrize("ns", NAMESPACES)
 async def test_range_async(async_index: AsyncIndex, ns: str):
     vectors = [
-        {"id": f"id-{i}", "vector": [random.random() for _ in range(2)]}
+        {
+            "id": f"id-{i}",
+            "vector": [random.random() for _ in range(2)],
+            "metadata": {"meta": i},
+            "data": f"data-{i}",
+        }
         for i in range(20)
     ]
 
@@ -57,10 +75,17 @@ async def test_range_async(async_index: AsyncIndex, ns: str):
         cursor="",
         limit=4,
         include_vectors=True,
+        include_metadata=True,
+        include_data=True,
         namespace=ns,
     )
     assert len(res.vectors) == 4
     assert res.next_cursor != ""
+
+    for i in range(4):
+        assert res.vectors[i].id == f"id-{i}"
+        assert res.vectors[i].metadata == {"meta": i}
+        assert res.vectors[i].data == f"data-{i}"
 
     while res.next_cursor != "":
         res = await async_index.range(
