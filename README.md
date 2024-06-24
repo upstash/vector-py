@@ -62,7 +62,7 @@ index.upsert(
 
 ```python
 # as dicts, either of the form:
-# - {"id": id, "vector": vector, "metadata": metadata, "data" data)
+# - {"id": id, "vector": vector, "metadata": metadata, "data": data)
 # - {"id": id, "vector": vector, "metadata": metadata)
 # - {"id": id, "vector": vector, "data": data)
 # - {"id": id, "vector": vector} 
