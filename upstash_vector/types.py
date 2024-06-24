@@ -1,5 +1,5 @@
-from dataclasses import dataclass
 import enum
+from dataclasses import dataclass
 from typing import Optional, List, Dict, TypedDict, Union, Protocol
 
 
@@ -125,10 +125,10 @@ class MetadataUpdateMode(enum.Enum):
     according to the `RFC 7396 JSON Merge Patch` algorithm.
     """
 
-    OVERWRITE = 0
+    OVERWRITE = "OVERWRITE"
     """Overwrite the metadata, and set it to a new value."""
 
-    PATCH = 1
+    PATCH = "PATCH"
     """Patch the metadata according to Merge Patch algorithm."""
 
 
