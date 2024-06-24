@@ -1,7 +1,7 @@
+from os import environ
+
 import pytest
 import pytest_asyncio
-
-from os import environ
 
 from tests import NAMESPACES
 from upstash_vector import Index, AsyncIndex

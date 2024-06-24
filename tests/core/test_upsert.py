@@ -19,18 +19,24 @@ def test_upsert_tuple(index: Index, ns: str):
     v2_id = "id2"
     v2_values = [0.3, 0.4]
 
+    v3_id = "id3"
+    v3_values = [0.5, 0.6]
+    v3_data = "data-value"
+
     index.upsert(
         vectors=[
             (v1_id, v1_values, v1_metadata),
             (v2_id, v2_values),
+            (v3_id, v3_values, None, v3_data),
         ],
         namespace=ns,
     )
 
     res = index.fetch(
-        ids=[v1_id, v2_id],
+        ids=[v1_id, v2_id, v3_id],
         include_vectors=True,
         include_metadata=True,
+        include_data=True,
         namespace=ns,
     )
 
@@ -38,11 +44,19 @@ def test_upsert_tuple(index: Index, ns: str):
     assert res[0].id == v1_id
     assert res[0].metadata == v1_metadata
     assert res[0].vector == v1_values
+    assert res[0].data is None
 
     assert res[1] is not None
     assert res[1].id == v2_id
     assert res[1].metadata is None
     assert res[1].vector == v2_values
+    assert res[1].data is None
+
+    assert res[2] is not None
+    assert res[2].id == v3_id
+    assert res[2].metadata is None
+    assert res[2].vector == v3_values
+    assert res[2].data == v3_data
 
 
 @pytest.mark.asyncio
@@ -55,18 +69,24 @@ async def test_upsert_tuple_async(async_index: AsyncIndex, ns: str):
     v2_id = "id2"
     v2_values = [0.3, 0.4]
 
+    v3_id = "id3"
+    v3_values = [0.5, 0.6]
+    v3_data = "data-value"
+
     await async_index.upsert(
         vectors=[
             (v1_id, v1_values, v1_metadata),
             (v2_id, v2_values),
+            (v3_id, v3_values, None, v3_data),
         ],
         namespace=ns,
     )
 
     res = await async_index.fetch(
-        ids=[v1_id, v2_id],
+        ids=[v1_id, v2_id, v3_id],
         include_vectors=True,
         include_metadata=True,
+        include_data=True,
         namespace=ns,
     )
 
@@ -74,11 +94,19 @@ async def test_upsert_tuple_async(async_index: AsyncIndex, ns: str):
     assert res[0].id == v1_id
     assert res[0].metadata == v1_metadata
     assert res[0].vector == v1_values
+    assert res[0].data is None
 
     assert res[1] is not None
     assert res[1].id == v2_id
     assert res[1].metadata is None
     assert res[1].vector == v2_values
+    assert res[1].data is None
+
+    assert res[2] is not None
+    assert res[2].id == v3_id
+    assert res[2].metadata is None
+    assert res[2].vector == v3_values
+    assert res[2].data == v3_data
 
 
 @pytest.mark.parametrize("ns", NAMESPACES)
@@ -90,18 +118,24 @@ def test_upsert_dict(index: Index, ns: str):
     v2_id = "dict_id2"
     v2_values = [0.3, 0.4]
 
+    v3_id = "id3"
+    v3_values = [0.5, 0.6]
+    v3_data = "data-value"
+
     index.upsert(
         vectors=[
             {"id": v1_id, "vector": v1_values, "metadata": v1_metadata},
             {"id": v2_id, "vector": v2_values},
+            {"id": v3_id, "vector": v3_values, "data": v3_data},
         ],
         namespace=ns,
     )
 
     res = index.fetch(
-        ids=[v1_id, v2_id],
+        ids=[v1_id, v2_id, v3_id],
         include_vectors=True,
         include_metadata=True,
+        include_data=True,
         namespace=ns,
     )
 
@@ -109,11 +143,19 @@ def test_upsert_dict(index: Index, ns: str):
     assert res[0].id == v1_id
     assert res[0].metadata == v1_metadata
     assert res[0].vector == v1_values
+    assert res[0].data is None
 
     assert res[1] is not None
     assert res[1].id == v2_id
     assert res[1].metadata is None
     assert res[1].vector == v2_values
+    assert res[1].data is None
+
+    assert res[2] is not None
+    assert res[2].id == v3_id
+    assert res[2].metadata is None
+    assert res[2].vector == v3_values
+    assert res[2].data == v3_data
 
 
 @pytest.mark.asyncio
@@ -126,18 +168,24 @@ async def test_upsert_dict_async(async_index: AsyncIndex, ns: str):
     v2_id = "dict_id2"
     v2_values = [0.3, 0.4]
 
+    v3_id = "id3"
+    v3_values = [0.5, 0.6]
+    v3_data = "data-value"
+
     await async_index.upsert(
         vectors=[
             {"id": v1_id, "vector": v1_values, "metadata": v1_metadata},
             {"id": v2_id, "vector": v2_values},
+            {"id": v3_id, "vector": v3_values, "data": v3_data},
         ],
         namespace=ns,
     )
 
     res = await async_index.fetch(
-        ids=[v1_id, v2_id],
+        ids=[v1_id, v2_id, v3_id],
         include_vectors=True,
         include_metadata=True,
+        include_data=True,
         namespace=ns,
     )
 
@@ -145,11 +193,19 @@ async def test_upsert_dict_async(async_index: AsyncIndex, ns: str):
     assert res[0].id == v1_id
     assert res[0].metadata == v1_metadata
     assert res[0].vector == v1_values
+    assert res[0].data is None
 
     assert res[1] is not None
     assert res[1].id == v2_id
     assert res[1].metadata is None
     assert res[1].vector == v2_values
+    assert res[1].data is None
+
+    assert res[2] is not None
+    assert res[2].id == v3_id
+    assert res[2].metadata is None
+    assert res[2].vector == v3_values
+    assert res[2].data == v3_data
 
 
 @pytest.mark.parametrize("ns", NAMESPACES)
@@ -161,18 +217,24 @@ def test_upsert_vector(index: Index, ns: str):
     v2_id = "vector_id2"
     v2_values = [0.3, 0.4]
 
+    v3_id = "id3"
+    v3_values = [0.5, 0.6]
+    v3_data = "data-value"
+
     index.upsert(
         vectors=[
             Vector(id=v1_id, vector=v1_values, metadata=v1_metadata),
             Vector(id=v2_id, vector=v2_values),
+            Vector(id=v3_id, vector=v3_values, data=v3_data),
         ],
         namespace=ns,
     )
 
     res = index.fetch(
-        ids=[v1_id, v2_id],
+        ids=[v1_id, v2_id, v3_id],
         include_vectors=True,
         include_metadata=True,
+        include_data=True,
         namespace=ns,
     )
 
@@ -180,11 +242,19 @@ def test_upsert_vector(index: Index, ns: str):
     assert res[0].id == v1_id
     assert res[0].metadata == v1_metadata
     assert res[0].vector == v1_values
+    assert res[0].data is None
 
     assert res[1] is not None
     assert res[1].id == v2_id
     assert res[1].metadata is None
     assert res[1].vector == v2_values
+    assert res[1].data is None
+
+    assert res[2] is not None
+    assert res[2].id == v3_id
+    assert res[2].metadata is None
+    assert res[2].vector == v3_values
+    assert res[2].data == v3_data
 
 
 @pytest.mark.asyncio
@@ -197,18 +267,24 @@ async def test_upsert_vector_async(async_index: AsyncIndex, ns: str):
     v2_id = "vector_id2"
     v2_values = [0.3, 0.4]
 
+    v3_id = "id3"
+    v3_values = [0.5, 0.6]
+    v3_data = "data-value"
+
     await async_index.upsert(
         vectors=[
             Vector(id=v1_id, vector=v1_values, metadata=v1_metadata),
             Vector(id=v2_id, vector=v2_values),
+            Vector(id=v3_id, vector=v3_values, data=v3_data),
         ],
         namespace=ns,
     )
 
     res = await async_index.fetch(
-        ids=[v1_id, v2_id],
+        ids=[v1_id, v2_id, v3_id],
         include_vectors=True,
         include_metadata=True,
+        include_data=True,
         namespace=ns,
     )
 
@@ -216,11 +292,19 @@ async def test_upsert_vector_async(async_index: AsyncIndex, ns: str):
     assert res[0].id == v1_id
     assert res[0].metadata == v1_metadata
     assert res[0].vector == v1_values
+    assert res[0].data is None
 
     assert res[1] is not None
     assert res[1].id == v2_id
     assert res[1].metadata is None
     assert res[1].vector == v2_values
+    assert res[1].data is None
+
+    assert res[2] is not None
+    assert res[2].id == v3_id
+    assert res[2].metadata is None
+    assert res[2].vector == v3_values
+    assert res[2].data == v3_data
 
 
 @pytest.mark.parametrize("ns", NAMESPACES)
@@ -232,18 +316,24 @@ def test_upsert_tuple_with_numpy(index: Index, ns: str):
     v2_id = "id2"
     v2_values = np.array([0.3, 0.4])
 
+    v3_id = "id3"
+    v3_values = np.array([0.5, 0.6])
+    v3_data = "data-value"
+
     index.upsert(
         vectors=[
             (v1_id, v1_values, v1_metadata),
             (v2_id, v2_values),
+            (v3_id, v3_values, None, v3_data),
         ],
         namespace=ns,
     )
 
     res = index.fetch(
-        ids=[v1_id, v2_id],
+        ids=[v1_id, v2_id, v3_id],
         include_vectors=True,
         include_metadata=True,
+        include_data=True,
         namespace=ns,
     )
 
@@ -251,11 +341,19 @@ def test_upsert_tuple_with_numpy(index: Index, ns: str):
     assert res[0].id == v1_id
     assert res[0].metadata == v1_metadata
     assert res[0].vector == v1_values.tolist()
+    assert res[0].data is None
 
     assert res[1] is not None
     assert res[1].id == v2_id
     assert res[1].metadata is None
     assert res[1].vector == v2_values.tolist()
+    assert res[1].data is None
+
+    assert res[2] is not None
+    assert res[2].id == v3_id
+    assert res[2].metadata is None
+    assert res[2].vector == v3_values.tolist()
+    assert res[2].data == v3_data
 
 
 @pytest.mark.parametrize("ns", NAMESPACES)
@@ -267,18 +365,24 @@ def test_upsert_dict_with_numpy(index: Index, ns: str):
     v2_id = "dict_id2"
     v2_values = np.array([0.3, 0.4])
 
+    v3_id = "dict_id3"
+    v3_values = np.array([0.5, 0.6])
+    v3_data = "data-value"
+
     index.upsert(
         vectors=[
             {"id": v1_id, "vector": v1_values, "metadata": v1_metadata},
             {"id": v2_id, "vector": v2_values},
+            {"id": v3_id, "vector": v3_values, "data": v3_data},
         ],
         namespace=ns,
     )
 
     res = index.fetch(
-        ids=[v1_id, v2_id],
+        ids=[v1_id, v2_id, v3_id],
         include_vectors=True,
         include_metadata=True,
+        include_data=True,
         namespace=ns,
     )
 
@@ -286,11 +390,19 @@ def test_upsert_dict_with_numpy(index: Index, ns: str):
     assert res[0].id == v1_id
     assert res[0].metadata == v1_metadata
     assert res[0].vector == v1_values.tolist()
+    assert res[0].data is None
 
     assert res[1] is not None
     assert res[1].id == v2_id
     assert res[1].metadata is None
     assert res[1].vector == v2_values.tolist()
+    assert res[1].data is None
+
+    assert res[2] is not None
+    assert res[2].id == v3_id
+    assert res[2].metadata is None
+    assert res[2].vector == v3_values.tolist()
+    assert res[2].data == v3_data
 
 
 @pytest.mark.parametrize("ns", NAMESPACES)
@@ -302,18 +414,24 @@ def test_upsert_vector_with_numpy(index: Index, ns: str):
     v2_id = "vector_id2"
     v2_values = np.array([0.3, 0.4])
 
+    v3_id = "vector_id3"
+    v3_values = np.array([0.5, 0.6])
+    v3_data = "data-value"
+
     index.upsert(
         vectors=[
             Vector(id=v1_id, vector=v1_values, metadata=v1_metadata),
             Vector(id=v2_id, vector=v2_values),
+            Vector(id=v3_id, vector=v3_values, data=v3_data),
         ],
         namespace=ns,
     )
 
     res = index.fetch(
-        ids=[v1_id, v2_id],
+        ids=[v1_id, v2_id, v3_id],
         include_vectors=True,
         include_metadata=True,
+        include_data=True,
         namespace=ns,
     )
 
@@ -321,11 +439,19 @@ def test_upsert_vector_with_numpy(index: Index, ns: str):
     assert res[0].id == v1_id
     assert res[0].metadata == v1_metadata
     assert res[0].vector == v1_values.tolist()
+    assert res[0].data is None
 
     assert res[1] is not None
     assert res[1].id == v2_id
     assert res[1].metadata is None
     assert res[1].vector == v2_values.tolist()
+    assert res[1].data is None
+
+    assert res[2] is not None
+    assert res[2].id == v3_id
+    assert res[2].metadata is None
+    assert res[2].vector == v3_values.tolist()
+    assert res[2].data == v3_data
 
 
 @pytest.mark.parametrize("ns", NAMESPACES)
@@ -337,20 +463,24 @@ def test_upsert_tuple_with_pandas(index: Index, ns: str):
     v2_id = "id2"
     v2_values = pd.array([0.3, 0.4])
 
-    assert v2_values == [0.3, 0.4]
+    v3_id = "id3"
+    v3_values = pd.array([0.5, 0.6])
+    v3_data = "data-value"
 
     index.upsert(
         vectors=[
             (v1_id, v1_values, v1_metadata),
             (v2_id, v2_values),
+            (v3_id, v3_values, None, v3_data),
         ],
         namespace=ns,
     )
 
     res = index.fetch(
-        ids=[v1_id, v2_id],
+        ids=[v1_id, v2_id, v3_id],
         include_vectors=True,
         include_metadata=True,
+        include_data=True,
         namespace=ns,
     )
 
@@ -358,11 +488,19 @@ def test_upsert_tuple_with_pandas(index: Index, ns: str):
     assert res[0].id == v1_id
     assert res[0].metadata == v1_metadata
     assert res[0].vector == v1_values
+    assert res[0].data is None
 
     assert res[1] is not None
     assert res[1].id == v2_id
     assert res[1].metadata is None
     assert res[1].vector == v2_values
+    assert res[1].data is None
+
+    assert res[2] is not None
+    assert res[2].id == v3_id
+    assert res[2].metadata is None
+    assert res[2].vector == v3_values
+    assert res[2].data == v3_data
 
 
 @pytest.mark.parametrize("ns", NAMESPACES)
@@ -374,18 +512,24 @@ def test_upsert_dict_with_pandas(index: Index, ns: str):
     v2_id = "dict_id2"
     v2_values = pd.array([0.3, 0.4])
 
+    v3_id = "dict_id3"
+    v3_values = pd.array([0.5, 0.6])
+    v3_data = "data-value"
+
     index.upsert(
         vectors=[
             {"id": v1_id, "vector": v1_values, "metadata": v1_metadata},
             {"id": v2_id, "vector": v2_values},
+            {"id": v3_id, "vector": v3_values, "data": v3_data},
         ],
         namespace=ns,
     )
 
     res = index.fetch(
-        ids=[v1_id, v2_id],
+        ids=[v1_id, v2_id, v3_id],
         include_vectors=True,
         include_metadata=True,
+        include_data=True,
         namespace=ns,
     )
 
@@ -393,11 +537,19 @@ def test_upsert_dict_with_pandas(index: Index, ns: str):
     assert res[0].id == v1_id
     assert res[0].metadata == v1_metadata
     assert res[0].vector == v1_values
+    assert res[0].data is None
 
     assert res[1] is not None
     assert res[1].id == v2_id
     assert res[1].metadata is None
     assert res[1].vector == v2_values
+    assert res[1].data is None
+
+    assert res[2] is not None
+    assert res[2].id == v3_id
+    assert res[2].metadata is None
+    assert res[2].vector == v3_values
+    assert res[2].data == v3_data
 
 
 @pytest.mark.parametrize("ns", NAMESPACES)
@@ -409,18 +561,24 @@ def test_upsert_vector_with_pandas(index: Index, ns: str):
     v2_id = "vector_id2"
     v2_values = pd.array([0.3, 0.4])
 
+    v3_id = "vector_id3"
+    v3_values = pd.array([0.5, 0.6])
+    v3_data = "data-value"
+
     index.upsert(
         vectors=[
             Vector(id=v1_id, vector=v1_values, metadata=v1_metadata),
             Vector(id=v2_id, vector=v2_values),
+            Vector(id=v3_id, vector=v3_values, data=v3_data),
         ],
         namespace=ns,
     )
 
     res = index.fetch(
-        ids=[v1_id, v2_id],
+        ids=[v1_id, v2_id, v3_id],
         include_vectors=True,
         include_metadata=True,
+        include_data=True,
         namespace=ns,
     )
 
@@ -428,11 +586,19 @@ def test_upsert_vector_with_pandas(index: Index, ns: str):
     assert res[0].id == v1_id
     assert res[0].metadata == v1_metadata
     assert res[0].vector == v1_values
+    assert res[0].data is None
 
     assert res[1] is not None
     assert res[1].id == v2_id
     assert res[1].metadata is None
     assert res[1].vector == v2_values
+    assert res[1].data is None
+
+    assert res[2] is not None
+    assert res[2].id == v3_id
+    assert res[2].metadata is None
+    assert res[2].vector == v3_values
+    assert res[2].data == v3_data
 
 
 @pytest.mark.parametrize("ns", NAMESPACES)
@@ -456,16 +622,19 @@ def test_upsert_data(embedding_index: Index, ns: str):
         ids=[v1_id, v2_id],
         include_vectors=True,
         include_metadata=True,
+        include_data=True,
         namespace=ns,
     )
 
     assert res[0] is not None
     assert res[0].id == v1_id
     assert res[0].metadata == v1_metadata
+    assert res[0].data == v1_data
 
     assert res[1] is not None
     assert res[1].id == v2_id
     assert res[1].metadata is None
+    assert res[1].data == v2_data
 
 
 @pytest.mark.asyncio
@@ -490,16 +659,19 @@ async def test_upsert_data_async(async_embedding_index: AsyncIndex, ns: str):
         ids=[v1_id, v2_id],
         include_vectors=True,
         include_metadata=True,
+        include_data=True,
         namespace=ns,
     )
 
     assert res[0] is not None
     assert res[0].id == v1_id
     assert res[0].metadata == v1_metadata
+    assert res[0].data == v1_data
 
     assert res[1] is not None
     assert res[1].id == v2_id
     assert res[1].metadata is None
+    assert res[1].data == v2_data
 
 
 @pytest.mark.parametrize("ns", NAMESPACES)

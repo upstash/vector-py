@@ -47,26 +47,32 @@ There are a couple of ways of doing upserts:
 
 ```python
 # as tuples, either of the form: 
+# - (id, vector, metadata, data)
 # - (id, vector, metadata)
 # - (id, vector) 
 
 index.upsert(
     vectors=[
-        ("id1", [0.1, 0.2], {"metadata_field": "metadata_value"}),
-        ("id2", [0.3, 0.4]),
+        ("id1", [0.1, 0.2], {"metadata_field": "metadata_value"}, "data-value"),
+        ("id2", [0.2, 0.2], {"metadata_field": "metadata_value"}),
+        ("id3", [0.3, 0.4]),
     ]
 )
 ```
 
 ```python
 # as dicts, either of the form:
+# - {"id": id, "vector": vector, "metadata": metadata, "data": data)
 # - {"id": id, "vector": vector, "metadata": metadata)
+# - {"id": id, "vector": vector, "data": data)
 # - {"id": id, "vector": vector} 
 
 index.upsert(
     vectors=[
-        {"id": "id3", "vector": [0.1, 0.2], "metadata": {"field": "value"}},
-        {"id": "id4", "vector": [0.5, 0.6]},
+        {"id": "id4", "vector": [0.1, 0.2], "metadata": {"field": "value"}, "data": "value"},
+        {"id": "id5", "vector": [0.1, 0.2], "metadata": {"field": "value"}},
+        {"id": "id6", "vector": [0.1, 0.2], "data": "value"},
+        {"id": "id7", "vector": [0.5, 0.6]},
     ]
 )
 ```
@@ -79,12 +85,15 @@ from upstash_vector import Vector
 index.upsert(
     vectors=[
         Vector(id="id5", vector=[1, 2], metadata={"field": "value"}),
-        Vector(id="id6", vector=[6, 7]),
+        Vector(id="id6", vector=[1, 2], data="value"),
+        Vector(id="id7", vector=[6, 7]),
     ]
 )
 ```
 
 If the index is created with an embedding model, raw string data can be upserted.
+In this case, the `data` field of the vector will also be set to the `data` passed
+below, so that it can be accessed later.
 
 ```python
 from upstash_vector import Data
@@ -121,6 +130,7 @@ res = index.query(
     top_k=5,
     include_vectors=False,
     include_metadata=True,
+    include_data=True,
     filter="metadata_f = 'metadata_v'"
 )
 
@@ -131,6 +141,7 @@ for r in res:
         r.score, # The similarity score of this vector to the query vector. Higher is more similar.
         r.vector, # The value of the vector, if requested.
         r.metadata, # The metadata of the vector, if requested and present.
+        r.data, # The data of the vector, if requested and present.
     )
 ```
 
@@ -142,6 +153,7 @@ res = index.query(
     top_k=5,
     include_vectors=False,
     include_metadata=True,
+    include_data=True,
 )
 ```
 
@@ -171,6 +183,7 @@ res = index.fetch(
     ids=["id3", "id4"], 
     include_vectors=False, 
     include_metadata=True,
+    include_data=True,
 )
 
 # List of fetch results, one for each id passed
@@ -181,7 +194,8 @@ for r in res:
     print(
         r.id, # The id used while upserting the vector
         r.vector, # The value of the vector, if requested.
-        r.medata, # The metadata of the vector, if requested and present.
+        r.metadata, # The metadata of the vector, if requested and present.
+        r.data, # The metadata of the vector, if requested and present.
     )
 ```
 
@@ -192,6 +206,7 @@ res = index.fetch(
     "id1", 
     include_vectors=True, 
     include_metadata=True,
+    include_data=False,
 )
 
 r = res[0]
@@ -199,7 +214,8 @@ if r: # Can be None, if there is no such vector with the given id
     print(
         r.id, # The id used while upserting the vector
         r.vector, # The value of the vector, if requested.
-        r.medata, # The metadata of the vector, if requested and present.
+        r.metadata, # The metadata of the vector, if requested and present.
+        r.data, # The metadata of the vector, if requested and present.
     )
 ```
 
@@ -225,6 +241,7 @@ res = index.range(
     limit=100, 
     include_vectors=False, 
     include_metadata=True,
+    include_data=True,
 )
 
 while res.next_cursor != "":
@@ -233,6 +250,7 @@ while res.next_cursor != "":
         limit=100, 
         include_vectors=False, 
         include_metadata=True,
+        include_data=True,
     )
     
     for v in res.vectors:
@@ -240,6 +258,7 @@ while res.next_cursor != "":
             v.id, # The id used while upserting the vector
             v.vector, # The value of the vector, if requested.
             v.metadata, # The metadata of the vector, if requested and present.
+            v.data, # The data of the vector, if requested and present.
         )
 ```
 
