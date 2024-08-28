@@ -22,6 +22,7 @@ from upstash_vector.utils import (
     convert_to_vectors,
     convert_to_payload,
 )
+from upstash_vector.core.resumable_query import ResumableQuery
 
 DEFAULT_NAMESPACE = ""
 
@@ -259,6 +260,73 @@ class IndexOperations:
             [QueryResult._from_json(obj) for obj in query_result]
             for query_result in result
         ]
+
+    def resumable_query(
+        self,
+        vector: Optional[Union[List[float], SupportsToList]] = None,
+        top_k: int = 10,
+        include_vectors: bool = False,
+        include_metadata: bool = False,
+        filter: str = "",
+        data: Optional[str] = None,
+        namespace: str = DEFAULT_NAMESPACE,
+        include_data: bool = False,
+        max_idle: int = 3600,
+    ) -> ResumableQuery:
+        """
+        Creates a resumable query.
+
+        :param vector: The vector value to query.
+        :param top_k: How many vectors will be returned as the query result.
+        :param include_vectors: Whether the resulting vectors will have their vector values or not.
+        :param include_metadata: Whether the resulting vectors will have their metadata or not.
+        :param filter: Filter expression to narrow down the query results.
+        :param data: Data to query for (after embedding it to a vector)
+        :param namespace: The namespace to use. When not specified, the default namespace is used.
+        :param include_data: Whether the resulting vectors will have their unstructured data or not.
+        :param max_idle: Maximum idle time for the resumable query in seconds.
+
+        :return: A ResumableQuery object.
+
+        Example usage:
+
+        ```python
+        query = index.resumable_query(
+            vector=[0.6, 0.9],
+            top_k=100,
+            include_vectors=False,
+            include_metadata=True,
+            max_idle=7200
+        )
+        result = query.start()
+        # Fetch results in batches
+        batch1 = query.fetch_next(10)
+        batch2 = query.fetch_next(20)
+        query.stop()
+        ```
+        """
+        payload = {
+            "topK": top_k,
+            "includeVectors": include_vectors,
+            "includeMetadata": include_metadata,
+            "includeData": include_data,
+            "filter": filter,
+            "maxIdle": max_idle,
+        }
+
+        if data is None and vector is None:
+            raise ClientError("either `data` or `vector` values must be given")
+        if data is not None and vector is not None:
+            raise ClientError(
+                "`data` and `vector` values cannot be given at the same time"
+            )
+
+        if data is not None:
+            payload["data"] = data
+        else:
+            payload["vector"] = convert_to_list(vector)
+
+        return ResumableQuery(payload, self, namespace)
 
     def delete(
         self,
@@ -682,6 +750,73 @@ class AsyncIndexOperations:
             [QueryResult._from_json(obj) for obj in query_result]
             for query_result in result
         ]
+
+    async def resumable_query(
+        self,
+        vector: Optional[Union[List[float], SupportsToList]] = None,
+        top_k: int = 10,
+        include_vectors: bool = False,
+        include_metadata: bool = False,
+        filter: str = "",
+        data: Optional[str] = None,
+        namespace: str = DEFAULT_NAMESPACE,
+        include_data: bool = False,
+        max_idle: int = 3600,
+    ) -> ResumableQuery:
+        """
+        Creates a resumable query.
+
+        :param vector: The vector value to query.
+        :param top_k: How many vectors will be returned as the query result.
+        :param include_vectors: Whether the resulting vectors will have their vector values or not.
+        :param include_metadata: Whether the resulting vectors will have their metadata or not.
+        :param filter: Filter expression to narrow down the query results.
+        :param data: Data to query for (after embedding it to a vector)
+        :param namespace: The namespace to use. When not specified, the default namespace is used.
+        :param include_data: Whether the resulting vectors will have their unstructured data or not.
+        :param max_idle: Maximum idle time for the resumable query in seconds.
+
+        :return: A ResumableQuery object.
+
+        Example usage:
+
+        ```python
+        query = await index.resumable_query(
+            vector=[0.6, 0.9],
+            top_k=100,
+            include_vectors=False,
+            include_metadata=True,
+            max_idle=7200
+        )
+        result = await query.start()
+        # Fetch results in batches
+        batch1 = await query.fetch_next(10)
+        batch2 = await query.fetch_next(20)
+        await query.stop()
+        ```
+        """
+        payload = {
+            "topK": top_k,
+            "includeVectors": include_vectors,
+            "includeMetadata": include_metadata,
+            "includeData": include_data,
+            "filter": filter,
+            "maxIdle": max_idle,
+        }
+
+        if data is None and vector is None:
+            raise ClientError("either `data` or `vector` values must be given")
+        if data is not None and vector is not None:
+            raise ClientError(
+                "`data` and `vector` values cannot be given at the same time"
+            )
+
+        if data is not None:
+            payload["data"] = data
+        else:
+            payload["vector"] = convert_to_list(vector)
+
+        return ResumableQuery(payload, self, namespace)
 
     async def delete(
         self,
