@@ -1,13 +1,14 @@
-from httpx import Client, AsyncClient
-from typing import Any
 from os import environ
+from typing import Any
 
+import httpx
+
+from upstash_vector.core.index_operations import IndexOperations, AsyncIndexOperations
 from upstash_vector.http import (
     execute_with_parameters,
     execute_with_parameters_async,
     generate_headers,
 )
-from upstash_vector.core.index_operations import IndexOperations, AsyncIndexOperations
 
 
 class Index(IndexOperations):
@@ -32,7 +33,12 @@ class Index(IndexOperations):
         self, url: str, token: str, retries: int = 3, retry_interval: float = 1.0
     ):
         self._url = url
-        self._client = Client()
+        self._client = httpx.Client(
+            timeout=httpx.Timeout(
+                timeout=120.0,
+                connect=10.0,
+            )
+        )
         self._retries = retries
         self._retry_interval = retry_interval
         self._headers = generate_headers(token)
@@ -89,7 +95,12 @@ class AsyncIndex(AsyncIndexOperations):
     ):
         self._url = url
         self._headers = generate_headers(token)
-        self._client = AsyncClient()
+        self._client = httpx.AsyncClient(
+            timeout=httpx.Timeout(
+                timeout=120.0,
+                connect=10.0,
+            )
+        )
         self._retries = retries
         self._retry_interval = retry_interval
 
