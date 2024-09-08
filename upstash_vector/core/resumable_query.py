@@ -15,7 +15,7 @@ class ResumableQuery:
         self.payload = payload
         self.client = client
         self.namespace = namespace
-        self.uuid = Optional[str]
+        self.uuid = None
 
     async def async_start(self) -> List[QueryResult]:
         if "vector" in self.payload:
