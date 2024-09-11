@@ -20,6 +20,7 @@ class ResumableQuery:
         client: The client object for executing requests.
         namespace (Optional[str]): The namespace for the query.
         uuid (Optional[str]): The unique identifier for the resumable query session.
+        initial_results (List[QueryResult]): The initial query results.
     """
 
     def __init__(
@@ -38,33 +39,53 @@ class ResumableQuery:
         self.namespace = namespace
         self.uuid = None
 
-    async def async_start(self) -> List[QueryResult]:
+    def __enter__(self):
         """
-        Start the resumable query asynchronously.
+        Enter the runtime context related to this object.
+
+        The with statement will bind this method's return value to the target(s)
+        specified in the as clause of the statement, if any.
 
         Returns:
-            List[QueryResult]: The initial query results.
-
-        Raises:
-            ClientError: If the payload doesn't contain 'vector' or 'data' key.
+            self: The ResumableQuery instance.
         """
-        if "vector" in self.payload:
-            path = RESUMABLE_QUERY_VECTOR_PATH
-        elif "data" in self.payload:
-            path = RESUMABLE_QUERY_DATA_PATH
-        else:
-            raise ClientError("Payload must contain either 'vector' or 'data' key.")
+        return self
 
-        if self.namespace:
-            path = f"{path}/{self.namespace}"
+    def __exit__(self, exc_type, exc_value, traceback):
+        """
+        Exit the runtime context related to this object.
 
-        result = await self.client._execute_request_async(
-            payload=self.payload, path=path
-        )
-        self.uuid = result["uuid"]
-        return result["scores"]
+        The parameters describe the exception that caused the context to be exited.
+        If the context was exited without an exception, all three arguments will be None.
 
-    def start(self) -> List[QueryResult]:
+        Args:
+            exc_type: The exception type if an exception was raised in the context, else None.
+            exc_value: The exception instance if an exception was raised in the context, else None.
+            traceback: The traceback if an exception was raised in the context, else None.
+        """
+        self.stop()
+
+    async def __aenter__(self):
+        """
+        Enter the runtime context related to this object asynchronously.
+
+        Returns:
+            self: The ResumableQuery instance.
+        """
+        return self
+
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        """
+        Exit the runtime context related to this object asynchronously.
+
+        Args:
+            exc_type: The exception type if an exception was raised in the context, else None.
+            exc_value: The exception instance if an exception was raised in the context, else None.
+            traceback: The traceback if an exception was raised in the context, else None.
+        """
+        await self.async_stop()
+
+    def _start(self) -> List[QueryResult]:
         """
         Start the resumable query synchronously.
 
@@ -86,6 +107,37 @@ class ResumableQuery:
             path = f"{path}/{self.namespace}"
 
         result = self.client._execute_request(payload=self.payload, path=path)
+
+        self.uuid = result["uuid"]
+        if not self.uuid:
+            raise ClientError("Resumable query could not be started.")
+
+        return [QueryResult._from_json(obj) for obj in result.get("scores", [])]
+
+    async def _async_start(self) -> List[QueryResult]:
+        """
+        Start the resumable query asynchronously.
+
+        Returns:
+            List[QueryResult]: The initial query results.
+
+        Raises:
+            ClientError: If the payload doesn't contain 'vector' or 'data' key,
+                         or if the resumable query couldn't be started.
+        """
+        if "vector" in self.payload:
+            path = RESUMABLE_QUERY_VECTOR_PATH
+        elif "data" in self.payload:
+            path = RESUMABLE_QUERY_DATA_PATH
+        else:
+            raise ClientError("Payload must contain either 'vector' or 'data' key.")
+
+        if self.namespace:
+            path = f"{path}/{self.namespace}"
+
+        result = await self.client._execute_request_async(
+            payload=self.payload, path=path
+        )
 
         self.uuid = result["uuid"]
         if not self.uuid:
