@@ -9,15 +9,45 @@ RESUMABLE_QUERY_END_PATH = "/resumable-query-end"
 
 
 class ResumableQuery:
+    """
+    A class representing a resumable query for vector search operations.
+
+    This class allows for starting, fetching next results, and stopping a resumable query.
+    It supports both synchronous and asynchronous operations.
+
+    Attributes:
+        payload (Dict[str, Any]): The query payload.
+        client: The client object for executing requests.
+        namespace (Optional[str]): The namespace for the query.
+        uuid (Optional[str]): The unique identifier for the resumable query session.
+    """
+
     def __init__(
         self, payload: Dict[str, Any], client, namespace: Optional[str] = None
     ):
+        """
+        Initialize a ResumableQuery instance.
+
+        Args:
+            payload (Dict[str, Any]): The query payload.
+            client: The client object for executing requests.
+            namespace (Optional[str]): The namespace for the query. Defaults to None.
+        """
         self.payload = payload
         self.client = client
         self.namespace = namespace
         self.uuid = None
 
     async def async_start(self) -> List[QueryResult]:
+        """
+        Start the resumable query asynchronously.
+
+        Returns:
+            List[QueryResult]: The initial query results.
+
+        Raises:
+            ClientError: If the payload doesn't contain 'vector' or 'data' key.
+        """
         if "vector" in self.payload:
             path = RESUMABLE_QUERY_VECTOR_PATH
         elif "data" in self.payload:
@@ -35,6 +65,16 @@ class ResumableQuery:
         return result["scores"]
 
     def start(self) -> List[QueryResult]:
+        """
+        Start the resumable query synchronously.
+
+        Returns:
+            List[QueryResult]: The initial query results.
+
+        Raises:
+            ClientError: If the payload doesn't contain 'vector' or 'data' key,
+                         or if the resumable query couldn't be started.
+        """
         if "vector" in self.payload:
             path = RESUMABLE_QUERY_VECTOR_PATH
         elif "data" in self.payload:
@@ -54,6 +94,18 @@ class ResumableQuery:
         return [QueryResult._from_json(obj) for obj in result.get("scores", [])]
 
     def fetch_next(self, additional_k: int) -> List[QueryResult]:
+        """
+        Fetch the next batch of results synchronously.
+
+        Args:
+            additional_k (int): The number of additional results to fetch.
+
+        Returns:
+            List[QueryResult]: The next batch of query results.
+
+        Raises:
+            ClientError: If the resumable query hasn't been started.
+        """
         if self.uuid is None:
             raise ClientError(
                 "Resumable query has not been started. Call start() first."
@@ -65,6 +117,18 @@ class ResumableQuery:
         return [QueryResult._from_json(obj) for obj in result]
 
     async def async_fetch_next(self, additional_k: int) -> List[QueryResult]:
+        """
+        Fetch the next batch of results asynchronously.
+
+        Args:
+            additional_k (int): The number of additional results to fetch.
+
+        Returns:
+            List[QueryResult]: The next batch of query results.
+
+        Raises:
+            ClientError: If the resumable query hasn't been started.
+        """
         if not self.uuid:
             raise ClientError(
                 "Resumable query has not been started. Call start() first."
@@ -76,6 +140,15 @@ class ResumableQuery:
         return [QueryResult._from_json(obj) for obj in result]
 
     def stop(self) -> str:
+        """
+        Stop the resumable query synchronously.
+
+        Returns:
+            str: The result of stopping the query.
+
+        Raises:
+            ClientError: If the resumable query hasn't been started.
+        """
         if not self.uuid:
             raise ClientError(
                 "Resumable query has not been started. Call start() first."
@@ -88,6 +161,15 @@ class ResumableQuery:
         return result
 
     async def async_stop(self) -> str:
+        """
+        Stop the resumable query asynchronously.
+
+        Returns:
+            str: The result of stopping the query.
+
+        Raises:
+            ClientError: If the resumable query hasn't been started.
+        """
         if not self.uuid:
             raise ClientError(
                 "Resumable query has not been started. Call start() first."
