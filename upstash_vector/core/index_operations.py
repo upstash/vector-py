@@ -1,7 +1,7 @@
 # Define vector operations here:
 # Upsert and query functions and signatures
 
-from typing import Sequence, Union, List, Dict, Optional, Any, Tuple
+from typing import Sequence, Union, List, Dict, Optional, Any
 
 from upstash_vector.errors import ClientError
 from upstash_vector.types import (
@@ -272,9 +272,9 @@ class IndexOperations:
         namespace: str = DEFAULT_NAMESPACE,
         include_data: bool = False,
         max_idle: int = 3600,
-    ) -> Tuple[ResumableQuery, List[QueryResult]]:
+    ) -> ResumableQuery:
         """
-        Creates a resumable query and returns the query object along with initial results.
+        Creates a resumable query. After fetching the necessary results, it's strongly recommended to stop the query with the `.stop()` method.
 
         :param vector: The vector value to query.
         :param top_k: How many vectors will be returned as the query result.
@@ -286,20 +286,20 @@ class IndexOperations:
         :param include_data: Whether the resulting vectors will have their unstructured data or not.
         :param max_idle: Maximum idle time for the resumable query in seconds.
 
-        :return: A tuple containing the ResumableQuery object and the initial query results.
+        :return: A ResumableQuery object.
 
         Example usage:
 
         ```python
-        query, initial_results = index.resumable_query(
+        query = index.resumable_query(
             vector=[0.6, 0.9],
             top_k=100,
             include_vectors=False,
             include_metadata=True,
             max_idle=7200
         )
-        print(initial_results)
-        # Fetch more results in batches
+        result = query.start()
+        # Fetch results in batches
         batch1 = query.fetch_next(10)
         batch2 = query.fetch_next(20)
         query.stop()
@@ -326,9 +326,7 @@ class IndexOperations:
         else:
             payload["vector"] = convert_to_list(vector)
 
-        query = ResumableQuery(payload, self, namespace)
-        initial_results = query._start()
-        return query, initial_results
+        return ResumableQuery(payload, self, namespace)
 
     def delete(
         self,
@@ -764,9 +762,9 @@ class AsyncIndexOperations:
         namespace: str = DEFAULT_NAMESPACE,
         include_data: bool = False,
         max_idle: int = 3600,
-    ) -> Tuple[ResumableQuery, List[QueryResult]]:
+    ) -> ResumableQuery:
         """
-        Creates a resumable query and returns the query object along with initial results.
+        Creates a resumable query. After fetching the necessary results, it's strongly recommended to stop the query with the `.stop()` method.
 
         :param vector: The vector value to query.
         :param top_k: How many vectors will be returned as the query result.
@@ -778,20 +776,20 @@ class AsyncIndexOperations:
         :param include_data: Whether the resulting vectors will have their unstructured data or not.
         :param max_idle: Maximum idle time for the resumable query in seconds.
 
-        :return: A tuple containing the ResumableQuery object and the initial query results.
+        :return: A ResumableQuery object.
 
         Example usage:
 
         ```python
-        query, initial_results = await index.resumable_query(
+        query = await index.resumable_query(
             vector=[0.6, 0.9],
             top_k=100,
             include_vectors=False,
             include_metadata=True,
             max_idle=7200
         )
-        print(initial_results)
-        # Fetch more results in batches
+        result = await query.start()
+        # Fetch results in batches
         batch1 = await query.fetch_next(10)
         batch2 = await query.fetch_next(20)
         await query.stop()
@@ -818,9 +816,7 @@ class AsyncIndexOperations:
         else:
             payload["vector"] = convert_to_list(vector)
 
-        query = ResumableQuery(payload, self, namespace)
-        initial_results = await query._async_start()
-        return query, initial_results
+        return ResumableQuery(payload, self, namespace)
 
     async def delete(
         self,
