@@ -274,7 +274,7 @@ class IndexOperations:
         max_idle: int = 3600,
     ) -> ResumableQuery:
         """
-        Creates a resumable query.
+        Creates a resumable query. After fetching the necessary results, it's strongly recommended to stop the query with the `.stop()` method.
 
         :param vector: The vector value to query.
         :param top_k: How many vectors will be returned as the query result.
@@ -764,7 +764,7 @@ class AsyncIndexOperations:
         max_idle: int = 3600,
     ) -> ResumableQuery:
         """
-        Creates a resumable query.
+        Creates a resumable query. After fetching the necessary results, it's strongly recommended to stop the query with the `.stop()` method.
 
         :param vector: The vector value to query.
         :param top_k: How many vectors will be returned as the query result.
