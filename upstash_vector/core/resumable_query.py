@@ -38,6 +38,47 @@ class ResumableQuery:
         self.namespace = namespace
         self.uuid = None
 
+    def __enter__(self):
+        """
+        Start the resumable query asynchronously.
+        Enter the runtime context related to this object.
+        The with statement will bind this method's return value to the target(s)
+        specified in the as clause of the statement, if any.
+        Returns:
+            self: The ResumableQuery instance.
+        """
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """
+        Exit the runtime context related to this object.
+        The parameters describe the exception that caused the context to be exited.
+        If the context was exited without an exception, all three arguments will be None.
+        Args:
+            exc_type: The exception type if an exception was raised in the context, else None.
+            exc_value: The exception instance if an exception was raised in the context, else None.
+            traceback: The traceback if an exception was raised in the context, else None.
+        """
+        self.stop()
+
+    async def __aenter__(self):
+        """
+        Enter the runtime context related to this object asynchronously.
+        Returns:
+            self: The ResumableQuery instance.
+        """
+        return self
+
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        """
+        Exit the runtime context related to this object asynchronously.
+        Args:
+            exc_type: The exception type if an exception was raised in the context, else None.
+            exc_value: The exception instance if an exception was raised in the context, else None.
+            traceback: The traceback if an exception was raised in the context, else None.
+        """
+        await self.async_stop()
+
     async def async_start(self) -> List[QueryResult]:
         """
         Start the resumable query asynchronously.

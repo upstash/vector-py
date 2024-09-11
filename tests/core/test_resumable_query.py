@@ -225,3 +225,157 @@ async def test_resumable_query_multiple_fetch_async(async_index: AsyncIndex, ns:
         assert stop_result == "Success"
 
     await assert_eventually_async(assertion)
+
+
+@pytest.mark.parametrize("ns", NAMESPACES)
+def test_resumable_query_context_manager(index: Index, ns: str):
+    index.upsert(
+        vectors=[
+            ("id1", [0.1, 0.2], {"field": "value1"}),
+            ("id2", [0.3, 0.4], {"field": "value2"}),
+            ("id3", [0.5, 0.6], {"field": "value3"}),
+        ],
+        namespace=ns,
+    )
+
+    def assertion():
+        with index.resumable_query(
+            vector=[0.1, 0.2],
+            top_k=2,
+            include_metadata=True,
+            include_vectors=True,
+            namespace=ns,
+        ) as query:
+            initial_results = query.start()
+            assert isinstance(initial_results, list)
+            assert len(initial_results) > 0
+            assert hasattr(initial_results[0], "id")
+            assert hasattr(initial_results[0], "metadata")
+
+            next_results = query.fetch_next(1)
+            assert isinstance(next_results, list)
+            assert len(next_results) == 1
+
+        # The query should be stopped automatically after exiting the context
+
+        with pytest.raises(ClientError):
+            query.fetch_next(1)
+
+        with pytest.raises(ClientError):
+            query.stop()
+
+    assert_eventually(assertion)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("ns", NAMESPACES)
+async def test_resumable_query_async_context_manager(async_index: AsyncIndex, ns: str):
+    await async_index.upsert(
+        vectors=[
+            ("id1", [0.1, 0.2], {"field": "value1"}),
+            ("id2", [0.3, 0.4], {"field": "value2"}),
+            ("id3", [0.5, 0.6], {"field": "value3"}),
+        ],
+        namespace=ns,
+    )
+
+    async def assertion():
+        async with await async_index.resumable_query(
+            vector=[0.1, 0.2],
+            top_k=2,
+            include_metadata=True,
+            include_vectors=True,
+            namespace=ns,
+        ) as query:
+            initial_results = await query.async_start()
+            assert isinstance(initial_results, list)
+            assert len(initial_results) > 0
+            assert "id" in initial_results[0]
+            assert "metadata" in initial_results[0]
+
+            next_results = await query.async_fetch_next(1)
+            assert isinstance(next_results, list)
+            assert len(next_results) == 1
+
+        # The query should be stopped automatically after exiting the context
+
+        with pytest.raises(ClientError):
+            await query.async_fetch_next(1)
+
+        with pytest.raises(ClientError):
+            await query.async_stop()
+
+    await assert_eventually_async(assertion)
+
+
+@pytest.mark.parametrize("ns", NAMESPACES)
+def test_resumable_query_context_manager_exception_handling(index: Index, ns: str):
+    index.upsert(
+        vectors=[
+            ("id1", [0.1, 0.2], {"field": "value1"}),
+            ("id2", [0.3, 0.4], {"field": "value2"}),
+        ],
+        namespace=ns,
+    )
+
+    def assertion():
+        try:
+            with index.resumable_query(
+                vector=[0.1, 0.2],
+                top_k=2,
+                include_metadata=True,
+                namespace=ns,
+            ) as query:
+                initial_results = query.start()
+                assert len(initial_results) == 2
+                raise ValueError("Test exception")
+        except ValueError:
+            pass
+
+        # The query should be stopped even if an exception occurred
+
+        with pytest.raises(ClientError):
+            query.fetch_next(1)
+
+        with pytest.raises(ClientError):
+            query.stop()
+
+    assert_eventually(assertion)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("ns", NAMESPACES)
+async def test_resumable_query_async_context_manager_exception_handling(
+    async_index: AsyncIndex, ns: str
+):
+    await async_index.upsert(
+        vectors=[
+            ("id1", [0.1, 0.2], {"field": "value1"}),
+            ("id2", [0.3, 0.4], {"field": "value2"}),
+        ],
+        namespace=ns,
+    )
+
+    async def assertion():
+        try:
+            async with await async_index.resumable_query(
+                vector=[0.1, 0.2],
+                top_k=2,
+                include_metadata=True,
+                namespace=ns,
+            ) as query:
+                initial_results = await query.async_start()
+                assert len(initial_results) == 2
+                raise ValueError("Test exception")
+        except ValueError:
+            pass
+
+        # The query should be stopped even if an exception occurred
+
+        with pytest.raises(ClientError):
+            await query.async_fetch_next(1)
+
+        with pytest.raises(ClientError):
+            await query.async_stop()
+
+    await assert_eventually_async(assertion)
