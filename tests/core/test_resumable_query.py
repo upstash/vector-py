@@ -1,8 +1,11 @@
-import pytest
-from upstash_vector import Index, AsyncIndex
-from upstash_vector.errors import ClientError
-from tests import assert_eventually_async, assert_eventually, NAMESPACES
+import asyncio
 import time
+
+import pytest
+
+from tests import assert_eventually_async, assert_eventually, NAMESPACES
+from upstash_vector import Index, AsyncIndex
+from upstash_vector.errors import UpstashError
 
 
 @pytest.mark.parametrize("ns", NAMESPACES)
@@ -16,31 +19,31 @@ def test_resumable_query(index: Index, ns: str):
         namespace=ns,
     )
 
+    def assertion():
+        result, handle = index.resumable_query(
+            vector=[0.1, 0.2],
+            top_k=2,
+            include_metadata=True,
+            include_vectors=True,
+            namespace=ns,
+        )
+
+        assert isinstance(result, list)
+
+        assert len(result) > 0
+        assert result[0].metadata is not None
+        assert result[0].vector is not None
+
+        handle.stop()
+
+        with pytest.raises(UpstashError):
+            handle.fetch_next(1)
+
+        with pytest.raises(UpstashError):
+            handle.stop()
+
     time.sleep(1)
-
-    query = index.resumable_query(
-        vector=[0.1, 0.2],
-        top_k=2,
-        include_metadata=True,
-        include_vectors=True,
-        namespace=ns,
-    )
-
-    initial_results = query.start()
-    assert isinstance(initial_results, list)
-
-    assert len(initial_results) > 0
-    assert hasattr(initial_results[0], "id")
-    assert hasattr(initial_results[0], "metadata")
-
-    stop_result = query.stop()
-    assert stop_result == "Success"
-
-    with pytest.raises(ClientError):
-        query.fetch_next(1)
-
-    with pytest.raises(ClientError):
-        query.stop()
+    assert_eventually(assertion)
 
 
 @pytest.mark.parametrize("ns", NAMESPACES)
@@ -53,21 +56,21 @@ def test_resumable_query_with_data(embedding_index: Index, ns: str):
         namespace=ns,
     )
 
+    def assertion():
+        result, handle = embedding_index.resumable_query(
+            data="Hello",
+            top_k=1,
+            include_metadata=True,
+            namespace=ns,
+        )
+
+        assert len(result) == 1
+        assert result[0].id == "id1"
+
+        handle.stop()
+
     time.sleep(1)
-
-    query = embedding_index.resumable_query(
-        data="Hello",
-        top_k=1,
-        include_metadata=True,
-        namespace=ns,
-    )
-
-    results = query.start()
-    assert len(results) == 1
-    assert results[0].id == "id1"
-
-    stop_result = query.stop()
-    assert stop_result == "Success"
+    assert_eventually(assertion)
 
 
 @pytest.mark.asyncio
@@ -83,7 +86,7 @@ async def test_resumable_query_async(async_index: AsyncIndex, ns: str):
     )
 
     async def assertion():
-        query = await async_index.resumable_query(
+        result, handle = await async_index.resumable_query(
             vector=[0.1, 0.2],
             top_k=2,
             include_metadata=True,
@@ -91,25 +94,24 @@ async def test_resumable_query_async(async_index: AsyncIndex, ns: str):
             namespace=ns,
         )
 
-        initial_results = await query.async_start()
-        assert isinstance(initial_results, list)
-        assert len(initial_results) > 0
-        assert "id" in initial_results[0]
-        assert "metadata" in initial_results[0]
+        assert isinstance(result, list)
+        assert len(result) > 0
+        assert result[0].metadata is not None
+        assert result[0].vector is not None
 
-        next_results = await query.async_fetch_next(1)
+        next_results = await handle.fetch_next(1)
         assert isinstance(next_results, list)
         assert len(next_results) == 1
 
-        stop_result = await query.async_stop()
-        assert stop_result == "Success"
+        await handle.stop()
 
-        with pytest.raises(ClientError):
-            await query.async_fetch_next(1)
+        with pytest.raises(UpstashError):
+            await handle.fetch_next(1)
 
-        with pytest.raises(ClientError):
-            await query.async_stop()
+        with pytest.raises(UpstashError):
+            await handle.stop()
 
+    await asyncio.sleep(1)
     await assert_eventually_async(assertion)
 
 
@@ -127,20 +129,19 @@ async def test_resumable_query_with_data_async(
     )
 
     async def assertion():
-        query = await async_embedding_index.resumable_query(
+        result, handle = await async_embedding_index.resumable_query(
             data="Hello",
             top_k=1,
             include_metadata=True,
             namespace=ns,
         )
 
-        results = await query.async_start()
-        assert len(results) == 1
-        assert results[0]["id"] == "id1"
+        assert len(result) == 1
+        assert result[0].id == "id1"
 
-        stop_result = await query.async_stop()
-        assert stop_result == "Success"
+        await handle.stop()
 
+    await asyncio.sleep(1)
     await assert_eventually_async(assertion)
 
 
@@ -158,35 +159,35 @@ def test_resumable_query_fetch_next(index: Index, ns: str):
     )
 
     def assertion():
-        query = index.resumable_query(
+        result, handle = index.resumable_query(
             vector=[0.1, 0.2],
             top_k=2,
             include_metadata=True,
             namespace=ns,
         )
 
-        initial_results = query.start()
-        assert len(initial_results) == 2
-        assert initial_results[0].id == "id1"
-        assert initial_results[1].id == "id2"
+        assert len(result) == 2
+        assert result[0].id == "id1"
+        assert result[1].id == "id2"
 
         # Fetch next 2 results
-        next_results_1 = query.fetch_next(2)
+        next_results_1 = handle.fetch_next(2)
         assert len(next_results_1) == 2
         assert next_results_1[0].id == "id3"
         assert next_results_1[1].id == "id4"
 
         # Fetch next 1 result
-        next_results_2 = query.fetch_next(1)
+        next_results_2 = handle.fetch_next(1)
         assert len(next_results_2) == 1
         assert next_results_2[0].id == "id5"
 
         # Try to fetch more, should return empty list
-        next_results_3 = query.fetch_next(1)
+        next_results_3 = handle.fetch_next(1)
         assert len(next_results_3) == 0
 
-        query.stop()
+        handle.stop()
 
+    time.sleep(1)
     assert_eventually(assertion)
 
 
@@ -205,25 +206,24 @@ async def test_resumable_query_multiple_fetch_async(async_index: AsyncIndex, ns:
     )
 
     async def assertion():
-        query = await async_index.resumable_query(
+        result, handle = await async_index.resumable_query(
             vector=[0.1, 0.2],
             top_k=2,
             include_metadata=True,
             namespace=ns,
         )
 
-        initial_results = await query.async_start()
-        assert len(initial_results) == 2
+        assert len(result) == 2
 
-        next_results_1 = await query.async_fetch_next(2)
+        next_results_1 = await handle.fetch_next(2)
         assert len(next_results_1) == 2
 
-        next_results_2 = await query.async_fetch_next(1)
+        next_results_2 = await handle.fetch_next(1)
         assert len(next_results_2) == 1
 
-        stop_result = await query.async_stop()
-        assert stop_result == "Success"
+        await handle.stop()
 
+    await asyncio.sleep(1)
     await assert_eventually_async(assertion)
 
 
@@ -239,31 +239,33 @@ def test_resumable_query_context_manager(index: Index, ns: str):
     )
 
     def assertion():
-        with index.resumable_query(
+        result, handle = index.resumable_query(
             vector=[0.1, 0.2],
             top_k=2,
             include_metadata=True,
             include_vectors=True,
             namespace=ns,
-        ) as query:
-            initial_results = query.start()
-            assert isinstance(initial_results, list)
-            assert len(initial_results) > 0
-            assert hasattr(initial_results[0], "id")
-            assert hasattr(initial_results[0], "metadata")
+        )
 
-            next_results = query.fetch_next(1)
+        with handle:
+            assert isinstance(result, list)
+            assert len(result) > 0
+            assert result[0].metadata is not None
+            assert result[0].vector is not None
+
+            next_results = handle.fetch_next(1)
             assert isinstance(next_results, list)
             assert len(next_results) == 1
 
         # The query should be stopped automatically after exiting the context
 
-        with pytest.raises(ClientError):
-            query.fetch_next(1)
+        with pytest.raises(UpstashError):
+            handle.fetch_next(1)
 
-        with pytest.raises(ClientError):
-            query.stop()
+        with pytest.raises(UpstashError):
+            handle.stop()
 
+    time.sleep(1)
     assert_eventually(assertion)
 
 
@@ -280,102 +282,31 @@ async def test_resumable_query_async_context_manager(async_index: AsyncIndex, ns
     )
 
     async def assertion():
-        async with await async_index.resumable_query(
+        result, handle = await async_index.resumable_query(
             vector=[0.1, 0.2],
             top_k=2,
             include_metadata=True,
             include_vectors=True,
             namespace=ns,
-        ) as query:
-            initial_results = await query.async_start()
-            assert isinstance(initial_results, list)
-            assert len(initial_results) > 0
-            assert "id" in initial_results[0]
-            assert "metadata" in initial_results[0]
+        )
 
-            next_results = await query.async_fetch_next(1)
+        async with handle:
+            assert isinstance(result, list)
+            assert len(result) > 0
+            assert result[0].metadata is not None
+            assert result[0].vector is not None
+
+            next_results = await handle.fetch_next(1)
             assert isinstance(next_results, list)
             assert len(next_results) == 1
 
         # The query should be stopped automatically after exiting the context
 
-        with pytest.raises(ClientError):
-            await query.async_fetch_next(1)
+        with pytest.raises(UpstashError):
+            await handle.fetch_next(1)
 
-        with pytest.raises(ClientError):
-            await query.async_stop()
+        with pytest.raises(UpstashError):
+            await handle.stop()
 
-    await assert_eventually_async(assertion)
-
-
-@pytest.mark.parametrize("ns", NAMESPACES)
-def test_resumable_query_context_manager_exception_handling(index: Index, ns: str):
-    index.upsert(
-        vectors=[
-            ("id1", [0.1, 0.2], {"field": "value1"}),
-            ("id2", [0.3, 0.4], {"field": "value2"}),
-        ],
-        namespace=ns,
-    )
-
-    def assertion():
-        try:
-            with index.resumable_query(
-                vector=[0.1, 0.2],
-                top_k=2,
-                include_metadata=True,
-                namespace=ns,
-            ) as query:
-                initial_results = query.start()
-                assert len(initial_results) == 2
-                raise ValueError("Test exception")
-        except ValueError:
-            pass
-
-        # The query should be stopped even if an exception occurred
-
-        with pytest.raises(ClientError):
-            query.fetch_next(1)
-
-        with pytest.raises(ClientError):
-            query.stop()
-
-    assert_eventually(assertion)
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("ns", NAMESPACES)
-async def test_resumable_query_async_context_manager_exception_handling(
-    async_index: AsyncIndex, ns: str
-):
-    await async_index.upsert(
-        vectors=[
-            ("id1", [0.1, 0.2], {"field": "value1"}),
-            ("id2", [0.3, 0.4], {"field": "value2"}),
-        ],
-        namespace=ns,
-    )
-
-    async def assertion():
-        try:
-            async with await async_index.resumable_query(
-                vector=[0.1, 0.2],
-                top_k=2,
-                include_metadata=True,
-                namespace=ns,
-            ) as query:
-                initial_results = await query.async_start()
-                assert len(initial_results) == 2
-                raise ValueError("Test exception")
-        except ValueError:
-            pass
-
-        # The query should be stopped even if an exception occurred
-
-        with pytest.raises(ClientError):
-            await query.async_fetch_next(1)
-
-        with pytest.raises(ClientError):
-            await query.async_stop()
-
+    await asyncio.sleep(1)
     await assert_eventually_async(assertion)

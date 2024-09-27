@@ -1,7 +1,14 @@
-# Define vector operations here:
-# Upsert and query functions and signatures
-
-from typing import Sequence, Union, List, Dict, Optional, Any
+from typing import (
+    Sequence,
+    Union,
+    List,
+    Dict,
+    Optional,
+    Any,
+    Tuple,
+    Callable,
+    Awaitable,
+)
 
 from upstash_vector.errors import ClientError
 from upstash_vector.types import (
@@ -22,7 +29,6 @@ from upstash_vector.utils import (
     convert_to_vectors,
     convert_to_payload,
 )
-from upstash_vector.core.resumable_query import ResumableQuery
 
 DEFAULT_NAMESPACE = ""
 
@@ -39,6 +45,10 @@ INFO_PATH = "/info"
 LIST_NAMESPACES_PATH = "/list-namespaces"
 DELETE_NAMESPACE_PATH = "/delete-namespace"
 UPDATE_PATH = "/update"
+RESUMABLE_QUERY_PATH = "/resumable-query"
+RESUMABLE_QUERY_DATA_PATH = "/resumable-query-data"
+RESUMABLE_QUERY_NEXT_PATH = "/resumable-query-next"
+RESUMABLE_QUERY_END_PATH = "/resumable-query-end"
 
 
 def _path_for(namespace: str, path: str) -> str:
@@ -272,9 +282,11 @@ class IndexOperations:
         namespace: str = DEFAULT_NAMESPACE,
         include_data: bool = False,
         max_idle: int = 3600,
-    ) -> ResumableQuery:
+    ) -> Tuple[List[QueryResult], "ResumableQueryHandle"]:
         """
-        Creates a resumable query. After fetching the necessary results, it's strongly recommended to stop the query with the `.stop()` method.
+        Creates a resumable query.
+        After fetching the necessary results, it's recommended to stop the query
+        to release the acquired resources.
 
         :param vector: The vector value to query.
         :param top_k: How many vectors will be returned as the query result.
@@ -286,25 +298,30 @@ class IndexOperations:
         :param include_data: Whether the resulting vectors will have their unstructured data or not.
         :param max_idle: Maximum idle time for the resumable query in seconds.
 
-        :return: A ResumableQuery object.
+        :return: First batch of the results, along with a handle to fetch more or stop the query.
 
         Example usage:
 
         ```python
-        query = index.resumable_query(
+        result, handle = index.resumable_query(
             vector=[0.6, 0.9],
             top_k=100,
             include_vectors=False,
             include_metadata=True,
-            max_idle=7200
         )
-        result = query.start()
-        # Fetch results in batches
-        batch1 = query.fetch_next(10)
-        batch2 = query.fetch_next(20)
-        query.stop()
+        # Fetch the next batch of the results
+        result1 = handle.fetch_next(10)
+        result2 = handle.fetch_next(20)
+        handle.stop()
         ```
         """
+        if data is None and vector is None:
+            raise ClientError("either `data` or `vector` values must be given")
+        if data is not None and vector is not None:
+            raise ClientError(
+                "`data` and `vector` values cannot be given at the same time"
+            )
+
         payload = {
             "topK": top_k,
             "includeVectors": include_vectors,
@@ -314,19 +331,19 @@ class IndexOperations:
             "maxIdle": max_idle,
         }
 
-        if data is None and vector is None:
-            raise ClientError("either `data` or `vector` values must be given")
-        if data is not None and vector is not None:
-            raise ClientError(
-                "`data` and `vector` values cannot be given at the same time"
-            )
-
         if data is not None:
             payload["data"] = data
+            path = RESUMABLE_QUERY_DATA_PATH
         else:
             payload["vector"] = convert_to_list(vector)
+            path = RESUMABLE_QUERY_PATH
 
-        return ResumableQuery(payload, self, namespace)
+        result = self._execute_request(payload=payload, path=_path_for(namespace, path))
+
+        uid = result["uuid"]
+        scores = [QueryResult._from_json(obj) for obj in result["scores"]]
+
+        return scores, ResumableQueryHandle(self._execute_request, uid)
 
     def delete(
         self,
@@ -762,9 +779,11 @@ class AsyncIndexOperations:
         namespace: str = DEFAULT_NAMESPACE,
         include_data: bool = False,
         max_idle: int = 3600,
-    ) -> ResumableQuery:
+    ) -> Tuple[List[QueryResult], "AsyncResumableQueryHandle"]:
         """
-        Creates a resumable query. After fetching the necessary results, it's strongly recommended to stop the query with the `.stop()` method.
+        Creates a resumable query.
+        After fetching the necessary results, it's recommended to stop the query
+        to release the acquired resources.
 
         :param vector: The vector value to query.
         :param top_k: How many vectors will be returned as the query result.
@@ -776,25 +795,30 @@ class AsyncIndexOperations:
         :param include_data: Whether the resulting vectors will have their unstructured data or not.
         :param max_idle: Maximum idle time for the resumable query in seconds.
 
-        :return: A ResumableQuery object.
+        :return: First batch of the results, along with a handle to fetch more or stop the query.
 
         Example usage:
 
         ```python
-        query = await index.resumable_query(
+        result, handle = await index.resumable_query(
             vector=[0.6, 0.9],
             top_k=100,
             include_vectors=False,
             include_metadata=True,
-            max_idle=7200
         )
-        result = await query.start()
-        # Fetch results in batches
-        batch1 = await query.fetch_next(10)
-        batch2 = await query.fetch_next(20)
-        await query.stop()
+        # Fetch the next batch of results
+        result1 = await handle.fetch_next(10)
+        result2 = await handle.fetch_next(20)
+        await handle.stop()
         ```
         """
+        if data is None and vector is None:
+            raise ClientError("either `data` or `vector` values must be given")
+        if data is not None and vector is not None:
+            raise ClientError(
+                "`data` and `vector` values cannot be given at the same time"
+            )
+
         payload = {
             "topK": top_k,
             "includeVectors": include_vectors,
@@ -804,19 +828,21 @@ class AsyncIndexOperations:
             "maxIdle": max_idle,
         }
 
-        if data is None and vector is None:
-            raise ClientError("either `data` or `vector` values must be given")
-        if data is not None and vector is not None:
-            raise ClientError(
-                "`data` and `vector` values cannot be given at the same time"
-            )
-
         if data is not None:
             payload["data"] = data
+            path = RESUMABLE_QUERY_DATA_PATH
         else:
             payload["vector"] = convert_to_list(vector)
+            path = RESUMABLE_QUERY_PATH
 
-        return ResumableQuery(payload, self, namespace)
+        result = await self._execute_request_async(
+            payload=payload, path=_path_for(namespace, path)
+        )
+
+        uid = result["uuid"]
+        scores = [QueryResult._from_json(obj) for obj in result["scores"]]
+
+        return scores, AsyncResumableQueryHandle(self._execute_request_async, uid)
 
     async def delete(
         self,
@@ -1032,3 +1058,85 @@ class AsyncIndexOperations:
         await self._execute_request_async(
             payload=None, path=_path_for(namespace, DELETE_NAMESPACE_PATH)
         )
+
+
+class ResumableQueryHandle:
+    """
+    A class representing a resumable query for vector search operations.
+
+    This class allows for fetching next results, and stopping a resumable query.
+    """
+
+    def __init__(self, exec_fn: Callable[[Any, str], Any], uid: str):
+        self._exec_fn = exec_fn
+        self._uid = uid
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.stop()
+
+    def fetch_next(self, additional_k: int) -> List[QueryResult]:
+        """
+        Fetches the next batch of results.
+
+        Args:
+            additional_k (int): The number of additional results to fetch.
+
+        Returns:
+            List[QueryResult]: The next batch of query results.
+        """
+        payload = {"uuid": self._uid, "additionalK": additional_k}
+        result = self._exec_fn(payload, RESUMABLE_QUERY_NEXT_PATH)
+        return [QueryResult._from_json(obj) for obj in result]
+
+    def stop(self) -> None:
+        """
+        Stops the resumable query.
+        """
+        payload = {"uuid": self._uid}
+        self._exec_fn(payload, RESUMABLE_QUERY_END_PATH)
+
+
+class AsyncResumableQueryHandle:
+    """
+    A class representing a resumable query for vector search operations.
+
+    This class allows for fetching next results, and stopping a resumable query.
+    """
+
+    def __init__(
+        self,
+        exec_fn: Callable[[Any, str], Awaitable[Any]],
+        uid: str,
+    ):
+        self._exec_fn = exec_fn
+        self._uid = uid
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        await self.stop()
+
+    async def fetch_next(self, additional_k: int) -> List[QueryResult]:
+        """
+        Fetches the next batch of results.
+
+        Args:
+            additional_k (int): The number of additional results to fetch.
+
+        Returns:
+            List[QueryResult]: The next batch of query results.
+        """
+        payload = {"uuid": self._uid, "additionalK": additional_k}
+        result = await self._exec_fn(payload, RESUMABLE_QUERY_NEXT_PATH)
+        return [QueryResult._from_json(obj) for obj in result]
+
+    async def stop(self) -> None:
+        """
+        Stops the resumable query.
+        """
+        payload = {"uuid": self._uid}
+        await self._exec_fn(payload, RESUMABLE_QUERY_END_PATH)
