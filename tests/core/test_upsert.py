@@ -637,6 +637,24 @@ def test_upsert_data(embedding_index: Index, ns: str):
     assert res[1].data == v2_data
 
 
+def test_upsert_to_none_namespace(embedding_index: Index):
+    v_id = "none_namespace_vector_id"
+    v1_data = "Hello-World"
+
+    embedding_index.upsert(
+        vectors=[
+            Data(id=v_id, data=v1_data),
+        ],
+        namespace=None,
+    )
+
+    # test if the data is indeed inserted to default namespace with namespace=None config
+    res = embedding_index.fetch(ids=[v_id], include_data=True, namespace="")
+
+    assert res[0] is not None
+    assert res[0].id == v_id
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("ns", NAMESPACES)
 async def test_upsert_data_async(async_embedding_index: AsyncIndex, ns: str):
