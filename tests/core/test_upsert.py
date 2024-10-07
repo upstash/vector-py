@@ -645,7 +645,7 @@ def test_upsert_to_none_namespace(embedding_index: Index):
         vectors=[
             Data(id=v_id, data=v1_data),
         ],
-        namespace=None,
+        namespace=None,  # type: ignore[arg-type]
     )
 
     # test if the data is indeed inserted to default namespace with namespace=None config
