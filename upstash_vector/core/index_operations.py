@@ -52,7 +52,7 @@ RESUMABLE_QUERY_END_PATH = "/resumable-query-end"
 
 
 def _path_for(namespace: str, path: str) -> str:
-    if namespace == DEFAULT_NAMESPACE:
+    if namespace == DEFAULT_NAMESPACE or not namespace:
         return path
 
     return f"{path}/{namespace}"
