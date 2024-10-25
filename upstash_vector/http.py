@@ -1,9 +1,10 @@
+import asyncio
 import os
 import time
-import asyncio
-from typing import Any, Dict
-from httpx import Client, AsyncClient
 from platform import python_version
+from typing import Any, Dict
+
+from httpx import Client, AsyncClient
 
 from upstash_vector import __version__
 from upstash_vector.errors import UpstashError
@@ -41,7 +42,7 @@ def execute_with_parameters(
 
     for attempts_left in range(max(0, retries), -1, -1):
         try:
-            response = client.post(url=url, headers=headers, json=payload).json()
+            response = client.post(url=url, headers=headers, json=payload)
             break
 
         except Exception as e:
@@ -53,10 +54,11 @@ def execute_with_parameters(
         assert last_error is not None
         raise last_error
 
-    if "error" in response:
-        raise UpstashError(response["error"])
+    body = response.json()
+    if "error" in body:
+        raise UpstashError(body["error"])
 
-    return response["result"]
+    return body["result"]
 
 
 async def execute_with_parameters_async(
@@ -72,8 +74,7 @@ async def execute_with_parameters_async(
 
     for attempts_left in range(max(0, retries), -1, -1):
         try:
-            resp = await client.post(url=url, headers=headers, json=payload)
-            response = resp.json()
+            response = await client.post(url=url, headers=headers, json=payload)
             break
 
         except Exception as e:
@@ -85,7 +86,8 @@ async def execute_with_parameters_async(
         assert last_error is not None
         raise last_error
 
-    if "error" in response:
-        raise UpstashError(response["error"])
+    body = response.json()
+    if "error" in body:
+        raise UpstashError(body["error"])
 
-    return response["result"]
+    return body["result"]
