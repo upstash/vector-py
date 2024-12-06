@@ -1,13 +1,13 @@
 import pytest
 
 from tests import (
+    NAMESPACES,
     assert_eventually,
     assert_eventually_async,
-    NAMESPACES,
     ensure_ns_exists,
     ensure_ns_exists_async,
 )
-from upstash_vector import Index, AsyncIndex
+from upstash_vector import AsyncIndex, Index
 
 
 def test_info(index: Index):

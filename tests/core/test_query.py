@@ -2,8 +2,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from tests import assert_eventually, assert_eventually_async, NAMESPACES
-from upstash_vector import Index, AsyncIndex
+from tests import NAMESPACES, assert_eventually, assert_eventually_async
+from upstash_vector import AsyncIndex, Index
+from upstash_vector.types import FusionAlgorithm, SparseVector, WeightingStrategy
 
 
 @pytest.mark.parametrize("ns", NAMESPACES)
@@ -1023,5 +1024,634 @@ async def test_query_with_data_with_vector_with_metadata_async(
         assert query_res[1].score < 1
         assert query_res[1].vector == v2_values
         assert query_res[1].data is None
+
+    await assert_eventually_async(assertion)
+
+
+@pytest.mark.parametrize("ns", NAMESPACES)
+def test_query_sparse_index(sparse_index: Index, ns: str):
+    sparse_index.upsert(
+        vectors=[
+            ("id0", ([0, 1], [0.1, 0.2])),
+            ("id1", ([1, 2], [0.2, 0.3]), {"key": "value"}),
+            ("id2", ([2, 3], [0.3, 0.4]), {"key": "value"}, "data"),
+        ],
+        namespace=ns,
+    )
+
+    def assertion():
+        res = sparse_index.query(
+            sparse_vector=([0, 1, 3], [0.1, 0.5, 0.1]),
+            include_vectors=True,
+            include_metadata=True,
+            include_data=True,
+            namespace=ns,
+        )
+
+        assert len(res) == 3
+
+        assert res[0].id == "id0"
+        assert res[0].metadata is None
+        assert res[0].sparse_vector == SparseVector([0, 1], [0.1, 0.2])
+
+        assert res[1].id == "id1"
+        assert res[1].metadata == {"key": "value"}
+        assert res[1].sparse_vector == SparseVector([1, 2], [0.2, 0.3])
+
+        assert res[2].id == "id2"
+        assert res[2].metadata == {"key": "value"}
+        assert res[2].data == "data"
+        assert res[2].sparse_vector == SparseVector([2, 3], [0.3, 0.4])
+
+    assert_eventually(assertion)
+
+
+@pytest.mark.parametrize("ns", NAMESPACES)
+def test_query_sparse_index_weighting_strategy(sparse_index: Index, ns: str):
+    sparse_index.upsert(
+        vectors=[
+            ("id0", ([0, 1], [0.1, 0.1])),
+            ("id1", ([1, 2], [0.1, 0.1]), {"key": "value"}),
+            ("id2", ([2, 3], [0.1, 0.1]), {"key": "value"}, "data"),
+        ],
+        namespace=ns,
+    )
+
+    def assertion():
+        res = sparse_index.query(
+            sparse_vector=([0, 1, 3], [0.2, 0.1, 0.1]),
+            include_vectors=True,
+            include_metadata=True,
+            include_data=True,
+            weighting_strategy=WeightingStrategy.IDF,
+            namespace=ns,
+        )
+
+        assert len(res) == 3
+
+        assert res[0].id == "id0"
+        assert res[0].metadata is None
+        assert res[0].sparse_vector == SparseVector([0, 1], [0.1, 0.1])
+
+        assert res[1].id == "id2"
+        assert res[1].metadata == {"key": "value"}
+        assert res[1].data == "data"
+        assert res[1].sparse_vector == SparseVector([2, 3], [0.1, 0.1])
+
+        assert res[2].id == "id1"
+        assert res[2].metadata == {"key": "value"}
+        assert res[2].sparse_vector == SparseVector([1, 2], [0.1, 0.1])
+
+    assert_eventually(assertion)
+
+
+@pytest.mark.parametrize("ns", NAMESPACES)
+def test_query_many_sparse_index(sparse_index: Index, ns: str):
+    sparse_index.upsert(
+        vectors=[
+            ("id0", ([0, 1], [0.1, 0.1])),
+            ("id1", ([1, 2], [0.1, 0.1]), {"key": "value"}),
+            ("id2", ([2, 3], [0.1, 0.1]), {"key": "value"}, "data"),
+        ],
+        namespace=ns,
+    )
+
+    def assertion():
+        res = sparse_index.query_many(
+            queries=[
+                {
+                    "sparse_vector": (np.array([3, 4]), pd.array([0.1, 0.2])),
+                },
+                {
+                    "sparse_vector": SparseVector([0, 1], [0.5, 0.1]),
+                    "include_vectors": True,
+                },
+                {
+                    "sparse_vector": SparseVector(np.array([2, 3]), [0.5, 0.5]),
+                    "weighting_strategy": WeightingStrategy.IDF,
+                    "include_metadata": True,
+                },
+            ],
+            namespace=ns,
+        )
+
+        assert len(res) == 3
+
+        assert len(res[0]) == 1
+        assert res[0][0].id == "id2"
+
+        assert len(res[1]) == 2
+        assert res[1][0].id == "id0"
+        assert res[1][0].sparse_vector == SparseVector([0, 1], [0.1, 0.1])
+        assert res[1][1].id == "id1"
+        assert res[1][1].sparse_vector == SparseVector([1, 2], [0.1, 0.1])
+
+        assert len(res[2]) == 2
+        assert res[2][0].id == "id2"
+        assert res[2][0].metadata == {"key": "value"}
+        assert res[2][1].id == "id1"
+        assert res[2][1].metadata == {"key": "value"}
+
+    assert_eventually(assertion)
+
+
+@pytest.mark.parametrize("ns", NAMESPACES)
+def test_query_hybrid_index(hybrid_index: Index, ns: str):
+    hybrid_index.upsert(
+        vectors=[
+            ("id0", [0.1, 0.2], ([0, 1], [0.1, 0.2])),
+            ("id1", [0.2, 0.3], ([1, 2], [0.2, 0.3]), {"key": "value"}),
+            ("id2", [0.3, 0.4], ([2, 3], [0.3, 0.4]), {"key": "value"}, "data"),
+        ],
+        namespace=ns,
+    )
+
+    def assertion():
+        res = hybrid_index.query(
+            vector=[0.2, 0.3],
+            sparse_vector=([0, 1, 3], [0.1, 0.5, 0.1]),
+            include_vectors=True,
+            include_metadata=True,
+            include_data=True,
+            namespace=ns,
+        )
+
+        assert len(res) == 3
+
+        assert res[0].id == "id1"
+        assert res[0].metadata == {"key": "value"}
+        assert res[0].vector == [0.2, 0.3]
+        assert res[0].sparse_vector == SparseVector([1, 2], [0.2, 0.3])
+
+        assert res[1].id == "id0"
+        assert res[1].vector == [0.1, 0.2]
+        assert res[1].sparse_vector == SparseVector([0, 1], [0.1, 0.2])
+
+        assert res[2].id == "id2"
+        assert res[2].metadata == {"key": "value"}
+        assert res[2].data == "data"
+        assert res[2].vector == [0.3, 0.4]
+        assert res[2].sparse_vector == SparseVector([2, 3], [0.3, 0.4])
+
+    assert_eventually(assertion)
+
+
+@pytest.mark.parametrize("ns", NAMESPACES)
+def test_query_hybrid_index_weighting_strategy(hybrid_index: Index, ns: str):
+    hybrid_index.upsert(
+        vectors=[
+            ("id0", [0.1, 0.1], ([0, 1], [0.1, 0.1])),
+            ("id1", [0.9, 0.5], ([1, 2], [0.1, 0.1]), {"key": "value"}),
+            ("id2", [0.1, 0.1], ([2, 3], [0.1, 0.1]), {"key": "value"}, "data"),
+        ],
+        namespace=ns,
+    )
+
+    def assertion():
+        res = hybrid_index.query(
+            vector=[0.1, 0.1],
+            sparse_vector=([0, 1, 3], [0.5, 0.1, 0.1]),
+            include_vectors=True,
+            include_metadata=True,
+            include_data=True,
+            weighting_strategy=WeightingStrategy.IDF,
+            namespace=ns,
+        )
+
+        assert len(res) == 3
+
+        assert res[0].id == "id0"
+        assert res[0].metadata is None
+        assert res[0].vector == [0.1, 0.1]
+        assert res[0].sparse_vector == SparseVector([0, 1], [0.1, 0.1])
+
+        assert res[1].id == "id2"
+        assert res[1].metadata == {"key": "value"}
+        assert res[1].data == "data"
+        assert res[1].vector == [0.1, 0.1]
+        assert res[1].sparse_vector == SparseVector([2, 3], [0.1, 0.1])
+
+        assert res[2].id == "id1"
+        assert res[2].metadata == {"key": "value"}
+        assert res[2].vector == [0.9, 0.5]
+        assert res[2].sparse_vector == SparseVector([1, 2], [0.1, 0.1])
+
+    assert_eventually(assertion)
+
+
+@pytest.mark.parametrize("ns", NAMESPACES)
+def test_query_hybrid_index_fusion_algorithm(hybrid_index: Index, ns: str):
+    hybrid_index.upsert(
+        vectors=[
+            ("id0", [0.8, 0.9], ([0, 1], [0.1, 0.1])),
+            ("id1", [0.9, 0.9], ([1, 2], [0.1, 0.1]), {"key": "value"}),
+            ("id2", [0.3, 0.9], ([2, 3], [0.1, 0.1]), {"key": "value"}, "data"),
+        ],
+        namespace=ns,
+    )
+
+    def assertion():
+        res = hybrid_index.query(
+            vector=[0.9, 0.9],
+            sparse_vector=([0, 1, 3], [0.1, 0.1, 100]),
+            include_vectors=True,
+            include_metadata=True,
+            include_data=True,
+            fusion_algorithm=FusionAlgorithm.DBSF,
+            namespace=ns,
+        )
+
+        assert len(res) == 3
+
+        assert res[0].id == "id1"
+        assert res[0].metadata == {"key": "value"}
+        assert res[0].vector == [0.9, 0.9]
+        assert res[0].sparse_vector == SparseVector([1, 2], [0.1, 0.1])
+
+        assert res[1].id == "id2"
+        assert res[1].metadata == {"key": "value"}
+        assert res[1].data == "data"
+        assert res[1].vector == [0.3, 0.9]
+        assert res[1].sparse_vector == SparseVector([2, 3], [0.1, 0.1])
+
+        assert res[2].id == "id0"
+        assert res[2].vector == [0.8, 0.9]
+        assert res[2].sparse_vector == SparseVector([0, 1], [0.1, 0.1])
+
+    assert_eventually(assertion)
+
+
+@pytest.mark.parametrize("ns", NAMESPACES)
+def test_query_many_hybrid_index(hybrid_index: Index, ns: str):
+    hybrid_index.upsert(
+        vectors=[
+            ("id0", [0.1, 0.2], ([0, 1], [0.1, 0.1])),
+            ("id1", [0.1, 0.4], ([1, 2], [0.2, 0.1]), {"key": "value"}),
+            ("id2", [0.5, 0.1], ([2, 3], [0.3, 0.1]), {"key": "value"}, "data"),
+        ],
+        namespace=ns,
+    )
+
+    def assertion():
+        res = hybrid_index.query_many(
+            queries=[
+                {
+                    "vector": [0.1, 0.1],
+                    "sparse_vector": (np.array([3, 4]), pd.array([0.1, 0.2])),
+                    "fusion_algorithm": FusionAlgorithm.RRF,
+                    "top_k": 1,
+                },
+                {
+                    "vector": np.array([0.5, 0.1]),
+                    "sparse_vector": SparseVector([0, 1], [0.5, 0.1]),
+                    "include_vectors": True,
+                },
+                {
+                    "sparse_vector": SparseVector(np.array([2, 3]), [0.5, 0.5]),
+                    "weighting_strategy": WeightingStrategy.IDF,
+                    "fusion_algorithm": FusionAlgorithm.DBSF,
+                    "include_metadata": True,
+                },
+            ],
+            namespace=ns,
+        )
+
+        assert len(res) == 3
+
+        assert len(res[0]) == 1
+        assert res[0][0].id == "id2"
+
+        assert len(res[1]) == 3
+        assert res[1][0].id == "id0"
+        assert res[1][0].sparse_vector == SparseVector([0, 1], [0.1, 0.1])
+        assert res[1][1].id == "id1"
+        assert res[1][1].sparse_vector == SparseVector([1, 2], [0.2, 0.1])
+
+        assert len(res[2]) == 2
+        assert res[2][0].id == "id2"
+        assert res[2][0].metadata == {"key": "value"}
+        assert res[2][1].id == "id1"
+        assert res[2][1].metadata == {"key": "value"}
+
+    assert_eventually(assertion)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("ns", NAMESPACES)
+async def test_query_sparse_index_async(async_sparse_index: AsyncIndex, ns: str):
+    await async_sparse_index.upsert(
+        vectors=[
+            ("id0", ([0, 1], [0.1, 0.2])),
+            ("id1", ([1, 2], [0.2, 0.3]), {"key": "value"}),
+            ("id2", ([2, 3], [0.3, 0.4]), {"key": "value"}, "data"),
+        ],
+        namespace=ns,
+    )
+
+    async def assertion():
+        res = await async_sparse_index.query(
+            sparse_vector=([0, 1, 3], [0.1, 0.5, 0.1]),
+            include_vectors=True,
+            include_metadata=True,
+            include_data=True,
+            namespace=ns,
+        )
+
+        assert len(res) == 3
+
+        assert res[0].id == "id0"
+        assert res[0].metadata is None
+        assert res[0].sparse_vector == SparseVector([0, 1], [0.1, 0.2])
+
+        assert res[1].id == "id1"
+        assert res[1].metadata == {"key": "value"}
+        assert res[1].sparse_vector == SparseVector([1, 2], [0.2, 0.3])
+
+        assert res[2].id == "id2"
+        assert res[2].metadata == {"key": "value"}
+        assert res[2].data == "data"
+        assert res[2].sparse_vector == SparseVector([2, 3], [0.3, 0.4])
+
+    await assert_eventually_async(assertion)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("ns", NAMESPACES)
+async def test_query_sparse_index_weighting_strategy_async(
+    async_sparse_index: AsyncIndex, ns: str
+):
+    await async_sparse_index.upsert(
+        vectors=[
+            ("id0", ([0, 1], [0.1, 0.1])),
+            ("id1", ([1, 2], [0.1, 0.1]), {"key": "value"}),
+            ("id2", ([2, 3], [0.1, 0.1]), {"key": "value"}, "data"),
+        ],
+        namespace=ns,
+    )
+
+    async def assertion():
+        res = await async_sparse_index.query(
+            sparse_vector=([0, 1, 3], [0.2, 0.1, 0.1]),
+            include_vectors=True,
+            include_metadata=True,
+            include_data=True,
+            weighting_strategy=WeightingStrategy.IDF,
+            namespace=ns,
+        )
+
+        assert len(res) == 3
+
+        assert res[0].id == "id0"
+        assert res[0].metadata is None
+        assert res[0].sparse_vector == SparseVector([0, 1], [0.1, 0.1])
+
+        assert res[1].id == "id2"
+        assert res[1].metadata == {"key": "value"}
+        assert res[1].data == "data"
+        assert res[1].sparse_vector == SparseVector([2, 3], [0.1, 0.1])
+
+        assert res[2].id == "id1"
+        assert res[2].metadata == {"key": "value"}
+        assert res[2].sparse_vector == SparseVector([1, 2], [0.1, 0.1])
+
+    await assert_eventually_async(assertion)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("ns", NAMESPACES)
+async def test_query_many_sparse_index_async(async_sparse_index: AsyncIndex, ns: str):
+    await async_sparse_index.upsert(
+        vectors=[
+            ("id0", ([0, 1], [0.1, 0.1])),
+            ("id1", ([1, 2], [0.1, 0.1]), {"key": "value"}),
+            ("id2", ([2, 3], [0.1, 0.1]), {"key": "value"}, "data"),
+        ],
+        namespace=ns,
+    )
+
+    async def assertion():
+        res = await async_sparse_index.query_many(
+            queries=[
+                {
+                    "sparse_vector": (np.array([3, 4]), pd.array([0.1, 0.2])),
+                },
+                {
+                    "sparse_vector": SparseVector([0, 1], [0.5, 0.1]),
+                    "include_vectors": True,
+                },
+                {
+                    "sparse_vector": SparseVector(np.array([2, 3]), [0.5, 0.5]),
+                    "weighting_strategy": WeightingStrategy.IDF,
+                    "include_metadata": True,
+                },
+            ],
+            namespace=ns,
+        )
+
+        assert len(res) == 3
+
+        assert len(res[0]) == 1
+        assert res[0][0].id == "id2"
+
+        assert len(res[1]) == 2
+        assert res[1][0].id == "id0"
+        assert res[1][0].sparse_vector == SparseVector([0, 1], [0.1, 0.1])
+        assert res[1][1].id == "id1"
+        assert res[1][1].sparse_vector == SparseVector([1, 2], [0.1, 0.1])
+
+        assert len(res[2]) == 2
+        assert res[2][0].id == "id2"
+        assert res[2][0].metadata == {"key": "value"}
+        assert res[2][1].id == "id1"
+        assert res[2][1].metadata == {"key": "value"}
+
+    await assert_eventually_async(assertion)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("ns", NAMESPACES)
+async def test_query_hybrid_index_async(async_hybrid_index: AsyncIndex, ns: str):
+    await async_hybrid_index.upsert(
+        vectors=[
+            ("id0", [0.1, 0.2], ([0, 1], [0.1, 0.2])),
+            ("id1", [0.2, 0.3], ([1, 2], [0.2, 0.3]), {"key": "value"}),
+            ("id2", [0.3, 0.4], ([2, 3], [0.3, 0.4]), {"key": "value"}, "data"),
+        ],
+        namespace=ns,
+    )
+
+    async def assertion():
+        res = await async_hybrid_index.query(
+            vector=[0.2, 0.3],
+            sparse_vector=([0, 1, 3], [0.1, 0.5, 0.1]),
+            include_vectors=True,
+            include_metadata=True,
+            include_data=True,
+            namespace=ns,
+        )
+
+        assert len(res) == 3
+
+        assert res[0].id == "id1"
+        assert res[0].metadata == {"key": "value"}
+        assert res[0].vector == [0.2, 0.3]
+        assert res[0].sparse_vector == SparseVector([1, 2], [0.2, 0.3])
+
+        assert res[1].id == "id0"
+        assert res[1].vector == [0.1, 0.2]
+        assert res[1].sparse_vector == SparseVector([0, 1], [0.1, 0.2])
+
+        assert res[2].id == "id2"
+        assert res[2].metadata == {"key": "value"}
+        assert res[2].data == "data"
+        assert res[2].vector == [0.3, 0.4]
+        assert res[2].sparse_vector == SparseVector([2, 3], [0.3, 0.4])
+
+    await assert_eventually_async(assertion)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("ns", NAMESPACES)
+async def test_query_hybrid_index_weighting_strategy_async(
+    async_hybrid_index: AsyncIndex, ns: str
+):
+    await async_hybrid_index.upsert(
+        vectors=[
+            ("id0", [0.1, 0.1], ([0, 1], [0.1, 0.1])),
+            ("id1", [0.9, 0.5], ([1, 2], [0.1, 0.1]), {"key": "value"}),
+            ("id2", [0.1, 0.1], ([2, 3], [0.1, 0.1]), {"key": "value"}, "data"),
+        ],
+        namespace=ns,
+    )
+
+    async def assertion():
+        res = await async_hybrid_index.query(
+            vector=[0.1, 0.1],
+            sparse_vector=([0, 1, 3], [0.5, 0.1, 0.1]),
+            include_vectors=True,
+            include_metadata=True,
+            include_data=True,
+            weighting_strategy=WeightingStrategy.IDF,
+            namespace=ns,
+        )
+
+        assert len(res) == 3
+
+        assert res[0].id == "id0"
+        assert res[0].metadata is None
+        assert res[0].vector == [0.1, 0.1]
+        assert res[0].sparse_vector == SparseVector([0, 1], [0.1, 0.1])
+
+        assert res[1].id == "id2"
+        assert res[1].metadata == {"key": "value"}
+        assert res[1].data == "data"
+        assert res[1].vector == [0.1, 0.1]
+        assert res[1].sparse_vector == SparseVector([2, 3], [0.1, 0.1])
+
+        assert res[2].id == "id1"
+        assert res[2].metadata == {"key": "value"}
+        assert res[2].vector == [0.9, 0.5]
+        assert res[2].sparse_vector == SparseVector([1, 2], [0.1, 0.1])
+
+    await assert_eventually_async(assertion)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("ns", NAMESPACES)
+async def test_query_hybrid_index_fusion_algorithm_async(
+    async_hybrid_index: AsyncIndex, ns: str
+):
+    await async_hybrid_index.upsert(
+        vectors=[
+            ("id0", [0.8, 0.9], ([0, 1], [0.1, 0.1])),
+            ("id1", [0.9, 0.9], ([1, 2], [0.1, 0.1]), {"key": "value"}),
+            ("id2", [0.3, 0.9], ([2, 3], [0.1, 0.1]), {"key": "value"}, "data"),
+        ],
+        namespace=ns,
+    )
+
+    async def assertion():
+        res = await async_hybrid_index.query(
+            vector=[0.9, 0.9],
+            sparse_vector=([0, 1, 3], [0.1, 0.1, 100]),
+            include_vectors=True,
+            include_metadata=True,
+            include_data=True,
+            fusion_algorithm=FusionAlgorithm.DBSF,
+            namespace=ns,
+        )
+
+        assert len(res) == 3
+
+        assert res[0].id == "id1"
+        assert res[0].metadata == {"key": "value"}
+        assert res[0].vector == [0.9, 0.9]
+        assert res[0].sparse_vector == SparseVector([1, 2], [0.1, 0.1])
+
+        assert res[1].id == "id2"
+        assert res[1].metadata == {"key": "value"}
+        assert res[1].data == "data"
+        assert res[1].vector == [0.3, 0.9]
+        assert res[1].sparse_vector == SparseVector([2, 3], [0.1, 0.1])
+
+        assert res[2].id == "id0"
+        assert res[2].vector == [0.8, 0.9]
+        assert res[2].sparse_vector == SparseVector([0, 1], [0.1, 0.1])
+
+    await assert_eventually_async(assertion)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("ns", NAMESPACES)
+async def test_query_many_hybrid_index_async(async_hybrid_index: AsyncIndex, ns: str):
+    await async_hybrid_index.upsert(
+        vectors=[
+            ("id0", [0.1, 0.2], ([0, 1], [0.1, 0.1])),
+            ("id1", [0.1, 0.4], ([1, 2], [0.2, 0.1]), {"key": "value"}),
+            ("id2", [0.5, 0.1], ([2, 3], [0.3, 0.1]), {"key": "value"}, "data"),
+        ],
+        namespace=ns,
+    )
+
+    async def assertion():
+        res = await async_hybrid_index.query_many(
+            queries=[
+                {
+                    "vector": [0.1, 0.1],
+                    "sparse_vector": (np.array([3, 4]), pd.array([0.1, 0.2])),
+                    "fusion_algorithm": FusionAlgorithm.RRF,
+                    "top_k": 1,
+                },
+                {
+                    "vector": np.array([0.5, 0.1]),
+                    "sparse_vector": SparseVector([0, 1], [0.5, 0.1]),
+                    "include_vectors": True,
+                },
+                {
+                    "sparse_vector": SparseVector(np.array([2, 3]), [0.5, 0.5]),
+                    "weighting_strategy": WeightingStrategy.IDF,
+                    "fusion_algorithm": FusionAlgorithm.DBSF,
+                    "include_metadata": True,
+                },
+            ],
+            namespace=ns,
+        )
+
+        assert len(res) == 3
+
+        assert len(res[0]) == 1
+        assert res[0][0].id == "id2"
+
+        assert len(res[1]) == 3
+        assert res[1][0].id == "id0"
+        assert res[1][0].sparse_vector == SparseVector([0, 1], [0.1, 0.1])
+        assert res[1][1].id == "id1"
+        assert res[1][1].sparse_vector == SparseVector([1, 2], [0.2, 0.1])
+
+        assert len(res[2]) == 2
+        assert res[2][0].id == "id2"
+        assert res[2][0].metadata == {"key": "value"}
+        assert res[2][1].id == "id1"
+        assert res[2][1].metadata == {"key": "value"}
 
     await assert_eventually_async(assertion)

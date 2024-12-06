@@ -4,7 +4,7 @@ import time
 from platform import python_version
 from typing import Any, Dict
 
-from httpx import Client, AsyncClient
+from httpx import AsyncClient, Client
 
 from upstash_vector import __version__
 from upstash_vector.errors import UpstashError

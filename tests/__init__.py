@@ -1,10 +1,24 @@
-import time
 import asyncio
+import os
+import time
 
-from upstash_vector import Index, AsyncIndex
+import dotenv
+
+from upstash_vector import AsyncIndex, Index
 from upstash_vector.core.index_operations import DEFAULT_NAMESPACE
 
+dotenv.load_dotenv()
+
 NAMESPACES = [DEFAULT_NAMESPACE, "ns"]
+
+INDEX_URL = os.environ["URL"]
+INDEX_TOKEN = os.environ["TOKEN"]
+SPARSE_INDEX_URL = os.environ["SPARSE_URL"]
+SPARSE_INDEX_TOKEN = os.environ["SPARSE_TOKEN"]
+HYBRID_INDEX_URL = os.environ["HYBRID_URL"]
+HYBRID_INDEX_TOKEN = os.environ["HYBRID_TOKEN"]
+EMBEDDING_INDEX_URL = os.environ["EMBEDDING_URL"]
+EMBEDDING_INDEX_TOKEN = os.environ["EMBEDDING_TOKEN"]
 
 
 def assert_eventually(assertion, retry_delay=0.5, timeout=5.0):

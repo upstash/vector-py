@@ -1,24 +1,28 @@
 # Upstash Vector Python SDK
+
 The Upstash Vector Python client
 
 > [!NOTE]  
 > **This project is in GA Stage.**
 >
-> The Upstash Professional Support fully covers this project. It receives regular updates, and bug fixes. 
+> The Upstash Professional Support fully covers this project. It receives regular updates, and bug fixes.
 > The Upstash team is committed to maintaining and improving its functionality.
 
 ## Installation
 
 Install a released version from pip:
+
 ```shell
 pip3 install upstash-vector
 ```
 
 ## Usage
-In order to use this client, head out to [Upstash Console](https://console.upstash.com) and create a vector database. 
+
+In order to use this client, head out to [Upstash Console](https://console.upstash.com) and create a vector database.
 There, get the `UPSTASH_VECTOR_REST_URL` and the `UPSTASH_VECTOR_REST_TOKEN` from the dashboard.
 
 ### Initializing the Index
+
 ```python
 from upstash_vector import Index
 
@@ -46,11 +50,10 @@ to be later queried or fetched.
 There are a couple of ways of doing upserts:
 
 ```python
-# as tuples, either of the form: 
-# - (id, vector, metadata, data)
-# - (id, vector, metadata)
-# - (id, vector) 
-
+# - dense indexes
+#   - (id, vector, metadata, data)
+#   - (id, vector, metadata)
+#   - (id, vector)
 index.upsert(
     vectors=[
         ("id1", [0.1, 0.2], {"metadata_field": "metadata_value"}, "data-value"),
@@ -58,15 +61,38 @@ index.upsert(
         ("id3", [0.3, 0.4]),
     ]
 )
+
+# - sparse indexes
+#   - (id, sparse_vector, metadata, data)
+#   - (id, sparse_vector, metadata)
+#   - (id, sparse_vector)
+index.upsert(
+    vectors=[
+        ("id1", ([0, 1], [0.1, 0.2]), {"metadata_field": "metadata_value"}, "data-value"),
+        ("id2", ([1, 2], [0.2, 0.2]), {"metadata_field": "metadata_value"}),
+        ("id3", ([2, 3, 4], [0.3, 0.4, 0.5])),
+    ]
+)
+
+# - hybrid indexes
+#   - (id, vector, sparse_vector, metadata, data)
+#   - (id, vector, sparse_vector, metadata)
+#   - (id, vector, sparse_vector)
+index.upsert(
+    vectors=[
+        ("id1", [0.1, 0.2], ([0, 1], [0.1, 0.2]), {"metadata_field": "metadata_value"}, "data-value"),
+        ("id2", [0.2, 0.2], ([1, 2], [0.2, 0.2]), {"metadata_field": "metadata_value"}),
+        ("id3", [0.3, 0.4], ([2, 3, 4], [0.3, 0.4, 0.5])),
+    ]
+)
 ```
 
 ```python
-# as dicts, either of the form:
-# - {"id": id, "vector": vector, "metadata": metadata, "data": data)
-# - {"id": id, "vector": vector, "metadata": metadata)
-# - {"id": id, "vector": vector, "data": data)
-# - {"id": id, "vector": vector} 
-
+# - dense indexes
+#   - {"id": id, "vector": vector, "metadata": metadata, "data": data)
+#   - {"id": id, "vector": vector, "metadata": metadata)
+#   - {"id": id, "vector": vector, "data": data)
+#   - {"id": id, "vector": vector} 
 index.upsert(
     vectors=[
         {"id": "id4", "vector": [0.1, 0.2], "metadata": {"field": "value"}, "data": "value"},
@@ -75,18 +101,69 @@ index.upsert(
         {"id": "id7", "vector": [0.5, 0.6]},
     ]
 )
+
+# - sparse indexes
+#   - {"id": id, "sparse_vector": sparse_vector, "metadata": metadata, "data": data)
+#   - {"id": id, "sparse_vector": sparse_vector, "metadata": metadata)
+#   - {"id": id, "sparse_vector": sparse_vector, "data": data)
+#   - {"id": id, "sparse_vector": sparse_vector} 
+index.upsert(
+    vectors=[
+        {"id": "id4", "sparse_vector": ([0, 1], [0.1, 0.2]), "metadata": {"field": "value"}, "data": "value"},
+        {"id": "id5", "sparse_vector": ([1, 2], [0.2, 0.2]), "metadata": {"field": "value"}},
+        {"id": "id6", "sparse_vector": ([2, 3, 4], [0.3, 0.4, 0.5]), "data": "value"},
+        {"id": "id7", "sparse_vector": ([4], [0.3])},
+    ]
+)
+
+# - hybrid indexes
+#   - {"id": id, "vector": vector, "sparse_vector": sparse_vector, "metadata": metadata, "data": data)
+#   - {"id": id, "vector": vector, "sparse_vector": sparse_vector, "metadata": metadata)
+#   - {"id": id, "vector": vector, "sparse_vector": sparse_vector, "data": data)
+#   - {"id": id, "vector": vector, "sparse_vector": sparse_vector} 
+index.upsert(
+    vectors=[
+        {"id": "id4", "vector": [0.1, 0.2], "sparse_vector": ([0], [0.1]), "metadata": {"field": "value"},
+         "data": "value"},
+        {"id": "id5", "vector": [0.1, 0.2], "sparse_vector": ([1, 2], [0.2, 0.2]), "metadata": {"field": "value"}},
+        {"id": "id6", "vector": [0.1, 0.2], "sparse_vector": ([2, 3, 4], [0.3, 0.4, 0.5]), "data": "value"},
+        {"id": "id7", "vector": [0.5, 0.6], "sparse_vector": ([4], [0.3])},
+    ]
+)
 ```
 
 ```python
 from upstash_vector import Vector
+from upstash_vector.types import SparseVector
 
-# as Vector objects
-
+# dense indexes
 index.upsert(
     vectors=[
-        Vector(id="id5", vector=[1, 2], metadata={"field": "value"}),
-        Vector(id="id6", vector=[1, 2], data="value"),
-        Vector(id="id7", vector=[6, 7]),
+        Vector(id="id5", vector=[1, 2], metadata={"field": "value"}, data="value"),
+        Vector(id="id6", vector=[1, 2], metadata={"field": "value"}),
+        Vector(id="id7", vector=[1, 2], data="value"),
+        Vector(id="id8", vector=[6, 7]),
+    ]
+)
+
+# sparse indexes
+index.upsert(
+    vectors=[
+        Vector(id="id5", sparse_vector=SparseVector([1], [0.1]), metadata={"field": "value"}, data="value"),
+        Vector(id="id6", sparse_vector=SparseVector([1, 2], [0.1, 0.2]), metadata={"field": "value"}),
+        Vector(id="id7", sparse_vector=SparseVector([3, 5], [0.3, 0.3]), data="value"),
+        Vector(id="id8", sparse_vector=SparseVector([4], [0.2])),
+    ]
+)
+
+# hybrid indexes
+index.upsert(
+    vectors=[
+        Vector(id="id5", vector=[1, 2], sparse_vector=SparseVector([1], [0.1]), metadata={"field": "value"},
+               data="value"),
+        Vector(id="id6", vector=[1, 2], sparse_vector=SparseVector([1, 2], [0.1, 0.2]), metadata={"field": "value"}),
+        Vector(id="id7", vector=[1, 2], sparse_vector=SparseVector([3, 5], [0.3, 0.3]), data="value"),
+        Vector(id="id8", vector=[6, 7], sparse_vector=SparseVector([4], [0.2])),
     ]
 )
 ```
@@ -113,7 +190,7 @@ When no namespace is provided, the default namespace is used.
 index.upsert(
     vectors=[
         ("id1", [0.1, 0.2]),
-        ("id2", [0.3,0.4]),
+        ("id2", [0.3, 0.4]),
     ],
     namespace="ns",
 )
@@ -126,7 +203,8 @@ query vector can be requested from a namespace of an index.
 
 ```python
 res = index.query(
-    vector=[0.6, 0.9], 
+    vector=[0.6, 0.9],  # for dense and hybrid indexes
+    sparse_vector=([0, 1], [0.1, 0.1]),  # for sparse and hybrid indexes 
     top_k=5,
     include_vectors=False,
     include_metadata=True,
@@ -137,11 +215,12 @@ res = index.query(
 # List of query results, sorted in the descending order of similarity
 for r in res:
     print(
-        r.id, # The id used while upserting the vector
-        r.score, # The similarity score of this vector to the query vector. Higher is more similar.
-        r.vector, # The value of the vector, if requested.
-        r.metadata, # The metadata of the vector, if requested and present.
-        r.data, # The data of the vector, if requested and present.
+        r.id,  # The id used while upserting the vector
+        r.score,  # The similarity score of this vector to the query vector. Higher is more similar.
+        r.vector,  # The value of the vector, if requested (for dense and hybrid indexes).
+        r.sparse,  # The value of the sparse vector, if requested (for sparse and hybrid indexes).
+        r.metadata,  # The metadata of the vector, if requested and present.
+        r.data,  # The data of the vector, if requested and present.
     )
 ```
 
@@ -160,15 +239,15 @@ res = index.query(
 When a filter is provided, query results are further narrowed down based
 on the vectors whose metadata matches with it.
 
-See [Metadata Filtering](https://upstash.com/docs/vector/features/filtering) documentation 
-for more information regarding the filter syntax. 
+See [Metadata Filtering](https://upstash.com/docs/vector/features/filtering) documentation
+for more information regarding the filter syntax.
 
-Also, a namespace can be specified to query from. 
-When no namespace is provided,  the default namespace is used.
+Also, a namespace can be specified to query from.
+When no namespace is provided, the default namespace is used.
 
 ```python
 res = index.query(
-    vector=[0.6, 0.9], 
+    vector=[0.6, 0.9],
     top_k=5,
     namespace="ns",
 )
@@ -180,22 +259,23 @@ A set of vectors can be fetched from a namespace of an index.
 
 ```python
 res = index.fetch(
-    ids=["id3", "id4"], 
-    include_vectors=False, 
+    ids=["id3", "id4"],
+    include_vectors=False,
     include_metadata=True,
     include_data=True,
 )
 
 # List of fetch results, one for each id passed
 for r in res:
-    if not r: # Can be None, if there is no such vector with the given id
+    if not r:  # Can be None, if there is no such vector with the given id
         continue
-    
+
     print(
-        r.id, # The id used while upserting the vector
-        r.vector, # The value of the vector, if requested.
-        r.metadata, # The metadata of the vector, if requested and present.
-        r.data, # The metadata of the vector, if requested and present.
+        r.id,  # The id used while upserting the vector
+        r.vector,  # The value of the vector, if requested (for dense and hybrid indexes).
+        r.sparse_vector,  # The value of the sparse vector, if requested (for sparse and hybrid indexes).
+        r.metadata,  # The metadata of the vector, if requested and present.
+        r.data,  # The metadata of the vector, if requested and present.
     )
 ```
 
@@ -203,28 +283,29 @@ or, for singular fetch:
 
 ```python
 res = index.fetch(
-    "id1", 
-    include_vectors=True, 
+    "id1",
+    include_vectors=True,
     include_metadata=True,
     include_data=False,
 )
 
 r = res[0]
-if r: # Can be None, if there is no such vector with the given id
+if r:  # Can be None, if there is no such vector with the given id
     print(
-        r.id, # The id used while upserting the vector
-        r.vector, # The value of the vector, if requested.
-        r.metadata, # The metadata of the vector, if requested and present.
-        r.data, # The metadata of the vector, if requested and present.
+        r.id,  # The id used while upserting the vector
+        r.vector,  # The value of the vector, if requested (for dense and hybrid indexes).
+        r.sparse_vector,  # The value of the sparse vector, if requested (for sparse and hybrid indexes).        
+        r.metadata,  # The metadata of the vector, if requested and present.
+        r.data,  # The metadata of the vector, if requested and present.
     )
 ```
 
-Also, a namespace can be specified to fetch from. 
+Also, a namespace can be specified to fetch from.
 When no namespace is provided, the default namespace is used.
 
 ```python
 res = index.fetch(
-    ids=["id3", "id4"], 
+    ids=["id3", "id4"],
     namespace="ns",
 )
 ```
@@ -237,37 +318,38 @@ in a page by page fashion.
 ```python
 # Scans the vectors 100 vector at a time,
 res = index.range(
-    cursor="", # Start the scan from the beginning 
-    limit=100, 
-    include_vectors=False, 
+    cursor="",  # Start the scan from the beginning 
+    limit=100,
+    include_vectors=False,
     include_metadata=True,
     include_data=True,
 )
 
 while res.next_cursor != "":
     res = index.range(
-        cursor=res.next_cursor, 
-        limit=100, 
-        include_vectors=False, 
+        cursor=res.next_cursor,
+        limit=100,
+        include_vectors=False,
         include_metadata=True,
         include_data=True,
     )
-    
+
     for v in res.vectors:
         print(
-            v.id, # The id used while upserting the vector
-            v.vector, # The value of the vector, if requested.
-            v.metadata, # The metadata of the vector, if requested and present.
-            v.data, # The data of the vector, if requested and present.
+            v.id,  # The id used while upserting the vector
+            v.vector,  # The value of the vector, if requested (for dense and hybrid indexes).
+            v.sparse_vector,  # The value of the sparse vector, if requested (for sparse and hybrid indexes).
+            v.metadata,  # The metadata of the vector, if requested and present.
+            v.data,  # The data of the vector, if requested and present.
         )
 ```
 
-Also, a namespace can be specified to range from. 
+Also, a namespace can be specified to range from.
 When no namespace is provided, the default namespace is used.
 
 ```python
 res = index.range(
-    cursor="", 
+    cursor="",
     limit=100,
     namespace="ns",
 )
@@ -284,7 +366,7 @@ res = index.delete(
 )
 
 print(
-    res.deleted, # How many vectors are deleted out of the given ids.
+    res.deleted,  # How many vectors are deleted out of the given ids.
 )
 ```
 
@@ -295,10 +377,10 @@ res = index.delete(
     "id1",
 )
 
-print(res) # A boolean indicating whether the vector is deleted or not.
+print(res)  # A boolean indicating whether the vector is deleted or not.
 ```
 
-Also, a namespace can be specified to delete from. 
+Also, a namespace can be specified to delete from.
 When no namespace is provided, the default namespace is used.
 
 ```python
@@ -310,24 +392,23 @@ res = index.delete(
 
 ### Update a Vector
 
-Either the vector value(or data for indexes created with an embedding model) or the metadata
-can be updated without needing to set the other one.
+Any combination of vector value, sparse vector value, data, or metadata can be updated.
 
 ```python
 res = index.update(
-    "id1", 
+    "id1",
     metadata={"new_field": "new_value"},
 )
 
-print(res) # A boolean indicating whether the vector is updated or not.
+print(res)  # A boolean indicating whether the vector is updated or not.
 ```
 
-Also, a namespace can be specified to update from. 
+Also, a namespace can be specified to update from.
 When no namespace is provided, the default namespace is used.
 
 ```python
 res = index.update(
-    "id1", 
+    "id1",
     metadata={"new_field": "new_value"},
     namespace="ns",
 )
@@ -341,7 +422,7 @@ All vectors can be removed from a namespace of an index.
 index.reset() 
 ```
 
-Also, a namespace can be specified to reset. 
+Also, a namespace can be specified to reset.
 When no namespace is provided, the default namespace is used.
 
 ```python
@@ -367,18 +448,18 @@ This information also contains per-namespace status.
 ```python
 info = index.info()
 print(
-    info.vector_count, # Total number of vectors across all namespaces
-    info.pending_vector_count, # Total number of vectors waiting to be indexed across all namespaces
-    info.index_size, # Total size of the index on disk in bytes
-    info.dimension, # Vector dimension
-    info.similarity_function, # Similarity function used
+    info.vector_count,  # Total number of vectors across all namespaces
+    info.pending_vector_count,  # Total number of vectors waiting to be indexed across all namespaces
+    info.index_size,  # Total size of the index on disk in bytes
+    info.dimension,  # Vector dimension
+    info.similarity_function,  # Similarity function used
 )
 
 for ns, ns_info in info.namespaces.items():
     print(
-        ns, # Name of the namespace
-        ns_info.vector_count, # Total number of vectors in this namespaces
-        ns_info.pending_vector_count, # Total number of vectors waiting to be indexed in this namespaces
+        ns,  # Name of the namespace
+        ns_info.vector_count,  # Total number of vectors in this namespaces
+        ns_info.pending_vector_count,  # Total number of vectors waiting to be indexed in this namespaces
     )
 ```
 
@@ -389,12 +470,12 @@ All the names of active namespaces can be listed.
 ```python
 namespaces = index.list_namespaces()
 for ns in namespaces:
-    print(ns) # name of the namespace
+    print(ns)  # name of the namespace
 ```
 
 ### Delete a Namespace
 
-A namespace can be deleted entirely. 
+A namespace can be deleted entirely.
 If no such namespace exists, and exception is raised.
 The default namespaces cannot be deleted.
 
@@ -405,7 +486,9 @@ index.delete_namespace(namespace="ns")
 # Contributing
 
 ## Preparing the environment
-This project uses [Poetry](https://python-poetry.org) for packaging and dependency management. Make sure you are able to create the poetry shell with relevant dependencies.
+
+This project uses [Poetry](https://python-poetry.org) for packaging and dependency management. Make sure you are able to
+create the poetry shell with relevant dependencies.
 
 You will also need a vector database on [Upstash](https://console.upstash.com/).
 
@@ -414,22 +497,33 @@ poetry install
 ```
 
 ## Code Formatting
+
 ```bash 
 poetry run ruff format .
 ```
 
 ## Running tests
 
-To run all the tests, make sure the poetry virtual environment activated with all 
+To run all the tests, make sure the poetry virtual environment activated with all
 the necessary dependencies.
 
-Create two Vector Stores on upstash. First one should have 2 dimensions. Second one should use an embedding model. Set the necessary environment variables:
+Create four Vector Stores on Upstash. First one should have 2 dimensions. Second one should use an embedding model. Set
+the necessary environment variables:
+
+- A dense index with 2 dimensions, with cosine similarity
+- A dense index with an embedding model
+- A sparse index
+- A hyrid index with 2 dimensions, with cosine similarity for the dense component.
 
 ```
 URL=****
 TOKEN=****
 EMBEDDING_URL=****
 EMBEDDING_TOKEN=****
+SPARSE_URL=****
+SPARSE_TOKEN=****
+HYBRID_URL=****
+HYBRID_TOKEN=****
 ```
 
 Then, run the following command to run tests:
