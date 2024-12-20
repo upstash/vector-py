@@ -19,6 +19,8 @@ HYBRID_INDEX_URL = os.environ["HYBRID_URL"]
 HYBRID_INDEX_TOKEN = os.environ["HYBRID_TOKEN"]
 EMBEDDING_INDEX_URL = os.environ["EMBEDDING_URL"]
 EMBEDDING_INDEX_TOKEN = os.environ["EMBEDDING_TOKEN"]
+HYBRID_EMBEDDING_INDEX_URL = os.environ["HYBRID_EMBEDDING_URL"]
+HYBRID_EMBEDDING_INDEX_TOKEN = os.environ["HYBRID_EMBEDDING_TOKEN"]
 
 
 def assert_eventually(assertion, retry_delay=0.5, timeout=5.0):

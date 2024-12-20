@@ -4,6 +4,8 @@ import pytest_asyncio
 from tests import (
     EMBEDDING_INDEX_TOKEN,
     EMBEDDING_INDEX_URL,
+    HYBRID_EMBEDDING_INDEX_TOKEN,
+    HYBRID_EMBEDDING_INDEX_URL,
     HYBRID_INDEX_TOKEN,
     HYBRID_INDEX_URL,
     INDEX_TOKEN,
@@ -74,6 +76,22 @@ def embedding_index():
 @pytest_asyncio.fixture
 async def async_embedding_index():
     idx = AsyncIndex(EMBEDDING_INDEX_URL, EMBEDDING_INDEX_TOKEN)
+    for ns in NAMESPACES:
+        await idx.reset(namespace=ns)
+    return idx
+
+
+@pytest.fixture
+def hybrid_embedding_index():
+    idx = Index(HYBRID_EMBEDDING_INDEX_URL, HYBRID_EMBEDDING_INDEX_TOKEN)
+    for ns in NAMESPACES:
+        idx.reset(namespace=ns)
+    return idx
+
+
+@pytest_asyncio.fixture
+async def async_hybrid_embedding_index():
+    idx = AsyncIndex(HYBRID_EMBEDDING_INDEX_URL, HYBRID_EMBEDDING_INDEX_TOKEN)
     for ns in NAMESPACES:
         await idx.reset(namespace=ns)
     return idx

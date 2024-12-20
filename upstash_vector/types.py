@@ -248,6 +248,45 @@ class FusionAlgorithm(enum.Enum):
     """
 
 
+class QueryMode(enum.Enum):
+    """
+    Query mode for hybrid indexes with Upstash-hosted
+    embedding models.
+
+    Specifies whether to run the query in only the
+    dense index, only the sparse index, or in both.
+
+    If not provided, defaults to `HYBRID`.
+    """
+
+    HYBRID = "HYBRID"
+    """
+    Runs the query in hybrid index mode, after embedding
+    the raw text data into dense and sparse vectors.
+    
+    Query results from the dense and sparse index components
+    of the hybrid index are fused before returning the result.
+    """
+
+    DENSE = "DENSE"
+    """
+    Runs the query in dense index mode, after embedding
+    the raw text data into a dense vector.
+    
+    Only the query results from the dense index component
+    of the hybrid index is returned.
+    """
+
+    SPARSE = "SPARSE"
+    """
+    Runs the query in sparse index mode, after embedding
+    the raw text data into a sparse vector.
+    
+    Only the query results from the sparse index component
+    of the hybrid index is returned.
+    """
+
+
 class QueryRequest(TypedDict, total=False):
     vector: Union[List[float], SupportsToList]
     """
@@ -323,4 +362,15 @@ class QueryRequest(TypedDict, total=False):
     It must be provided only for hybrid indexes.
     
     When not specified, defaults to `RRF`.
+    """
+
+    query_mode: QueryMode
+    """
+    Specifies whether to run the query in only the
+    dense index, only the sparse index, or in both.
+    
+    It must be provided only for hybrid indexes with 
+    Upstash-hosted embedding models.
+    
+    When not specified, defaults to `HYBRID`.
     """

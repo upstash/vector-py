@@ -26,6 +26,7 @@ from upstash_vector.types import (
     TupleAsSparseVectorT,
     Vector,
     WeightingStrategy,
+    QueryMode,
 )
 from upstash_vector.utils import (
     query_requests_to_payload,
@@ -157,6 +158,7 @@ class IndexOperations:
         sparse_vector: Optional[Union[SparseVector, TupleAsSparseVectorT]] = None,
         weighting_strategy: Optional[WeightingStrategy] = None,
         fusion_algorithm: Optional[FusionAlgorithm] = None,
+        query_mode: Optional[QueryMode] = None,
     ) -> List[QueryResult]:
         """
         Query `top_k` many similar vectors.
@@ -174,6 +176,7 @@ class IndexOperations:
         :param sparse_vector: The sparse vector value to query.
         :param weighting_strategy: Weighting strategy to be used for sparse vectors.
         :param fusion_algorithm: Fusion algorithm to use while fusing scores from hybrid vectors.
+        :param query_mode: Query mode for hybrid indexes with Upstash-hosted embedding models.
 
         Example usage:
 
@@ -208,6 +211,9 @@ class IndexOperations:
 
         if fusion_algorithm is not None:
             payload["fusionAlgorithm"] = fusion_algorithm.value
+
+        if query_mode is not None:
+            payload["queryMode"] = query_mode.value
 
         if data is not None:
             if vector is not None or sparse_vector is not None:
@@ -316,6 +322,7 @@ class IndexOperations:
         sparse_vector: Optional[Union[SparseVector, TupleAsSparseVectorT]] = None,
         weighting_strategy: Optional[WeightingStrategy] = None,
         fusion_algorithm: Optional[FusionAlgorithm] = None,
+        query_mode: Optional[QueryMode] = None,
     ) -> Tuple[List[QueryResult], "ResumableQueryHandle"]:
         """
         Creates a resumable query.
@@ -334,6 +341,7 @@ class IndexOperations:
         :param sparse_vector: The sparse vector value to query.
         :param weighting_strategy: Weighting strategy to be used for sparse vectors.
         :param fusion_algorithm: Fusion algorithm to use while fusing scores from hybrid vectors.
+        :param query_mode: Query mode for hybrid indexes with Upstash-hosted embedding models.
 
         :return: First batch of the results, along with a handle to fetch more or stop the query.
 
@@ -366,6 +374,9 @@ class IndexOperations:
 
         if fusion_algorithm is not None:
             payload["fusionAlgorithm"] = fusion_algorithm.value
+
+        if query_mode is not None:
+            payload["queryMode"] = query_mode.value
 
         if data is not None:
             if vector is not None or sparse_vector is not None:
@@ -713,6 +724,7 @@ class AsyncIndexOperations:
         sparse_vector: Optional[Union[SparseVector, TupleAsSparseVectorT]] = None,
         weighting_strategy: Optional[WeightingStrategy] = None,
         fusion_algorithm: Optional[FusionAlgorithm] = None,
+        query_mode: Optional[QueryMode] = None,
     ) -> List[QueryResult]:
         """
         Query `top_k` many similar vectors.
@@ -730,6 +742,7 @@ class AsyncIndexOperations:
         :param sparse_vector: The sparse vector value to query.
         :param weighting_strategy: Weighting strategy to be used for sparse vectors.
         :param fusion_algorithm: Fusion algorithm to use while fusing scores from hybrid vectors.
+        :param query_mode: Query mode for hybrid indexes with Upstash-hosted embedding models.
 
         Example usage:
 
@@ -764,6 +777,9 @@ class AsyncIndexOperations:
 
         if fusion_algorithm is not None:
             payload["fusionAlgorithm"] = fusion_algorithm.value
+
+        if query_mode is not None:
+            payload["queryMode"] = query_mode.value
 
         if data is not None:
             if vector is not None or sparse_vector is not None:
@@ -874,6 +890,7 @@ class AsyncIndexOperations:
         sparse_vector: Optional[Union[SparseVector, TupleAsSparseVectorT]] = None,
         weighting_strategy: Optional[WeightingStrategy] = None,
         fusion_algorithm: Optional[FusionAlgorithm] = None,
+        query_mode: Optional[QueryMode] = None,
     ) -> Tuple[List[QueryResult], "AsyncResumableQueryHandle"]:
         """
         Creates a resumable query.
@@ -892,6 +909,7 @@ class AsyncIndexOperations:
         :param sparse_vector: The sparse vector value to query.
         :param weighting_strategy: Weighting strategy to be used for sparse vectors.
         :param fusion_algorithm: Fusion algorithm to use while fusing scores from hybrid vectors.
+        :param query_mode: Query mode for hybrid indexes with Upstash-hosted embedding models.
 
         :return: First batch of the results, along with a handle to fetch more or stop the query.
 
@@ -924,6 +942,9 @@ class AsyncIndexOperations:
 
         if fusion_algorithm is not None:
             payload["fusionAlgorithm"] = fusion_algorithm.value
+
+        if query_mode is not None:
+            payload["queryMode"] = query_mode.value
 
         if data is not None:
             if vector is not None or sparse_vector is not None:

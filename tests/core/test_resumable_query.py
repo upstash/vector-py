@@ -3,7 +3,12 @@ import pytest
 from tests import NAMESPACES, assert_eventually, assert_eventually_async
 from upstash_vector import AsyncIndex, Index
 from upstash_vector.errors import UpstashError
-from upstash_vector.types import FusionAlgorithm, SparseVector, WeightingStrategy
+from upstash_vector.types import (
+    FusionAlgorithm,
+    SparseVector,
+    WeightingStrategy,
+    QueryMode,
+)
 
 
 @pytest.mark.parametrize("ns", NAMESPACES)
@@ -379,5 +384,70 @@ async def test_resumable_query_hybrid_async(async_hybrid_index: AsyncIndex, ns: 
             assert next_result[0].data == "data"
             assert next_result[0].vector == [0.7, 0.9]
             assert next_result[0].sparse_vector == SparseVector([0, 3], [0.1, 0.1])
+
+    await assert_eventually_async(assertion)
+
+
+@pytest.mark.parametrize("ns", NAMESPACES)
+def test_resumable_query_hybrid_embedding_index_query_mode(
+    hybrid_embedding_index: Index, ns: str
+):
+    hybrid_embedding_index.upsert(
+        vectors=[
+            ("id0", "hello"),
+            ("id1", "hello world"),
+            ("id2", "hello world Upstash"),
+        ],
+        namespace=ns,
+    )
+
+    def assertion():
+        result, handle = hybrid_embedding_index.resumable_query(
+            data="hello world Upstash",
+            top_k=1,
+            query_mode=QueryMode.SPARSE,
+            namespace=ns,
+        )
+
+        with handle:
+            assert len(result) == 1
+            assert result[0].id == "id2"
+
+            next_result = handle.fetch_next(1)
+            assert len(next_result) == 1
+            assert next_result[0].id == "id1"
+
+    assert_eventually(assertion)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("ns", NAMESPACES)
+async def test_resumable_query_hybrid_embedding_index_query_mode_async(
+    async_hybrid_embedding_index: AsyncIndex, ns: str
+):
+    await async_hybrid_embedding_index.upsert(
+        vectors=[
+            ("id0", "hello"),
+            ("id1", "hello world"),
+            ("id2", "hello world Upstash"),
+        ],
+        namespace=ns,
+    )
+
+    async def assertion():
+        result, handle = await async_hybrid_embedding_index.resumable_query(
+            data="hello world Upstash",
+            top_k=1,
+            query_mode=QueryMode.SPARSE,
+            namespace=ns,
+        )
+
+        async with handle:
+            assert len(result) == 1
+            assert result[0].id == "id2"
+
+            next_result = await handle.fetch_next(1)
+            assert len(next_result) == 1
+            assert next_result[0].id == "id1"
 
     await assert_eventually_async(assertion)

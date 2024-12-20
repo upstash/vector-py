@@ -4,7 +4,12 @@ import pytest
 
 from tests import NAMESPACES, assert_eventually, assert_eventually_async
 from upstash_vector import AsyncIndex, Index
-from upstash_vector.types import FusionAlgorithm, SparseVector, WeightingStrategy
+from upstash_vector.types import (
+    FusionAlgorithm,
+    SparseVector,
+    WeightingStrategy,
+    QueryMode,
+)
 
 
 @pytest.mark.parametrize("ns", NAMESPACES)
@@ -1653,5 +1658,64 @@ async def test_query_many_hybrid_index_async(async_hybrid_index: AsyncIndex, ns:
         assert res[2][0].metadata == {"key": "value"}
         assert res[2][1].id == "id1"
         assert res[2][1].metadata == {"key": "value"}
+
+    await assert_eventually_async(assertion)
+
+
+@pytest.mark.parametrize("ns", NAMESPACES)
+def test_query_hybrid_embedding_index_query_mode(
+    hybrid_embedding_index: Index, ns: str
+):
+    hybrid_embedding_index.upsert(
+        vectors=[
+            ("id0", "hello"),
+            ("id1", "hello world"),
+            ("id2", "hello world Upstash"),
+        ],
+        namespace=ns,
+    )
+
+    def assertion():
+        res = hybrid_embedding_index.query(
+            data="hello world Upstash",
+            query_mode=QueryMode.SPARSE,
+            namespace=ns,
+        )
+
+        assert len(res) == 3
+
+        assert res[0].id == "id2"
+        assert res[1].id == "id1"
+        assert res[2].id == "id0"
+
+    assert_eventually(assertion)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("ns", NAMESPACES)
+async def test_query_hybrid_embedding_index_query_mode_async(
+    async_hybrid_embedding_index: AsyncIndex, ns: str
+):
+    await async_hybrid_embedding_index.upsert(
+        vectors=[
+            ("id0", "hello"),
+            ("id1", "hello world"),
+            ("id2", "hello world Upstash"),
+        ],
+        namespace=ns,
+    )
+
+    async def assertion():
+        res = await async_hybrid_embedding_index.query(
+            data="hello world Upstash",
+            query_mode=QueryMode.SPARSE,
+            namespace=ns,
+        )
+
+        assert len(res) == 3
+
+        assert res[0].id == "id2"
+        assert res[1].id == "id1"
+        assert res[2].id == "id0"
 
     await assert_eventually_async(assertion)

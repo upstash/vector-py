@@ -44,5 +44,7 @@ jobs:
           export SPARSE_TOKEN="${{secrets.SPARSE_TOKEN}}"
           export HYBRID_URL="${{secrets.HYBRID_URL}}"
           export HYBRID_TOKEN="${{secrets.HYBRID_TOKEN}}"
+          export HYBRID_EMBEDDING_URL="${{secrets.HYBRID_EMBEDDING_URL}}"
+          export HYBRID_EMBEDDING_TOKEN="${{secrets.HYBRID_EMBEDDING_TOKEN}}"
           poetry install
           poetry run pytest

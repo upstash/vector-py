@@ -513,7 +513,8 @@ the necessary environment variables:
 - A dense index with 2 dimensions, with cosine similarity
 - A dense index with an embedding model
 - A sparse index
-- A hyrid index with 2 dimensions, with cosine similarity for the dense component.
+- A hybrid index with 2 dimensions, with cosine similarity for the dense component.
+- A hybrid index with embedding models
 
 ```
 URL=****
@@ -524,6 +525,8 @@ SPARSE_URL=****
 SPARSE_TOKEN=****
 HYBRID_URL=****
 HYBRID_TOKEN=****
+HYBRID_EMBEDDING_URL=****
+HYBRID_EMBEDDING_TOKEN=****
 ```
 
 Then, run the following command to run tests:
