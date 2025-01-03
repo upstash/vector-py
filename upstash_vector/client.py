@@ -35,7 +35,7 @@ class Index(IndexOperations):
         self._url = url
         self._client = httpx.Client(
             timeout=httpx.Timeout(
-                timeout=120.0,
+                timeout=600.0,
                 connect=10.0,
             )
         )
@@ -97,7 +97,7 @@ class AsyncIndex(AsyncIndexOperations):
         self._headers = generate_headers(token)
         self._client = httpx.AsyncClient(
             timeout=httpx.Timeout(
-                timeout=120.0,
+                timeout=600.0,
                 connect=10.0,
             )
         )
