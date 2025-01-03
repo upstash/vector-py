@@ -1,6 +1,7 @@
 import pytest
+
 from tests import NAMESPACES
-from upstash_vector import Index, AsyncIndex
+from upstash_vector import AsyncIndex, Index
 
 
 @pytest.mark.parametrize("ns", NAMESPACES)

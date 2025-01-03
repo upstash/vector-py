@@ -3,7 +3,7 @@ from typing import Any
 
 import httpx
 
-from upstash_vector.core.index_operations import IndexOperations, AsyncIndexOperations
+from upstash_vector.core.index_operations import AsyncIndexOperations, IndexOperations
 from upstash_vector.http import (
     execute_with_parameters,
     execute_with_parameters_async,

@@ -1,7 +1,7 @@
 import pytest
 
 from tests import NAMESPACES, ensure_ns_exists, ensure_ns_exists_async
-from upstash_vector import Index, AsyncIndex
+from upstash_vector import AsyncIndex, Index
 from upstash_vector.core.index_operations import DEFAULT_NAMESPACE
 
 
