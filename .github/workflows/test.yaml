@@ -12,10 +12,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: 3.8
 
@@ -40,6 +40,11 @@ jobs:
           export TOKEN="${{secrets.TOKEN}}"
           export EMBEDDING_URL="${{secrets.EMBEDDING_URL}}"
           export EMBEDDING_TOKEN="${{secrets.EMBEDDING_TOKEN}}"
-          poetry add --dev pytest
+          export SPARSE_URL="${{secrets.SPARSE_URL}}"
+          export SPARSE_TOKEN="${{secrets.SPARSE_TOKEN}}"
+          export HYBRID_URL="${{secrets.HYBRID_URL}}"
+          export HYBRID_TOKEN="${{secrets.HYBRID_TOKEN}}"
+          export HYBRID_EMBEDDING_URL="${{secrets.HYBRID_EMBEDDING_URL}}"
+          export HYBRID_EMBEDDING_TOKEN="${{secrets.HYBRID_EMBEDDING_TOKEN}}"
           poetry install
           poetry run pytest

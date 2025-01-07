@@ -1,33 +1,39 @@
 from typing import (
-    Sequence,
-    Union,
-    List,
-    Dict,
-    Optional,
     Any,
-    Tuple,
-    Callable,
     Awaitable,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
 )
 
 from upstash_vector.errors import ClientError
 from upstash_vector.types import (
     Data,
     DeleteResult,
+    FetchResult,
+    FusionAlgorithm,
+    InfoResult,
     MetadataUpdateMode,
     QueryRequest,
-    RangeResult,
-    InfoResult,
-    SupportsToList,
-    FetchResult,
     QueryResult,
+    RangeResult,
+    SparseVector,
+    SupportsToList,
+    TupleAsSparseVectorT,
     Vector,
+    WeightingStrategy,
+    QueryMode,
 )
 from upstash_vector.utils import (
-    convert_query_requests_to_payload,
-    convert_to_list,
-    convert_to_vectors,
-    convert_to_payload,
+    query_requests_to_payload,
+    sequence_to_vectors,
+    to_list,
+    to_sparse_vector,
+    vectors_to_payload,
 )
 
 DEFAULT_NAMESPACE = ""
@@ -82,7 +88,7 @@ class IndexOperations:
             vectors=[
                 ("id1", [0.1, 0.2], {"metadata_field": "metadata_value"}, "data-value"),
                 ("id2", [0.2, 0.2], {"metadata_field": "metadata_value"}),
-                ("id3", [0.3,0.4]),
+                ("id3", [0.3, 0.4]),
             ]
         )
         ```
@@ -133,8 +139,8 @@ class IndexOperations:
         ```
         """
 
-        vectors = convert_to_vectors(vectors)
-        payload, is_vector = convert_to_payload(vectors)
+        converted_vectors = sequence_to_vectors(vectors)
+        payload, is_vector = vectors_to_payload(converted_vectors)
         path = UPSERT_PATH if is_vector else UPSERT_DATA_PATH
 
         return self._execute_request(payload=payload, path=_path_for(namespace, path))
@@ -149,6 +155,10 @@ class IndexOperations:
         data: Optional[str] = None,
         namespace: str = DEFAULT_NAMESPACE,
         include_data: bool = False,
+        sparse_vector: Optional[Union[SparseVector, TupleAsSparseVectorT]] = None,
+        weighting_strategy: Optional[WeightingStrategy] = None,
+        fusion_algorithm: Optional[FusionAlgorithm] = None,
+        query_mode: Optional[QueryMode] = None,
     ) -> List[QueryResult]:
         """
         Query `top_k` many similar vectors.
@@ -163,6 +173,10 @@ class IndexOperations:
         :param data: Data to query for (after embedding it to a vector)
         :param namespace: The namespace to use. When not specified, the default namespace is used.
         :param include_data: Whether the resulting `top_k` vectors will have their unstructured data or not.
+        :param sparse_vector: The sparse vector value to query.
+        :param weighting_strategy: Weighting strategy to be used for sparse vectors.
+        :param fusion_algorithm: Fusion algorithm to use while fusing scores from hybrid vectors.
+        :param query_mode: Query mode for hybrid indexes with Upstash-hosted embedding models.
 
         Example usage:
 
@@ -192,18 +206,41 @@ class IndexOperations:
             "filter": filter,
         }
 
-        if data is None and vector is None:
-            raise ClientError("either `data` or `vector` values must be given")
-        if data is not None and vector is not None:
-            raise ClientError(
-                "`data` and `vector` values cannot be given at the same time"
-            )
+        if weighting_strategy is not None:
+            payload["weightingStrategy"] = weighting_strategy.value
+
+        if fusion_algorithm is not None:
+            payload["fusionAlgorithm"] = fusion_algorithm.value
+
+        if query_mode is not None:
+            payload["queryMode"] = query_mode.value
 
         if data is not None:
+            if vector is not None or sparse_vector is not None:
+                raise ClientError(
+                    "The query should not have "
+                    "`vector` or `sparse_vector` when it contains `data`."
+                )
+
             payload["data"] = data
             path = QUERY_DATA_PATH
         else:
-            payload["vector"] = convert_to_list(vector)
+            if vector is None and sparse_vector is None:
+                raise ClientError(
+                    "The query should contain `vector` "
+                    "and/or `sparse_vector` when it does not contain `data`."
+                )
+
+            if vector is not None:
+                payload["vector"] = to_list(vector)
+
+            if sparse_vector is not None:
+                sparse = to_sparse_vector(sparse_vector)
+                payload["sparseVector"] = {
+                    "indices": sparse.indices,
+                    "values": sparse.values,
+                }
+
             path = QUERY_PATH
 
         return [
@@ -262,7 +299,7 @@ class IndexOperations:
             single_result = self.query(**query, namespace=namespace)
             return [single_result]
 
-        has_vector_query, payload = convert_query_requests_to_payload(queries)
+        has_vector_query, payload = query_requests_to_payload(queries)
         path = QUERY_PATH if has_vector_query else QUERY_DATA_PATH
         result = self._execute_request(payload=payload, path=_path_for(namespace, path))
 
@@ -282,6 +319,10 @@ class IndexOperations:
         namespace: str = DEFAULT_NAMESPACE,
         include_data: bool = False,
         max_idle: int = 3600,
+        sparse_vector: Optional[Union[SparseVector, TupleAsSparseVectorT]] = None,
+        weighting_strategy: Optional[WeightingStrategy] = None,
+        fusion_algorithm: Optional[FusionAlgorithm] = None,
+        query_mode: Optional[QueryMode] = None,
     ) -> Tuple[List[QueryResult], "ResumableQueryHandle"]:
         """
         Creates a resumable query.
@@ -297,6 +338,10 @@ class IndexOperations:
         :param namespace: The namespace to use. When not specified, the default namespace is used.
         :param include_data: Whether the resulting vectors will have their unstructured data or not.
         :param max_idle: Maximum idle time for the resumable query in seconds.
+        :param sparse_vector: The sparse vector value to query.
+        :param weighting_strategy: Weighting strategy to be used for sparse vectors.
+        :param fusion_algorithm: Fusion algorithm to use while fusing scores from hybrid vectors.
+        :param query_mode: Query mode for hybrid indexes with Upstash-hosted embedding models.
 
         :return: First batch of the results, along with a handle to fetch more or stop the query.
 
@@ -305,7 +350,7 @@ class IndexOperations:
         ```python
         result, handle = index.resumable_query(
             vector=[0.6, 0.9],
-            top_k=100,
+            top_k=10,
             include_vectors=False,
             include_metadata=True,
         )
@@ -315,13 +360,6 @@ class IndexOperations:
         handle.stop()
         ```
         """
-        if data is None and vector is None:
-            raise ClientError("either `data` or `vector` values must be given")
-        if data is not None and vector is not None:
-            raise ClientError(
-                "`data` and `vector` values cannot be given at the same time"
-            )
-
         payload = {
             "topK": top_k,
             "includeVectors": include_vectors,
@@ -331,11 +369,41 @@ class IndexOperations:
             "maxIdle": max_idle,
         }
 
+        if weighting_strategy is not None:
+            payload["weightingStrategy"] = weighting_strategy.value
+
+        if fusion_algorithm is not None:
+            payload["fusionAlgorithm"] = fusion_algorithm.value
+
+        if query_mode is not None:
+            payload["queryMode"] = query_mode.value
+
         if data is not None:
+            if vector is not None or sparse_vector is not None:
+                raise ClientError(
+                    "The resumable query should not have "
+                    "`vector` or `sparse_vector` when it contains `data`."
+                )
+
             payload["data"] = data
             path = RESUMABLE_QUERY_DATA_PATH
         else:
-            payload["vector"] = convert_to_list(vector)
+            if vector is None and sparse_vector is None:
+                raise ClientError(
+                    "The resumable query should contain `vector` "
+                    "and/or `sparse_vector` when it does not contain `data`."
+                )
+
+            if vector is not None:
+                payload["vector"] = to_list(vector)
+
+            if sparse_vector is not None:
+                sparse = to_sparse_vector(sparse_vector)
+                payload["sparseVector"] = {
+                    "indices": sparse.indices,
+                    "values": sparse.values,
+                }
+
             path = RESUMABLE_QUERY_PATH
 
         result = self._execute_request(payload=payload, path=_path_for(namespace, path))
@@ -478,11 +546,12 @@ class IndexOperations:
     def update(
         self,
         id: str,
-        vector: Optional[List[float]] = None,
+        vector: Optional[Union[List[float], SupportsToList]] = None,
         data: Optional[str] = None,
         metadata: Optional[Dict] = None,
         namespace: str = DEFAULT_NAMESPACE,
         metadata_update_mode: MetadataUpdateMode = MetadataUpdateMode.OVERWRITE,
+        sparse_vector: Optional[Union[SparseVector, TupleAsSparseVectorT]] = None,
     ) -> bool:
         """
         Updates a vector value, data, or metadata for the given id.
@@ -495,6 +564,7 @@ class IndexOperations:
         :param metadata_update_mode: Whether to overwrite the whole
             it, or patch the metadata (insert new fields or update
             according to the `RFC 7396 JSON Merge Patch` algorithm.
+        :param sparse_vector: The sparse vector value to update to.
 
         Example usage:
 
@@ -508,7 +578,14 @@ class IndexOperations:
         }
 
         if vector is not None:
-            payload["vector"] = vector
+            payload["vector"] = to_list(vector)
+
+        if sparse_vector is not None:
+            sparse = to_sparse_vector(sparse_vector)
+            payload["sparseVector"] = {
+                "indices": sparse.indices,
+                "values": sparse.values,
+            }
 
         if data is not None:
             payload["data"] = data
@@ -577,7 +654,7 @@ class AsyncIndexOperations:
             vectors=[
                 ("id1", [0.1, 0.2], {"metadata_field": "metadata_value"}, "data-value"),
                 ("id2", [0.2, 0.2], {"metadata_field": "metadata_value"}),
-                ("id3", [0.3,0.4]),
+                ("id3", [0.3, 0.4]),
             ]
         )
         ```
@@ -626,8 +703,8 @@ class AsyncIndexOperations:
         )
         ```
         """
-        vectors = convert_to_vectors(vectors)
-        payload, is_vector = convert_to_payload(vectors)
+        converted_vectors = sequence_to_vectors(vectors)
+        payload, is_vector = vectors_to_payload(converted_vectors)
         path = UPSERT_PATH if is_vector else UPSERT_DATA_PATH
 
         return await self._execute_request_async(
@@ -644,6 +721,10 @@ class AsyncIndexOperations:
         data: Optional[str] = None,
         namespace: str = DEFAULT_NAMESPACE,
         include_data: bool = False,
+        sparse_vector: Optional[Union[SparseVector, TupleAsSparseVectorT]] = None,
+        weighting_strategy: Optional[WeightingStrategy] = None,
+        fusion_algorithm: Optional[FusionAlgorithm] = None,
+        query_mode: Optional[QueryMode] = None,
     ) -> List[QueryResult]:
         """
         Query `top_k` many similar vectors.
@@ -658,6 +739,10 @@ class AsyncIndexOperations:
         :param data: Data to query for (after embedding it to a vector)
         :param namespace: The namespace to use. When not specified, the default namespace is used.
         :param include_data: Whether the resulting `top_k` vectors will have their unstructured data or not.
+        :param sparse_vector: The sparse vector value to query.
+        :param weighting_strategy: Weighting strategy to be used for sparse vectors.
+        :param fusion_algorithm: Fusion algorithm to use while fusing scores from hybrid vectors.
+        :param query_mode: Query mode for hybrid indexes with Upstash-hosted embedding models.
 
         Example usage:
 
@@ -687,18 +772,41 @@ class AsyncIndexOperations:
             "filter": filter,
         }
 
-        if data is None and vector is None:
-            raise ClientError("either `data` or `vector` values must be given")
-        if data is not None and vector is not None:
-            raise ClientError(
-                "`data` and `vector` values cannot be given at the same time"
-            )
+        if weighting_strategy is not None:
+            payload["weightingStrategy"] = weighting_strategy.value
+
+        if fusion_algorithm is not None:
+            payload["fusionAlgorithm"] = fusion_algorithm.value
+
+        if query_mode is not None:
+            payload["queryMode"] = query_mode.value
 
         if data is not None:
+            if vector is not None or sparse_vector is not None:
+                raise ClientError(
+                    "The query should not have "
+                    "`vector` or `sparse_vector` when it contains `data`."
+                )
+
             payload["data"] = data
             path = QUERY_DATA_PATH
         else:
-            payload["vector"] = convert_to_list(vector)
+            if vector is None and sparse_vector is None:
+                raise ClientError(
+                    "The query should contain `vector` "
+                    "and/or `sparse_vector` when it does not contain `data`."
+                )
+
+            if vector is not None:
+                payload["vector"] = to_list(vector)
+
+            if sparse_vector is not None:
+                sparse = to_sparse_vector(sparse_vector)
+                payload["sparseVector"] = {
+                    "indices": sparse.indices,
+                    "values": sparse.values,
+                }
+
             path = QUERY_PATH
 
         return [
@@ -757,7 +865,7 @@ class AsyncIndexOperations:
             single_result = await self.query(**query, namespace=namespace)
             return [single_result]
 
-        has_vector_query, payload = convert_query_requests_to_payload(queries)
+        has_vector_query, payload = query_requests_to_payload(queries)
         path = QUERY_PATH if has_vector_query else QUERY_DATA_PATH
         result = await self._execute_request_async(
             payload=payload, path=_path_for(namespace, path)
@@ -779,6 +887,10 @@ class AsyncIndexOperations:
         namespace: str = DEFAULT_NAMESPACE,
         include_data: bool = False,
         max_idle: int = 3600,
+        sparse_vector: Optional[Union[SparseVector, TupleAsSparseVectorT]] = None,
+        weighting_strategy: Optional[WeightingStrategy] = None,
+        fusion_algorithm: Optional[FusionAlgorithm] = None,
+        query_mode: Optional[QueryMode] = None,
     ) -> Tuple[List[QueryResult], "AsyncResumableQueryHandle"]:
         """
         Creates a resumable query.
@@ -794,6 +906,10 @@ class AsyncIndexOperations:
         :param namespace: The namespace to use. When not specified, the default namespace is used.
         :param include_data: Whether the resulting vectors will have their unstructured data or not.
         :param max_idle: Maximum idle time for the resumable query in seconds.
+        :param sparse_vector: The sparse vector value to query.
+        :param weighting_strategy: Weighting strategy to be used for sparse vectors.
+        :param fusion_algorithm: Fusion algorithm to use while fusing scores from hybrid vectors.
+        :param query_mode: Query mode for hybrid indexes with Upstash-hosted embedding models.
 
         :return: First batch of the results, along with a handle to fetch more or stop the query.
 
@@ -802,7 +918,7 @@ class AsyncIndexOperations:
         ```python
         result, handle = await index.resumable_query(
             vector=[0.6, 0.9],
-            top_k=100,
+            top_k=10,
             include_vectors=False,
             include_metadata=True,
         )
@@ -812,13 +928,6 @@ class AsyncIndexOperations:
         await handle.stop()
         ```
         """
-        if data is None and vector is None:
-            raise ClientError("either `data` or `vector` values must be given")
-        if data is not None and vector is not None:
-            raise ClientError(
-                "`data` and `vector` values cannot be given at the same time"
-            )
-
         payload = {
             "topK": top_k,
             "includeVectors": include_vectors,
@@ -828,11 +937,41 @@ class AsyncIndexOperations:
             "maxIdle": max_idle,
         }
 
+        if weighting_strategy is not None:
+            payload["weightingStrategy"] = weighting_strategy.value
+
+        if fusion_algorithm is not None:
+            payload["fusionAlgorithm"] = fusion_algorithm.value
+
+        if query_mode is not None:
+            payload["queryMode"] = query_mode.value
+
         if data is not None:
+            if vector is not None or sparse_vector is not None:
+                raise ClientError(
+                    "The resumable query should not have "
+                    "`vector` or `sparse_vector` when it contains `data`."
+                )
+
             payload["data"] = data
             path = RESUMABLE_QUERY_DATA_PATH
         else:
-            payload["vector"] = convert_to_list(vector)
+            if vector is None and sparse_vector is None:
+                raise ClientError(
+                    "The resumable query should contain `vector` "
+                    "and/or `sparse_vector` when it does not contain `data`."
+                )
+
+            if vector is not None:
+                payload["vector"] = to_list(vector)
+
+            if sparse_vector is not None:
+                sparse = to_sparse_vector(sparse_vector)
+                payload["sparseVector"] = {
+                    "indices": sparse.indices,
+                    "values": sparse.values,
+                }
+
             path = RESUMABLE_QUERY_PATH
 
         result = await self._execute_request_async(
@@ -979,11 +1118,12 @@ class AsyncIndexOperations:
     async def update(
         self,
         id: str,
-        vector: Optional[List[float]] = None,
+        vector: Optional[Union[List[float], SupportsToList]] = None,
         data: Optional[str] = None,
         metadata: Optional[Dict] = None,
         namespace: str = DEFAULT_NAMESPACE,
         metadata_update_mode: MetadataUpdateMode = MetadataUpdateMode.OVERWRITE,
+        sparse_vector: Optional[Union[SparseVector, TupleAsSparseVectorT]] = None,
     ) -> bool:
         """
         Updates a vector value, data, or metadata for the given id.
@@ -996,6 +1136,7 @@ class AsyncIndexOperations:
         :param metadata_update_mode: Whether to overwrite the whole
             it, or patch the metadata (insert new fields or update
             according to the `RFC 7396 JSON Merge Patch` algorithm.
+        :param sparse_vector: The sparse vector value to update to.
 
         Example usage:
 
@@ -1009,7 +1150,14 @@ class AsyncIndexOperations:
         }
 
         if vector is not None:
-            payload["vector"] = vector
+            payload["vector"] = to_list(vector)
+
+        if sparse_vector is not None:
+            sparse = to_sparse_vector(sparse_vector)
+            payload["sparseVector"] = {
+                "indices": sparse.indices,
+                "values": sparse.values,
+            }
 
         if data is not None:
             payload["data"] = data

@@ -1,8 +1,8 @@
 import pytest
 
 from tests import NAMESPACES
-from upstash_vector import Index, AsyncIndex
-from upstash_vector.types import MetadataUpdateMode
+from upstash_vector import AsyncIndex, Index
+from upstash_vector.types import MetadataUpdateMode, SparseVector
 
 
 @pytest.mark.parametrize("ns", NAMESPACES)
@@ -257,3 +257,123 @@ async def test_update_vector_data_async(async_index: AsyncIndex, ns: str):
 async def test_update_non_existing_id_async(async_index: AsyncIndex, ns: str):
     updated = await async_index.update("id-999", vector=[0.4, 0.5], namespace=ns)
     assert updated is False
+
+
+@pytest.mark.parametrize("ns", NAMESPACES)
+def test_update_sparse_vector(sparse_index: Index, ns: str):
+    sparse_index.upsert(
+        vectors=[
+            ("id0", ([0, 1], [0.1, 0.2])),
+            ("id1", ([1, 2], [0.2, 0.3]), {"key": "value"}),
+            ("id2", ([2, 3], [0.3, 0.4]), {"key": "value"}, "data"),
+        ],
+        namespace=ns,
+    )
+
+    updated = sparse_index.update(
+        "id1",
+        sparse_vector=SparseVector([6, 7], [0.5, 0.6]),
+        namespace=ns,
+    )
+    assert updated is True
+
+    res = sparse_index.fetch(
+        "id1",
+        include_vectors=True,
+        namespace=ns,
+    )
+    assert len(res) == 1
+    assert res[0] is not None
+    assert res[0].id == "id1"
+    assert res[0].sparse_vector == SparseVector([6, 7], [0.5, 0.6])
+
+
+@pytest.mark.parametrize("ns", NAMESPACES)
+def test_update_hybrid_vector(hybrid_index: Index, ns: str):
+    hybrid_index.upsert(
+        vectors=[
+            ("id0", [0.1, 0.2], ([0, 1], [0.1, 0.2])),
+            ("id1", [0.2, 0.3], ([1, 2], [0.2, 0.3]), {"key": "value"}),
+        ],
+        namespace=ns,
+    )
+
+    updated = hybrid_index.update(
+        "id1",
+        vector=[0.5, 0.6],
+        sparse_vector=SparseVector([6, 7], [0.5, 0.6]),
+        namespace=ns,
+    )
+    assert updated is True
+
+    res = hybrid_index.fetch(
+        "id1",
+        include_vectors=True,
+        namespace=ns,
+    )
+    assert len(res) == 1
+    assert res[0] is not None
+    assert res[0].id == "id1"
+    assert res[0].vector == [0.5, 0.6]
+    assert res[0].sparse_vector == SparseVector([6, 7], [0.5, 0.6])
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("ns", NAMESPACES)
+async def test_update_sparse_vector_async(async_sparse_index: AsyncIndex, ns: str):
+    await async_sparse_index.upsert(
+        vectors=[
+            ("id0", ([0, 1], [0.1, 0.2])),
+            ("id1", ([1, 2], [0.2, 0.3]), {"key": "value"}),
+            ("id2", ([2, 3], [0.3, 0.4]), {"key": "value"}, "data"),
+        ],
+        namespace=ns,
+    )
+
+    updated = await async_sparse_index.update(
+        "id1",
+        sparse_vector=SparseVector([6, 7], [0.5, 0.6]),
+        namespace=ns,
+    )
+    assert updated is True
+
+    res = await async_sparse_index.fetch(
+        "id1",
+        include_vectors=True,
+        namespace=ns,
+    )
+    assert len(res) == 1
+    assert res[0] is not None
+    assert res[0].id == "id1"
+    assert res[0].sparse_vector == SparseVector([6, 7], [0.5, 0.6])
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("ns", NAMESPACES)
+async def test_update_hybrid_vector_async(async_hybrid_index: AsyncIndex, ns: str):
+    await async_hybrid_index.upsert(
+        vectors=[
+            ("id0", [0.1, 0.2], ([0, 1], [0.1, 0.2])),
+            ("id1", [0.2, 0.3], ([1, 2], [0.2, 0.3]), {"key": "value"}),
+        ],
+        namespace=ns,
+    )
+
+    updated = await async_hybrid_index.update(
+        "id1",
+        vector=[0.5, 0.6],
+        sparse_vector=SparseVector([6, 7], [0.5, 0.6]),
+        namespace=ns,
+    )
+    assert updated is True
+
+    res = await async_hybrid_index.fetch(
+        "id1",
+        include_vectors=True,
+        namespace=ns,
+    )
+    assert len(res) == 1
+    assert res[0] is not None
+    assert res[0].id == "id1"
+    assert res[0].vector == [0.5, 0.6]
+    assert res[0].sparse_vector == SparseVector([6, 7], [0.5, 0.6])

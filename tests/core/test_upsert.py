@@ -1,13 +1,12 @@
+import numpy as np
+import pandas as pd
 import pytest
 from pytest import raises
 
 from tests import NAMESPACES
-from upstash_vector import Index, AsyncIndex
+from upstash_vector import AsyncIndex, Index
 from upstash_vector.errors import ClientError
-from upstash_vector.types import Data, Vector
-
-import numpy as np
-import pandas as pd
+from upstash_vector.types import Data, SparseVector, Vector
 
 
 @pytest.mark.parametrize("ns", NAMESPACES)
@@ -766,3 +765,315 @@ async def test_invalid_payload_async(async_index: AsyncIndex, ns: str):
             ],
             namespace=ns,
         )
+
+
+@pytest.mark.parametrize("ns", NAMESPACES)
+def test_upsert_sparse(sparse_index: Index, ns: str):
+    sparse_index.upsert(
+        vectors=[
+            (
+                "id0",
+                ([0, 1], [0.1, 0.2]),
+            ),
+            (
+                "id1",
+                (np.array([1, 2]), [0.2, 0.3]),
+                {"key1": "value"},
+            ),
+            (
+                "id2",
+                ([2, 3], pd.array([0.3, 0.4])),
+                {"key2": "value"},
+                "data2",
+            ),
+            Vector(
+                "id3",
+                sparse_vector=([10, 20, 30, 40], [1.02, 2.01, 3.3, 4.4]),
+            ),
+            (
+                "id4",
+                SparseVector([2, 39, 93], [0.3, 0.5, 0.1]),
+            ),
+            (
+                "id5",
+                SparseVector(np.array([11]), pd.array([11.5])),
+            ),
+            {
+                "id": "id6",
+                "sparse_vector": ([42, 43, 44, 45, 46, 47], [42, 43, 44, 45, 46, 47]),
+                "metadata": {"key6": "value"},
+            },
+            {
+                "id": "id7",
+                "sparse_vector": SparseVector([4, 5], [4.5, 5.4]),
+                "metadata": {"key7": "value"},
+                "data": "data7",
+            },
+            {
+                "id": "id8",
+                "sparse_vector": (np.array([0, 3]), np.array([0.1, 3.0])),
+            },
+            Vector(
+                "id9",
+                sparse_vector=([1, 2], [1.2, 2.1]),
+            ),
+            Vector(
+                "id10",
+                sparse_vector=SparseVector([1], np.array([12.0])),
+            ),
+        ],
+        namespace=ns,
+    )
+
+    ids = [f"id{i}" for i in range(11)]
+    res = sparse_index.fetch(
+        ids,
+        include_vectors=True,
+        namespace=ns,
+    )
+    assert len(res) == 11
+    for i, r in enumerate(res):
+        assert r is not None
+        assert r.id == f"id{i}"
+        assert r.sparse_vector is not None
+
+
+@pytest.mark.parametrize("ns", NAMESPACES)
+def test_upsert_hybrid(hybrid_index: Index, ns: str):
+    hybrid_index.upsert(
+        vectors=[
+            (
+                "id0",
+                [0.1, 0.1],
+                ([0, 1], [0.1, 0.2]),
+            ),
+            (
+                "id1",
+                np.array([0.5, 0.5]),
+                (np.array([1, 2]), [0.2, 0.3]),
+                {"key1": "value"},
+            ),
+            (
+                "id2",
+                pd.array([0.1, 0.2]),
+                ([2, 3], pd.array([0.3, 0.4])),
+                {"key2": "value"},
+                "data2",
+            ),
+            Vector(
+                "id3",
+                vector=[3.3, 1.0],
+                sparse_vector=([10, 20, 30, 40], [1.02, 2.01, 3.3, 4.4]),
+            ),
+            (
+                "id4",
+                [1.1, 2.2],
+                SparseVector([2, 39, 93], [0.3, 0.5, 0.1]),
+            ),
+            (
+                "id5",
+                [1.0, 5.0],
+                SparseVector(np.array([11]), pd.array([11.5])),
+            ),
+            {
+                "id": "id6",
+                "vector": [13.0, 0.5],
+                "sparse_vector": ([42, 43, 44, 45, 46, 47], [42, 43, 44, 45, 46, 47]),
+                "metadata": {"key6": "value"},
+            },
+            {
+                "id": "id7",
+                "vector": np.array([4.2, 2.4]),
+                "sparse_vector": SparseVector([4, 5], [4.5, 5.4]),
+                "metadata": {"key7": "value"},
+                "data": "data7",
+            },
+            {
+                "id": "id8",
+                "vector": [13, 5.4],
+                "sparse_vector": (np.array([0, 3]), np.array([0.1, 3.0])),
+            },
+            Vector(
+                "id9",
+                vector=np.array([0.9, 0.7]),
+                sparse_vector=([1, 2], [1.2, 2.1]),
+            ),
+            Vector(
+                "id10",
+                vector=[0.0, 1.0],
+                sparse_vector=SparseVector([1], np.array([12.0])),
+            ),
+        ],
+        namespace=ns,
+    )
+
+    ids = [f"id{i}" for i in range(11)]
+    res = hybrid_index.fetch(
+        ids,
+        include_vectors=True,
+        namespace=ns,
+    )
+    assert len(res) == 11
+    for i, r in enumerate(res):
+        assert r is not None
+        assert r.id == f"id{i}"
+        assert r.vector is not None
+        assert len(r.vector) == 2
+        assert r.sparse_vector is not None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("ns", NAMESPACES)
+async def test_upsert_sparse_async(async_sparse_index: AsyncIndex, ns: str):
+    await async_sparse_index.upsert(
+        vectors=[
+            (
+                "id0",
+                ([0, 1], [0.1, 0.2]),
+            ),
+            (
+                "id1",
+                (np.array([1, 2]), [0.2, 0.3]),
+                {"key1": "value"},
+            ),
+            (
+                "id2",
+                ([2, 3], pd.array([0.3, 0.4])),
+                {"key2": "value"},
+                "data2",
+            ),
+            Vector(
+                "id3",
+                sparse_vector=([10, 20, 30, 40], [1.02, 2.01, 3.3, 4.4]),
+            ),
+            (
+                "id4",
+                SparseVector([2, 39, 93], [0.3, 0.5, 0.1]),
+            ),
+            (
+                "id5",
+                SparseVector(np.array([11]), pd.array([11.5])),
+            ),
+            {
+                "id": "id6",
+                "sparse_vector": ([42, 43, 44, 45, 46, 47], [42, 43, 44, 45, 46, 47]),
+                "metadata": {"key6": "value"},
+            },
+            {
+                "id": "id7",
+                "sparse_vector": SparseVector([4, 5], [4.5, 5.4]),
+                "metadata": {"key7": "value"},
+                "data": "data7",
+            },
+            {
+                "id": "id8",
+                "sparse_vector": (np.array([0, 3]), np.array([0.1, 3.0])),
+            },
+            Vector(
+                "id9",
+                sparse_vector=([1, 2], [1.2, 2.1]),
+            ),
+            Vector(
+                "id10",
+                sparse_vector=SparseVector([1], np.array([12.0])),
+            ),
+        ],
+        namespace=ns,
+    )
+
+    ids = [f"id{i}" for i in range(11)]
+    res = await async_sparse_index.fetch(
+        ids,
+        include_vectors=True,
+        namespace=ns,
+    )
+    assert len(res) == 11
+    for i, r in enumerate(res):
+        assert r is not None
+        assert r.id == f"id{i}"
+        assert r.sparse_vector is not None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("ns", NAMESPACES)
+async def test_upsert_hybrid_async(async_hybrid_index: AsyncIndex, ns: str):
+    await async_hybrid_index.upsert(
+        vectors=[
+            (
+                "id0",
+                [0.1, 0.1],
+                ([0, 1], [0.1, 0.2]),
+            ),
+            (
+                "id1",
+                np.array([0.5, 0.5]),
+                (np.array([1, 2]), [0.2, 0.3]),
+                {"key1": "value"},
+            ),
+            (
+                "id2",
+                pd.array([0.1, 0.2]),
+                ([2, 3], pd.array([0.3, 0.4])),
+                {"key2": "value"},
+                "data2",
+            ),
+            Vector(
+                "id3",
+                vector=[3.3, 1.0],
+                sparse_vector=([10, 20, 30, 40], [1.02, 2.01, 3.3, 4.4]),
+            ),
+            (
+                "id4",
+                [1.1, 2.2],
+                SparseVector([2, 39, 93], [0.3, 0.5, 0.1]),
+            ),
+            (
+                "id5",
+                [1.0, 5.0],
+                SparseVector(np.array([11]), pd.array([11.5])),
+            ),
+            {
+                "id": "id6",
+                "vector": [13.0, 0.5],
+                "sparse_vector": ([42, 43, 44, 45, 46, 47], [42, 43, 44, 45, 46, 47]),
+                "metadata": {"key6": "value"},
+            },
+            {
+                "id": "id7",
+                "vector": np.array([4.2, 2.4]),
+                "sparse_vector": SparseVector([4, 5], [4.5, 5.4]),
+                "metadata": {"key7": "value"},
+                "data": "data7",
+            },
+            {
+                "id": "id8",
+                "vector": [13, 5.4],
+                "sparse_vector": (np.array([0, 3]), np.array([0.1, 3.0])),
+            },
+            Vector(
+                "id9",
+                vector=np.array([0.9, 0.7]),
+                sparse_vector=([1, 2], [1.2, 2.1]),
+            ),
+            Vector(
+                "id10",
+                vector=[0.0, 1.0],
+                sparse_vector=SparseVector([1], np.array([12.0])),
+            ),
+        ],
+        namespace=ns,
+    )
+
+    ids = [f"id{i}" for i in range(11)]
+    res = await async_hybrid_index.fetch(
+        ids,
+        include_vectors=True,
+        namespace=ns,
+    )
+    assert len(res) == 11
+    for i, r in enumerate(res):
+        assert r is not None
+        assert r.id == f"id{i}"
+        assert r.vector is not None
+        assert len(r.vector) == 2
+        assert r.sparse_vector is not None
