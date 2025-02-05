@@ -132,12 +132,46 @@ class NamespaceInfo:
 
 
 @dataclass
+class DenseIndexInfo:
+    dimension: int
+    similarity_function: str
+    embedding_model: str
+
+    @classmethod
+    def _from_json(cls, obj: Optional[dict]) -> Optional["DenseIndexInfo"]:
+        if not obj:
+            return None
+
+        return cls(
+            dimension=obj["dimension"],
+            similarity_function=obj["similarityFunction"],
+            embedding_model=obj["embeddingModel"],
+        )
+
+
+@dataclass
+class SparseIndexInfo:
+    embedding_model: str
+
+    @classmethod
+    def _from_json(cls, obj: Optional[dict]) -> Optional["SparseIndexInfo"]:
+        if not obj:
+            return None
+
+        return cls(
+            embedding_model=obj["embeddingModel"],
+        )
+
+
+@dataclass
 class InfoResult:
     vector_count: int
     pending_vector_count: int
     index_size: int
     dimension: int
     similarity_function: str
+    dense_index: Optional[DenseIndexInfo]
+    sparse_index: Optional[SparseIndexInfo]
     namespaces: Dict[str, NamespaceInfo]
 
     @classmethod
@@ -148,6 +182,8 @@ class InfoResult:
             index_size=obj["indexSize"],
             dimension=obj["dimension"],
             similarity_function=obj["similarityFunction"],
+            dense_index=DenseIndexInfo._from_json(obj.get("denseIndex")),
+            sparse_index=SparseIndexInfo._from_json(obj.get("sparseIndex")),
             namespaces={
                 ns: NamespaceInfo._from_json(ns_info)
                 for ns, ns_info in obj["namespaces"].items()

@@ -39,6 +39,34 @@ def test_info(index: Index):
     assert_eventually(assertion)
 
 
+def test_info_dense_index(index: Index):
+    info = index.info()
+
+    assert info.dense_index is not None
+    assert info.dense_index.dimension == 2
+    assert info.dense_index.similarity_function == "COSINE"
+    assert info.dense_index.embedding_model == ""
+
+
+def test_info_sparse_index(sparse_index: Index):
+    info = sparse_index.info()
+
+    assert info.sparse_index is not None
+    assert info.sparse_index.embedding_model == ""
+
+
+def test_info_hybrid_index(hybrid_index: Index):
+    info = hybrid_index.info()
+
+    assert info.dense_index is not None
+    assert info.dense_index.dimension == 2
+    assert info.dense_index.similarity_function == "COSINE"
+    assert info.dense_index.embedding_model == ""
+
+    assert info.sparse_index is not None
+    assert info.sparse_index.embedding_model == ""
+
+
 @pytest.mark.asyncio
 async def test_info_async(async_index: AsyncIndex):
     for ns in NAMESPACES:
@@ -67,3 +95,34 @@ async def test_info_async(async_index: AsyncIndex):
             assert i.namespaces[ns].vector_count == 1
 
     await assert_eventually_async(assertion)
+
+
+@pytest.mark.asyncio
+async def test_info_dense_index_async(async_index: AsyncIndex):
+    info = await async_index.info()
+
+    assert info.dense_index is not None
+    assert info.dense_index.dimension == 2
+    assert info.dense_index.similarity_function == "COSINE"
+    assert info.dense_index.embedding_model == ""
+
+
+@pytest.mark.asyncio
+async def test_info_sparse_index_async(async_sparse_index: AsyncIndex):
+    info = await async_sparse_index.info()
+
+    assert info.sparse_index is not None
+    assert info.sparse_index.embedding_model == ""
+
+
+@pytest.mark.asyncio
+async def test_info_hybrid_index_async(async_hybrid_index: AsyncIndex):
+    info = await async_hybrid_index.info()
+
+    assert info.dense_index is not None
+    assert info.dense_index.dimension == 2
+    assert info.dense_index.similarity_function == "COSINE"
+    assert info.dense_index.embedding_model == ""
+
+    assert info.sparse_index is not None
+    assert info.sparse_index.embedding_model == ""
