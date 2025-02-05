@@ -19,13 +19,24 @@ def sequence_to_vectors(
 
 def _parse_vector(vector: Union[dict, tuple, Vector, Data]) -> Union[Vector, Data]:
     if isinstance(vector, Vector):
+        maybe_data = True
+
         dense = vector.vector
         if dense is not None:
+            maybe_data = False
             vector.vector = to_list(dense)
 
         sparse = vector.sparse_vector
         if sparse is not None:
+            maybe_data = False
             vector.sparse_vector = to_sparse_vector(sparse)
+
+        if maybe_data and vector.data:
+            return Data(
+                id=vector.id,
+                data=vector.data,
+                metadata=vector.metadata,
+            )
 
         return vector
     elif isinstance(vector, Data):

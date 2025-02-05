@@ -1077,3 +1077,44 @@ async def test_upsert_hybrid_async(async_hybrid_index: AsyncIndex, ns: str):
         assert r.vector is not None
         assert len(r.vector) == 2
         assert r.sparse_vector is not None
+
+
+@pytest.mark.parametrize("ns", NAMESPACES)
+def test_upsert_data_as_vector(embedding_index: Index, ns: str):
+    embedding_index.upsert(
+        vectors=[
+            Vector(id="test", data="data"),
+        ],
+        namespace=ns,
+    )
+
+    res = embedding_index.fetch(
+        ids=["test"],
+        include_data=True,
+        namespace=ns,
+    )
+
+    assert res[0] is not None
+    assert res[0].id == "test"
+    assert res[0].data == "data"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("ns", NAMESPACES)
+async def test_upsert_data_as_vector_async(async_embedding_index: AsyncIndex, ns: str):
+    await async_embedding_index.upsert(
+        vectors=[
+            Vector(id="test", data="data"),
+        ],
+        namespace=ns,
+    )
+
+    res = await async_embedding_index.fetch(
+        ids=["test"],
+        include_data=True,
+        namespace=ns,
+    )
+
+    assert res[0] is not None
+    assert res[0].id == "test"
+    assert res[0].data == "data"
