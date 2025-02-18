@@ -327,3 +327,84 @@ async def test_range_hybrid_async(async_hybrid_index: AsyncIndex, ns: str):
             include_vectors=True,
             namespace=ns,
         )
+
+
+@pytest.mark.parametrize("ns", NAMESPACES)
+def test_range_prefix(index: Index, ns: str):
+    index.upsert(
+        vectors=[
+            ("id-00", [0.1, 0.2]),
+            ("id-01", [0.1, 0.3]),
+            ("id-10", [0.1, 0.4]),
+            ("id-11", [0.1, 0.5]),
+            ("id-12", [0.1, 0.6]),
+            ("id-13", [0.1, 0.7]),
+        ],
+        namespace=ns,
+    )
+
+    result = index.range(
+        limit=2,
+        prefix="id-1",
+        namespace=ns,
+    )
+
+    assert len(result.vectors) == 2
+    assert result.vectors[0].id == "id-10"
+    assert result.vectors[1].id == "id-11"
+
+    assert result.next_cursor != ""
+
+    result = index.range(
+        cursor=result.next_cursor,
+        limit=2,
+        prefix="id-1",
+        namespace=ns,
+    )
+
+    assert len(result.vectors) == 2
+    assert result.vectors[0].id == "id-12"
+    assert result.vectors[1].id == "id-13"
+
+    assert result.next_cursor == ""
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("ns", NAMESPACES)
+async def test_range_prefix_async(async_index: AsyncIndex, ns: str):
+    await async_index.upsert(
+        vectors=[
+            ("id-00", [0.1, 0.2]),
+            ("id-01", [0.1, 0.3]),
+            ("id-10", [0.1, 0.4]),
+            ("id-11", [0.1, 0.5]),
+            ("id-12", [0.1, 0.6]),
+            ("id-13", [0.1, 0.7]),
+        ],
+        namespace=ns,
+    )
+
+    result = await async_index.range(
+        limit=2,
+        prefix="id-1",
+        namespace=ns,
+    )
+
+    assert len(result.vectors) == 2
+    assert result.vectors[0].id == "id-10"
+    assert result.vectors[1].id == "id-11"
+
+    assert result.next_cursor != ""
+
+    result = await async_index.range(
+        cursor=result.next_cursor,
+        limit=2,
+        prefix="id-1",
+        namespace=ns,
+    )
+
+    assert len(result.vectors) == 2
+    assert result.vectors[0].id == "id-12"
+    assert result.vectors[1].id == "id-13"
+
+    assert result.next_cursor == ""
