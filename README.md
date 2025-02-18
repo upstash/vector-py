@@ -300,6 +300,18 @@ if r:  # Can be None, if there is no such vector with the given id
     )
 ```
 
+Apart from the vector ids, vectors can also be fetched with an id prefix.
+
+```python
+# Fetch all the vectors whose id starts with `id-1`
+res = index.fetch(
+    prefix="id-1",
+    include_vectors=False,
+    include_metadata=True,
+    include_data=True,
+)
+```
+
 Also, a namespace can be specified to fetch from.
 When no namespace is provided, the default namespace is used.
 
