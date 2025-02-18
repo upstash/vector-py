@@ -415,8 +415,10 @@ class IndexOperations:
 
     def delete(
         self,
-        ids: Union[str, List[str]],
+        ids: Optional[Union[str, List[str]]] = None,
         namespace: str = DEFAULT_NAMESPACE,
+        prefix: Optional[str] = None,
+        filter: Optional[str] = None,
     ) -> DeleteResult:
         """
         Deletes the given vector(s) with given ids.
@@ -425,6 +427,8 @@ class IndexOperations:
 
         :param ids: Singular or list of ids of vector(s) to be deleted.
         :param namespace: The namespace to use. When not specified, the default namespace is used.
+        :param prefix: Prefix of vector ids to delete.
+        :param filter: Metadata filter for the vectors to delete.
 
         Example usage:
 
@@ -436,11 +440,23 @@ class IndexOperations:
         index.delete("0")
         ```
         """
-        if not isinstance(ids, list):
-            ids = [ids]
+        payload = {}
+        if ids is not None:
+            if not isinstance(ids, list):
+                ids = [ids]
+
+            payload["ids"] = ids
+
+        if prefix is not None:
+            payload["prefix"] = prefix
+
+        if filter is not None:
+            payload["filter"] = filter
 
         return DeleteResult._from_json(
-            self._execute_request(payload=ids, path=_path_for(namespace, DELETE_PATH))
+            self._execute_request(
+                payload=payload, path=_path_for(namespace, DELETE_PATH)
+            )
         )
 
     def reset(self, namespace: str = DEFAULT_NAMESPACE, all: bool = False) -> str:
@@ -985,8 +1001,10 @@ class AsyncIndexOperations:
 
     async def delete(
         self,
-        ids: Union[str, List[str]],
+        ids: Optional[Union[str, List[str]]] = None,
         namespace: str = DEFAULT_NAMESPACE,
+        prefix: Optional[str] = None,
+        filter: Optional[str] = None,
     ) -> DeleteResult:
         """
         Deletes the given vector(s) with given ids asynchronously.
@@ -995,6 +1013,8 @@ class AsyncIndexOperations:
 
         :param ids: Singular or list of ids of vector(s) to be deleted.
         :param namespace: The namespace to use. When not specified, the default namespace is used.
+        :param prefix: Prefix of vector ids to delete.
+        :param filter: Metadata filter for the vectors to delete.
 
         Example usage:
 
@@ -1006,12 +1026,22 @@ class AsyncIndexOperations:
         await index.delete("0")
         ```
         """
-        if not isinstance(ids, list):
-            ids = [ids]
+        payload = {}
+        if ids is not None:
+            if not isinstance(ids, list):
+                ids = [ids]
+
+            payload["ids"] = ids
+
+        if prefix is not None:
+            payload["prefix"] = prefix
+
+        if filter is not None:
+            payload["filter"] = filter
 
         return DeleteResult._from_json(
             await self._execute_request_async(
-                payload=ids, path=_path_for(namespace, DELETE_PATH)
+                payload=payload, path=_path_for(namespace, DELETE_PATH)
             )
         )
 

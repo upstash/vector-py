@@ -365,9 +365,8 @@ res = index.delete(
     ids=["id1", "id2"],
 )
 
-print(
-    res.deleted,  # How many vectors are deleted out of the given ids.
-)
+# How many vectors are deleted out of the given ids.
+print(res.deleted)
 ```
 
 or, for singular deletion:
@@ -377,7 +376,23 @@ res = index.delete(
     "id1",
 )
 
-print(res)  # A boolean indicating whether the vector is deleted or not.
+# 1 if the vector is deleted, 0 otherwise.
+print(res.deleted)
+```
+
+Apart from the vector ids, vectors can also be deleted with an id prefix
+or metadata filter.
+
+```python
+# Delete all the vectors whose id starts with `id-0`
+index.delete(
+    prefix="id-0",
+)
+
+# Delete all the vectors whose metadata matches with the filter
+index.delete(
+    filter="salary < 3000",
+)
 ```
 
 Also, a namespace can be specified to delete from.
