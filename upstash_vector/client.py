@@ -30,7 +30,12 @@ class Index(IndexOperations):
     """
 
     def __init__(
-        self, url: str, token: str, retries: int = 3, retry_interval: float = 1.0
+        self,
+        url: str,
+        token: str,
+        retries: int = 3,
+        retry_interval: float = 1.0,
+        allow_telemetry: bool = True,
     ):
         self._url = url
         self._client = httpx.Client(
@@ -41,7 +46,7 @@ class Index(IndexOperations):
         )
         self._retries = retries
         self._retry_interval = retry_interval
-        self._headers = generate_headers(token)
+        self._headers = generate_headers(token, allow_telemetry)
 
     def _execute_request(self, payload: Any = "", path: str = ""):
         url_with_path = f"{self._url}{path}"
@@ -55,7 +60,12 @@ class Index(IndexOperations):
         )
 
     @classmethod
-    def from_env(cls, retries: int = 3, retry_interval: float = 1.0) -> "Index":
+    def from_env(
+        cls,
+        retries: int = 3,
+        retry_interval: float = 1.0,
+        allow_telemetry: bool = True,
+    ) -> "Index":
         """
         Load the credentials from environment, and returns a client.
         """
@@ -65,6 +75,7 @@ class Index(IndexOperations):
             environ["UPSTASH_VECTOR_REST_TOKEN"],
             retries,
             retry_interval,
+            allow_telemetry,
         )
 
 
@@ -92,9 +103,9 @@ class AsyncIndex(AsyncIndexOperations):
         token: str,
         retries: int = 3,
         retry_interval: float = 1.0,
+        allow_telemetry: bool = True,
     ):
         self._url = url
-        self._headers = generate_headers(token)
         self._client = httpx.AsyncClient(
             timeout=httpx.Timeout(
                 timeout=600.0,
@@ -103,6 +114,7 @@ class AsyncIndex(AsyncIndexOperations):
         )
         self._retries = retries
         self._retry_interval = retry_interval
+        self._headers = generate_headers(token, allow_telemetry)
 
     async def _execute_request_async(self, payload: Any = "", path: str = ""):
         url_with_path = f"{self._url}{path}"
@@ -116,7 +128,12 @@ class AsyncIndex(AsyncIndexOperations):
         )
 
     @classmethod
-    def from_env(cls, retries: int = 3, retry_interval: float = 1.0) -> "AsyncIndex":
+    def from_env(
+        cls,
+        retries: int = 3,
+        retry_interval: float = 1.0,
+        allow_telemetry: bool = True,
+    ) -> "AsyncIndex":
         """
         Load the credentials from environment, and returns a client.
         """
@@ -126,4 +143,5 @@ class AsyncIndex(AsyncIndexOperations):
             environ["UPSTASH_VECTOR_REST_TOKEN"],
             retries,
             retry_interval,
+            allow_telemetry,
         )
