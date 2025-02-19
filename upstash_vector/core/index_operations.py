@@ -440,7 +440,7 @@ class IndexOperations:
         index.delete("0")
         ```
         """
-        payload = {}
+        payload: Dict[str, Any] = {}
         if ids is not None:
             if not isinstance(ids, list):
                 ids = [ids]
@@ -1026,7 +1026,7 @@ class AsyncIndexOperations:
         await index.delete("0")
         ```
         """
-        payload = {}
+        payload: Dict[str, Any] = {}
         if ids is not None:
             if not isinstance(ids, list):
                 ids = [ids]
