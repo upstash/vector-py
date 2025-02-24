@@ -10,21 +10,23 @@ from upstash_vector import __version__
 from upstash_vector.errors import UpstashError
 
 
-def generate_headers(token) -> Dict[str, str]:
+def generate_headers(token: str, allow_telemetry: bool) -> Dict[str, str]:
     headers = {
         "Authorization": f"Bearer {token}",
-        "Upstash-Telemetry-Sdk": f"upstash-vector-py@v{__version__}",
-        "Upstash-Telemetry-Runtime": f"python@v{python_version()}",
     }
 
-    if os.getenv("VERCEL"):
-        platform = "vercel"
-    elif os.getenv("AWS_REGION"):
-        platform = "aws"
-    else:
-        platform = "unknown"
+    if allow_telemetry:
+        headers["Upstash-Telemetry-Sdk"] = f"upstash-vector-py@v{__version__}"
+        headers["Upstash-Telemetry-Runtime"] = f"python@v{python_version()}"
 
-    headers["Upstash-Telemetry-Platform"] = platform
+        if os.getenv("VERCEL"):
+            platform = "vercel"
+        elif os.getenv("AWS_REGION"):
+            platform = "aws"
+        else:
+            platform = "unknown"
+
+        headers["Upstash-Telemetry-Platform"] = platform
 
     return headers
 
