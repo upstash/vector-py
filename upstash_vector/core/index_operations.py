@@ -512,11 +512,12 @@ class IndexOperations:
 
     def fetch(
         self,
-        ids: Union[str, List[str]],
+        ids: Optional[Union[str, List[str]]] = None,
         include_vectors: bool = False,
         include_metadata: bool = False,
         namespace: str = DEFAULT_NAMESPACE,
         include_data: bool = False,
+        prefix: Optional[str] = None,
     ) -> List[Optional[FetchResult]]:
         """
         Fetches details of a set of vectors.
@@ -526,6 +527,7 @@ class IndexOperations:
         :param include_metadata: Whether the resulting vectors will have their metadata or not.
         :param namespace: The namespace to use. When not specified, the default namespace is used.
         :param include_data: Whether the resulting `top_k` vectors will have their unstructured data or not.
+        :param prefix: Prefix of vector ids to fetch.
 
         Example usage:
 
@@ -533,20 +535,27 @@ class IndexOperations:
         res = index.fetch(["id1", "id2"], include_vectors=False, include_metadata=True)
         ```
         """
-        if not isinstance(ids, list):
-            ids = [ids]
-
-        payload = {
-            "ids": ids,
+        payload: Dict[str, Any] = {
             "includeVectors": include_vectors,
             "includeMetadata": include_metadata,
             "includeData": include_data,
         }
+
+        if ids is not None:
+            if not isinstance(ids, list):
+                ids = [ids]
+
+            payload["ids"] = ids
+
+        if prefix is not None:
+            payload["prefix"] = prefix
+
+        vectors = self._execute_request(
+            payload=payload, path=_path_for(namespace, FETCH_PATH)
+        )
+
         return [
-            FetchResult._from_json(vector) if vector else None
-            for vector in self._execute_request(
-                payload=payload, path=_path_for(namespace, FETCH_PATH)
-            )
+            FetchResult._from_json(vector) if vector else None for vector in vectors
         ]
 
     def update(
@@ -1090,11 +1099,12 @@ class AsyncIndexOperations:
 
     async def fetch(
         self,
-        ids: Union[str, List[str]],
+        ids: Optional[Union[str, List[str]]] = None,
         include_vectors: bool = False,
         include_metadata: bool = False,
         namespace: str = DEFAULT_NAMESPACE,
         include_data: bool = False,
+        prefix: Optional[str] = None,
     ) -> List[Optional[FetchResult]]:
         """
         Fetches details of a set of vectors asynchronously.
@@ -1104,6 +1114,7 @@ class AsyncIndexOperations:
         :param include_metadata: Whether the resulting vectors will have their metadata or not.
         :param namespace: The namespace to use. When not specified, the default namespace is used.
         :param include_data: Whether the resulting `top_k` vectors will have their unstructured data or not.
+        :param prefix: Prefix of vector ids to fetch.
 
         Example usage:
 
@@ -1111,20 +1122,27 @@ class AsyncIndexOperations:
         res = await index.fetch(["id1", "id2"], include_vectors=False, include_metadata=True)
         ```
         """
-        if not isinstance(ids, list):
-            ids = [ids]
-
-        payload = {
-            "ids": ids,
+        payload: Dict[str, Any] = {
             "includeVectors": include_vectors,
             "includeMetadata": include_metadata,
             "includeData": include_data,
         }
+
+        if ids is not None:
+            if not isinstance(ids, list):
+                ids = [ids]
+
+            payload["ids"] = ids
+
+        if prefix is not None:
+            payload["prefix"] = prefix
+
+        vectors = await self._execute_request_async(
+            payload=payload, path=_path_for(namespace, FETCH_PATH)
+        )
+
         return [
-            FetchResult._from_json(vector) if vector else None
-            for vector in await self._execute_request_async(
-                payload=payload, path=_path_for(namespace, FETCH_PATH)
-            )
+            FetchResult._from_json(vector) if vector else None for vector in vectors
         ]
 
     async def update(

@@ -547,3 +547,58 @@ async def test_fetch_hybrid_async(async_hybrid_index: AsyncIndex, ns: str):
     assert res[2].sparse_vector == SparseVector([2, 3], [0.3, 0.4])
 
     assert res[3] is None
+
+
+@pytest.mark.parametrize("ns", NAMESPACES)
+def test_fetch_prefix(index: Index, ns: str):
+    index.upsert(
+        vectors=[
+            ("id-00", [0.1, 0.2]),
+            ("id-01", [0.1, 0.3]),
+            ("id-10", [0.1, 0.4]),
+            ("id-11", [0.1, 0.5]),
+        ],
+        namespace=ns,
+    )
+
+    vectors = index.fetch(
+        prefix="id-1",
+        namespace=ns,
+    )
+
+    assert len(vectors) == 2
+    assert vectors[0] is not None
+    assert vectors[1] is not None
+
+    vectors.sort(key=lambda v: v.id)  # type: ignore[union-attr]
+
+    assert vectors[0].id == "id-10"
+    assert vectors[1].id == "id-11"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("ns", NAMESPACES)
+async def test_fetch_prefix_async(async_index: AsyncIndex, ns: str):
+    await async_index.upsert(
+        vectors=[
+            ("id-00", [0.1, 0.2]),
+            ("id-01", [0.1, 0.3]),
+            ("id-10", [0.1, 0.4]),
+            ("id-11", [0.1, 0.5]),
+        ],
+        namespace=ns,
+    )
+
+    vectors = await async_index.fetch(
+        prefix="id-1",
+        namespace=ns,
+    )
+
+    assert len(vectors) == 2
+    assert vectors[0] is not None
+    assert vectors[1] is not None
+
+    vectors.sort(key=lambda v: v.id)  # type: ignore[union-attr]
+
+    assert vectors[0].id == "id-10"
+    assert vectors[1].id == "id-11"
