@@ -344,6 +344,33 @@ while res.next_cursor != "":
         )
 ```
 
+Apart from that, vectors can also be ranged with an id prefix.
+
+```python
+# Range over all the vectors whose id starts with `id-1`
+res = index.range(
+    cursor="",
+    prefix="id-1",
+    limit=100,
+    include_vectors=False,
+    include_metadata=True,
+    include_data=True,
+)
+
+while res.next_cursor != "":
+    res = index.range(
+        cursor=res.next_cursor,
+        prefix="id-1",
+        limit=100,
+        include_vectors=False,
+        include_metadata=True,
+        include_data=True,
+    )
+
+    for v in res.vectors:
+        print(v)
+```
+
 Also, a namespace can be specified to range from.
 When no namespace is provided, the default namespace is used.
 

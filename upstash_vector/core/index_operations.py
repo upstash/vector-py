@@ -471,6 +471,7 @@ class IndexOperations:
         include_metadata: bool = False,
         namespace: str = DEFAULT_NAMESPACE,
         include_data: bool = False,
+        prefix: Optional[str] = None,
     ) -> RangeResult:
         """
         Scans the vectors starting from `cursor`, returns at most `limit` many vectors.
@@ -481,6 +482,7 @@ class IndexOperations:
         :param include_metadata: Whether the resulting `top_k` vectors will have their metadata or not.
         :param namespace: The namespace to use. When not specified, the default namespace is used.
         :param include_data: Whether the resulting `top_k` vectors will have their unstructured data or not.
+        :param prefix: Prefix of vector ids to range.
 
         Example usage:
 
@@ -498,6 +500,10 @@ class IndexOperations:
             "includeMetadata": include_metadata,
             "includeData": include_data,
         }
+
+        if prefix is not None:
+            payload["prefix"] = prefix
+
         return RangeResult._from_json(
             self._execute_request(
                 payload=payload, path=_path_for(namespace, RANGE_PATH)
@@ -1043,6 +1049,7 @@ class AsyncIndexOperations:
         include_metadata: bool = False,
         namespace: str = DEFAULT_NAMESPACE,
         include_data: bool = False,
+        prefix: Optional[str] = None,
     ) -> RangeResult:
         """
         Scans the vectors asynchronously starting from `cursor`, returns at most `limit` many vectors.
@@ -1053,6 +1060,7 @@ class AsyncIndexOperations:
         :param include_metadata: Whether the resulting `top_k` vectors will have their metadata or not.
         :param namespace: The namespace to use. When not specified, the default namespace is used.
         :param include_data: Whether the resulting `top_k` vectors will have their unstructured data or not.
+        :param prefix: Prefix of vector ids to range.
 
         Example usage:
 
@@ -1070,6 +1078,10 @@ class AsyncIndexOperations:
             "includeMetadata": include_metadata,
             "includeData": include_data,
         }
+
+        if prefix is not None:
+            payload["prefix"] = prefix
+
         return RangeResult._from_json(
             await self._execute_request_async(
                 payload=payload, path=_path_for(namespace, RANGE_PATH)
