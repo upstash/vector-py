@@ -451,3 +451,28 @@ async def test_resumable_query_hybrid_embedding_index_query_mode_async(
             assert next_result[0].id == "id1"
 
     await assert_eventually_async(assertion)
+
+
+def test_resumable_query_non_existing_namespace(index: Index):
+    result, handle = index.resumable_query(
+        vector=[0.1, 0.2],
+        namespace="non-existing-namespace",
+    )
+
+    with handle:
+        assert len(result) == 0
+        next_result = handle.fetch_next(5)
+        assert len(next_result) == 0
+
+
+@pytest.mark.asyncio
+async def test_resumable_query_non_existing_namespace_async(async_index: AsyncIndex):
+    result, handle = await async_index.resumable_query(
+        vector=[0.1, 0.2],
+        namespace="non-existing-namespace",
+    )
+
+    async with handle:
+        assert len(result) == 0
+        next_result = await handle.fetch_next(5)
+        assert len(next_result) == 0
