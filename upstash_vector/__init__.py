@@ -1,4 +1,4 @@
-__version__ = "0.8.0"
+__version__ = "0.8.1"
 
 from upstash_vector.client import AsyncIndex, Index
 from upstash_vector.types import Vector
