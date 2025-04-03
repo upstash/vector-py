@@ -1295,6 +1295,9 @@ class ResumableQueryHandle:
         Returns:
             List[QueryResult]: The next batch of query results.
         """
+        if self._uid == "":
+            return []
+
         payload = {"uuid": self._uid, "additionalK": additional_k}
         result = self._exec_fn(payload, RESUMABLE_QUERY_NEXT_PATH)
         return [QueryResult._from_json(obj) for obj in result]
@@ -1303,6 +1306,9 @@ class ResumableQueryHandle:
         """
         Stops the resumable query.
         """
+        if self._uid == "":
+            return
+
         payload = {"uuid": self._uid}
         self._exec_fn(payload, RESUMABLE_QUERY_END_PATH)
 
@@ -1338,6 +1344,9 @@ class AsyncResumableQueryHandle:
         Returns:
             List[QueryResult]: The next batch of query results.
         """
+        if self._uid == "":
+            return []
+
         payload = {"uuid": self._uid, "additionalK": additional_k}
         result = await self._exec_fn(payload, RESUMABLE_QUERY_NEXT_PATH)
         return [QueryResult._from_json(obj) for obj in result]
@@ -1346,5 +1355,8 @@ class AsyncResumableQueryHandle:
         """
         Stops the resumable query.
         """
+        if self._uid == "":
+            return
+
         payload = {"uuid": self._uid}
         await self._exec_fn(payload, RESUMABLE_QUERY_END_PATH)
