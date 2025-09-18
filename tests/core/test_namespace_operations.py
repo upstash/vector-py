@@ -75,11 +75,6 @@ async def test_delete_namespaces_async(async_index: AsyncIndex):
 
 def test_rename_namespace(index: Index):
     try:
-        index.delete_namespace("old_name")
-    except Exception:
-        pass
-
-    try:
         index.delete_namespace("new_name")
     except Exception:
         pass
@@ -95,13 +90,21 @@ def test_rename_namespace(index: Index):
     assert "old_name" not in info.namespaces
 
 
+def test_rename_namespace_existing(index: Index):
+    ensure_ns_exists(index, "old_name")
+    ensure_ns_exists(index, "new_name")
+
+    ok = index.rename_namespace("old_name", "new_name", delete_existing=True)
+    assert ok is True
+
+    info = index.info()
+
+    assert "new_name" in info.namespaces
+    assert "old_name" not in info.namespaces
+
+
 @pytest.mark.asyncio
 async def test_rename_namespace_async(async_index: AsyncIndex):
-    try:
-        await async_index.delete_namespace("old_name")
-    except Exception:
-        pass
-
     try:
         await async_index.delete_namespace("new_name")
     except Exception:
@@ -110,6 +113,22 @@ async def test_rename_namespace_async(async_index: AsyncIndex):
     await ensure_ns_exists_async(async_index, "old_name")
 
     ok = await async_index.rename_namespace("old_name", "new_name")
+    assert ok is True
+
+    info = await async_index.info()
+
+    assert "new_name" in info.namespaces
+    assert "old_name" not in info.namespaces
+
+
+@pytest.mark.asyncio
+async def test_rename_namespace_existing_async(async_index: AsyncIndex):
+    await ensure_ns_exists_async(async_index, "old_name")
+    await ensure_ns_exists_async(async_index, "new_name")
+
+    ok = await async_index.rename_namespace(
+        "old_name", "new_name", delete_existing=True
+    )
     assert ok is True
 
     info = await async_index.info()

@@ -661,17 +661,22 @@ class IndexOperations:
             payload=None, path=_path_for(namespace, DELETE_NAMESPACE_PATH)
         )
 
-    def rename_namespace(self, namespace: str, new_namespace: str) -> bool:
+    def rename_namespace(
+        self, namespace: str, new_namespace: str, delete_existing: bool = True
+    ) -> bool:
         """
         Renames the given namespace.
 
-        There should not be a namespace with the new namespace name.
+        There should not be a namespace with the new namespace name, unless
+        the `delete_existing` flag is set to `True`. In that case, the existing
+        namespace is deleted before the rename operation.
 
         Returns whether the rename operation succeeded or not.
         """
         payload = {
             "namespace": namespace,
             "newNamespace": new_namespace,
+            "deleteExisting": delete_existing,
         }
 
         result = self._execute_request(
@@ -1288,17 +1293,22 @@ class AsyncIndexOperations:
             payload=None, path=_path_for(namespace, DELETE_NAMESPACE_PATH)
         )
 
-    async def rename_namespace(self, namespace: str, new_namespace: str) -> bool:
+    async def rename_namespace(
+        self, namespace: str, new_namespace: str, delete_existing: bool = False
+    ) -> bool:
         """
         Renames the given namespace.
 
-        There should not be a namespace with the new namespace name.
+        There should not be a namespace with the new namespace name, unless
+        the `delete_existing` flag is set to `True`. In that case, the existing
+        namespace is deleted before the rename operation.
 
         Returns whether the rename operation succeeded or not.
         """
         payload = {
             "namespace": namespace,
             "newNamespace": new_namespace,
+            "deleteExisting": delete_existing,
         }
 
         result = await self._execute_request_async(
