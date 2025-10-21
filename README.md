@@ -537,6 +537,21 @@ The default namespaces cannot be deleted.
 index.delete_namespace(namespace="ns")
 ```
 
+## Telemetry
+
+This library sends anonymous telemetry data to help us improve your experience.
+We collect the following:
+
+- SDK version
+- Platform (Vercel, AWS)
+- Python Runtime version
+
+You can opt out by passing `allow_telemetry=False` when initializing the Redis client:
+
+```py
+idx = Index("INDEX_URL", "INDEX_TOKEN", allow_telemetry=False)
+```
+
 # Contributing
 
 ## Preparing the environment
