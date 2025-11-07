@@ -50,6 +50,7 @@ FETCH_PATH = "/fetch"
 INFO_PATH = "/info"
 LIST_NAMESPACES_PATH = "/list-namespaces"
 DELETE_NAMESPACE_PATH = "/delete-namespace"
+RENAME_NAMESPACE_PATH = "/rename-namespace"
 UPDATE_PATH = "/update"
 RESUMABLE_QUERY_PATH = "/resumable-query"
 RESUMABLE_QUERY_DATA_PATH = "/resumable-query-data"
@@ -660,6 +661,31 @@ class IndexOperations:
             payload=None, path=_path_for(namespace, DELETE_NAMESPACE_PATH)
         )
 
+    def rename_namespace(
+        self, namespace: str, new_namespace: str, delete_existing: bool = True
+    ) -> bool:
+        """
+        Renames the given namespace.
+
+        There should not be a namespace with the new namespace name, unless
+        the `delete_existing` flag is set to `True`. In that case, the existing
+        namespace is deleted before the rename operation.
+
+        Returns whether the rename operation succeeded or not.
+        """
+        payload = {
+            "namespace": namespace,
+            "newNamespace": new_namespace,
+            "deleteExisting": delete_existing,
+        }
+
+        result = self._execute_request(
+            payload=payload,
+            path=RENAME_NAMESPACE_PATH,
+        )
+
+        return result["renamed"]
+
 
 class AsyncIndexOperations:
     async def _execute_request_async(self, payload, path):
@@ -1266,6 +1292,31 @@ class AsyncIndexOperations:
         await self._execute_request_async(
             payload=None, path=_path_for(namespace, DELETE_NAMESPACE_PATH)
         )
+
+    async def rename_namespace(
+        self, namespace: str, new_namespace: str, delete_existing: bool = False
+    ) -> bool:
+        """
+        Renames the given namespace.
+
+        There should not be a namespace with the new namespace name, unless
+        the `delete_existing` flag is set to `True`. In that case, the existing
+        namespace is deleted before the rename operation.
+
+        Returns whether the rename operation succeeded or not.
+        """
+        payload = {
+            "namespace": namespace,
+            "newNamespace": new_namespace,
+            "deleteExisting": delete_existing,
+        }
+
+        result = await self._execute_request_async(
+            payload=payload,
+            path=RENAME_NAMESPACE_PATH,
+        )
+
+        return result["renamed"]
 
 
 class ResumableQueryHandle:
