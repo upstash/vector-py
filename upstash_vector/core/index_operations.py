@@ -1,3 +1,4 @@
+from urllib.parse import quote
 from typing import (
     Any,
     Awaitable,
@@ -64,18 +65,14 @@ def _path_for(namespace: str, path: str) -> str:
     if not isinstance(namespace, str):
         raise ClientError("Namespace must be a string.")
 
-    # The namespace is sent as it is, so it has to fit in a single path segment.
-    if any(char in namespace for char in "/?#"):
-        raise ClientError('Namespace cannot contain "/", "?" or "#".')
-
-    # "." and ".." are resolved while the URL is parsed, also when they are
-    # percent-encoded or surrounded by whitespace.
-    segment = "".join(char for char in namespace if char > " ")
-    segment = segment.replace("%2e", ".").replace("%2E", ".")
-    if segment in (".", ".."):
+    if namespace in (".", ".."):
         raise ClientError('Namespace cannot be "." or "..".')
 
-    return f"{path}/{namespace}"
+    if any(char in namespace for char in "/\\%"):
+        raise ClientError('Namespace cannot contain "/", "\\" or "%".')
+
+    # Percent-encode the namespace so that it stays a single path segment.
+    return f"{path}/{quote(namespace, safe='')}"
 
 
 class IndexOperations:

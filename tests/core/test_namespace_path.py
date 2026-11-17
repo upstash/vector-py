@@ -12,32 +12,36 @@ def test_default_namespace():
     assert _path_for("", "/query") == "/query"
 
 
-@pytest.mark.parametrize(
-    "namespace",
-    [
-        "my-namespace_1",
-        "tenant.a",
-        "user:1@example.com+a=b",
-        "a,b;c&d$e",
-        ".hidden",
-        "a..b",
-        "a b",
-        "100%25",
-    ],
-)
-def test_namespace_is_sent_as_it_is(namespace):
+@pytest.mark.parametrize("namespace", ["my-namespace_1", "tenant.a", "a..b", ".hidden"])
+def test_ordinary_namespace_is_sent_as_before(namespace):
     assert _path_for(namespace, "/query") == f"/query/{namespace}"
 
 
-@pytest.mark.parametrize("namespace", ["a/b", "a?b", "a#b", "../reset?all", "../info"])
-def test_namespace_with_separator_is_not_accepted(namespace):
+@pytest.mark.parametrize(
+    "namespace,encoded",
+    [
+        ("a?b", "a%3Fb"),
+        ("a#b", "a%23b"),
+        ("a b", "a%20b"),
+        ("user:1@example.com", "user%3A1%40example.com"),
+        ("a+b=c", "a%2Bb%3Dc"),
+        ("..?all", "..%3Fall"),
+        (".. ", "..%20"),
+    ],
+)
+def test_namespace_stays_a_single_path_segment(namespace, encoded):
+    assert _path_for(namespace, "/query") == f"/query/{encoded}"
+
+
+@pytest.mark.parametrize(
+    "namespace", ["a/b", "a\\b", "../reset?all", "100%", "%2e%2e", "a%2Fb"]
+)
+def test_namespace_with_slash_or_percent_is_not_accepted(namespace):
     with pytest.raises(ClientError, match="Namespace cannot contain"):
         _path_for(namespace, "/query")
 
 
-@pytest.mark.parametrize(
-    "namespace", [".", "..", "%2e", "%2E%2e", ".%2e", ".\t.", ".. ", " ..", "..\n"]
-)
+@pytest.mark.parametrize("namespace", [".", ".."])
 def test_dot_namespace_is_not_accepted(namespace):
     with pytest.raises(ClientError, match='Namespace cannot be "." or ".."'):
         _path_for(namespace, "/query")
@@ -57,7 +61,7 @@ def test_requested_urls():
     index.fetch(["1"], namespace="tenant.a")
     index.reset(all=True)
     assert urls == [
-        f"{BASE}/fetch/user:1",
+        f"{BASE}/fetch/user%3A1",
         f"{BASE}/fetch/tenant.a",
         f"{BASE}/reset?all",
     ]
@@ -81,7 +85,7 @@ async def test_requested_urls_async():
     index._client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
 
     await index.fetch(["1"], namespace="user:1")
-    assert urls == [f"{BASE}/fetch/user:1"]
+    assert urls == [f"{BASE}/fetch/user%3A1"]
 
     with pytest.raises(ClientError):
         await index.fetch(["1"], namespace="../reset?all")
