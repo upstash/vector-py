@@ -1,3 +1,4 @@
+from urllib.parse import quote
 from typing import (
     Any,
     Awaitable,
@@ -61,7 +62,17 @@ def _path_for(namespace: str, path: str) -> str:
     if namespace == DEFAULT_NAMESPACE or not namespace:
         return path
 
-    return f"{path}/{namespace}"
+    if not isinstance(namespace, str):
+        raise ClientError("Namespace must be a string.")
+
+    if namespace in (".", ".."):
+        raise ClientError('Namespace cannot be "." or "..".')
+
+    if any(char in namespace for char in "/\\%"):
+        raise ClientError('Namespace cannot contain "/", "\\" or "%".')
+
+    # Percent-encode the namespace so that it stays a single path segment.
+    return f"{path}/{quote(namespace, safe='')}"
 
 
 class IndexOperations:
