@@ -271,6 +271,7 @@ def query_requests_to_payload(
     queries: List[QueryRequest],
 ) -> Tuple[bool, List[Dict[str, Any]]]:
     has_data_query = False
+    has_vector_query = False
     payloads = []
 
     for query in queries:
@@ -307,6 +308,11 @@ def query_requests_to_payload(
                     "When the query contains `data`, it can't contain `vector` or `sparse_vector`."
                 )
 
+            if has_vector_query:
+                raise ClientError(
+                    "`data` and `vector`/`sparse_vector` queries cannot be mixed in the same batch."
+                )
+
             has_data_query = True
             payload["data"] = data
         else:
@@ -319,6 +325,8 @@ def query_requests_to_payload(
                 raise ClientError(
                     "`data` and `vector`/`sparse_vector` queries cannot be mixed in the same batch."
                 )
+
+            has_vector_query = True
 
             if vector is not None:
                 payload["vector"] = to_list(vector)
