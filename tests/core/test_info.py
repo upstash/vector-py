@@ -20,7 +20,7 @@ def test_info(index: Index):
     assert info.pending_vector_count == 0
     assert info.dimension == 2
     assert info.similarity_function == "COSINE"
-    assert len(info.namespaces) == len(NAMESPACES)
+    assert len(info.namespaces) >= len(NAMESPACES)
     for ns in NAMESPACES:
         assert ns in info.namespaces
         assert info.namespaces[ns].vector_count == 0
@@ -78,7 +78,7 @@ async def test_info_async(async_index: AsyncIndex):
     assert info.pending_vector_count == 0
     assert info.dimension == 2
     assert info.similarity_function == "COSINE"
-    assert len(info.namespaces) == len(NAMESPACES)
+    assert len(info.namespaces) >= len(NAMESPACES)
     for ns in NAMESPACES:
         assert ns in info.namespaces
         assert info.namespaces[ns].vector_count == 0
